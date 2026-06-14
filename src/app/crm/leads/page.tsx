@@ -98,7 +98,11 @@ export default async function LeadsPage({ searchParams }: { searchParams: { type
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500" dir="ltr" style={{textAlign: "right"}}>
                     {new Date(lead.createdAt).toLocaleDateString('ar-SA')}
                   </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">{lead.name}</td>
+                  <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
+                    <Link href={`/crm/leads/${lead.id}`} className="hover:text-primary hover:underline cursor-pointer">
+                      {lead.name}
+                    </Link>
+                  </td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500" dir="ltr" style={{textAlign: "right"}}>{lead.phone}</td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                     {lead.project?.name || "غير محدد"}

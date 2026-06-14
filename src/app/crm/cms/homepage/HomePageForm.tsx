@@ -47,8 +47,17 @@ export default function HomePageForm({ content }: { content: any }) {
             <input type="text" name="heroSubtitle" defaultValue={content.heroSubtitle} required className="w-full border-gray-300 rounded-md p-2 border" />
           </div>
           <div className="md:col-span-2">
-            <label className="block text-sm font-medium text-gray-700 mb-1">صورة الخلفية (URL)</label>
-            <input type="url" dir="ltr" name="heroBackgroundImage" defaultValue={content.heroBackgroundImage || ""} className="w-full border-gray-300 rounded-md p-2 border text-left" />
+            <label className="block text-sm font-medium text-gray-700 mb-1">الوسائط (صورة، فيديو، أو سلايدر)</label>
+            <textarea 
+              dir="ltr" 
+              name="heroBackgroundImage" 
+              defaultValue={content.heroBackgroundImage || ""} 
+              rows={3}
+              className="w-full border-gray-300 rounded-md p-2 border text-left" 
+            ></textarea>
+            <p className="text-xs text-gray-500 mt-1">
+              يمكنك إدخال رابط صورة واحدة، أو رابط فيديو MP4، أو عدة روابط صور (كل رابط في سطر منفصل أو مفصولة بفاصلة) لعرضها كسلايدر.
+            </p>
           </div>
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">نص الزر (CTA)</label>

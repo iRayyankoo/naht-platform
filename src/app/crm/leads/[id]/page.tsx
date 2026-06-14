@@ -30,7 +30,6 @@ export default async function LeadDetailsPage({ params }: { params: Promise<{ id
 
   if (!lead) notFound();
 
-  // Fetch all sales/marketing users for assignment if admin
   let users: any[] = [];
   if (userRole === "ADMIN") {
     users = await prisma.user.findMany({
@@ -74,6 +73,64 @@ export default async function LeadDetailsPage({ params }: { params: Promise<{ id
     return map[type] || type;
   };
 
+  // --- Timeline Logic ---
+  const pipelineStages = [
+    { id: "NEW", label: "عميل جديد" },
+    { id: "CONTACTED", label: "تم التواصل" },
+    { id: "INTERESTED", label: "مهتم" },
+    { id: "DETAILS_SENT", label: "إرسال التفاصيل" },
+    { id: "VISIT_SCHEDULED", label: "زيارة مجدولة" },
+    { id: "VISIT_DONE", label: "تمت الزيارة" },
+    { id: "NEGOTIATION", label: "تفاوض" }
+  ];
+
+  const getStageDate = (stageId: string) => {
+    if (stageId === "NEW") return lead.createdAt;
+    const ascNotes = [...lead.notes].reverse();
+    if (stageId === "CONTACTED") return ascNotes.find(n => n.noteType === "WHATSAPP_SENT")?.createdAt;
+    if (stageId === "DETAILS_SENT") return ascNotes.find(n => n.noteType === "DETAILS_SENT")?.createdAt;
+    if (stageId === "VISIT_SCHEDULED") return ascNotes.find(n => n.noteType === "VISIT_SCHEDULED")?.createdAt;
+    if (stageId === "VISIT_DONE") return ascNotes.find(n => n.noteType === "VISITED")?.createdAt;
+    return null;
+  };
+
+  let currentIndex = pipelineStages.findIndex(s => s.id === lead.status);
+  let isEndState = false;
+  let endStateLabel = "";
+  let endStateColor = "bg-gray-100 text-gray-500 border-gray-200";
+
+  if (currentIndex === -1) {
+    if (["SOLD", "LOST", "UNQUALIFIED", "DUPLICATE", "POSTPONED"].includes(lead.status)) {
+      isEndState = true;
+      currentIndex = pipelineStages.length;
+      endStateLabel = getStatusLabel(lead.status);
+      if (lead.status === "SOLD") endStateColor = "bg-green-100 text-green-700 border-green-500";
+      else endStateColor = "bg-red-100 text-red-700 border-red-500";
+    } else if (lead.status === "NO_ANSWER") {
+      currentIndex = 0; // Treated conceptually similar to NEW in pipeline
+    }
+  }
+
+  // --- Activity Log Logic ---
+  const activities = [
+    {
+      id: "creation",
+      title: "تم إنشاء العميل",
+      desc: lead.message ? `رسالة: ${lead.message}` : null,
+      user: "النظام",
+      date: lead.createdAt,
+      type: "SYSTEM"
+    },
+    ...lead.notes.map(n => ({
+      id: n.id,
+      title: getNoteTypeLabel(n.noteType),
+      desc: n.content,
+      user: n.user?.name || "مجهول",
+      date: n.createdAt,
+      type: "NOTE"
+    }))
+  ].sort((a, b) => b.date.getTime() - a.date.getTime());
+
   return (
     <div className="space-y-6 max-w-7xl mx-auto pb-12">
       {/* Header */}
@@ -86,10 +143,6 @@ export default async function LeadDetailsPage({ params }: { params: Promise<{ id
             <h1 className="text-2xl font-bold text-gray-900">ملف العميل: {lead.name}</h1>
             <span className="px-3 py-1 bg-gray-100 text-gray-800 text-sm font-bold rounded-full border border-gray-200">
               {getStatusLabel(lead.status)}
-            </span>
-            <span className="px-3 py-1 bg-blue-50 text-blue-700 text-xs font-bold rounded-full border border-blue-100 flex items-center">
-              <svg className="w-4 h-4 mr-1 rtl:ml-1 rtl:mr-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path></svg>
-              {lead.assignedTo?.name || "غير معين"}
             </span>
           </div>
         </div>
@@ -106,13 +159,37 @@ export default async function LeadDetailsPage({ params }: { params: Promise<{ id
         )}
       </div>
 
+      {/* Main Grid */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        {/* Left Column: Actions & Details */}
+        
+        {/* Left Column: Summary Card & Actions */}
         <div className="lg:col-span-1 space-y-6">
           
+          {/* Summary Card */}
+          <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-100">
+            <h3 className="text-lg font-bold text-gray-900 mb-4 border-b pb-2">ملخص العميل</h3>
+            <div className="space-y-3 text-sm">
+              <div className="flex justify-between border-b border-gray-50 pb-2"><span className="text-gray-500">الجوال:</span> <a href={`tel:${lead.phone}`} className="font-bold text-primary dir-ltr">{lead.phone}</a></div>
+              <div className="flex justify-between border-b border-gray-50 pb-2"><span className="text-gray-500">البريد:</span> <a href={`mailto:${lead.email}`} className="font-medium text-gray-900">{lead.email || "-"}</a></div>
+              <div className="flex justify-between border-b border-gray-50 pb-2"><span className="text-gray-500">المشروع:</span> <span className="font-medium text-gray-900">{lead.project?.name || "-"}</span></div>
+              <div className="flex justify-between border-b border-gray-50 pb-2"><span className="text-gray-500">الحالة:</span> <span className="font-bold text-gray-900">{getStatusLabel(lead.status)}</span></div>
+              <div className="flex justify-between border-b border-gray-50 pb-2"><span className="text-gray-500">المسؤول:</span> <span className="font-medium text-gray-900">{lead.assignedTo?.name || "غير معين"}</span></div>
+              <div className="flex justify-between border-b border-gray-50 pb-2"><span className="text-gray-500">المصدر:</span> <span className="font-medium text-gray-900">{lead.utmSource || lead.source || "-"}</span></div>
+              <div className="flex justify-between border-b border-gray-50 pb-2"><span className="text-gray-500">تاريخ التسجيل:</span> <span className="font-medium text-gray-900" dir="ltr">{new Date(lead.createdAt).toLocaleDateString('ar-SA')}</span></div>
+            </div>
+            <div className="mt-6 space-y-2">
+              <a href={`https://wa.me/${lead.phone.replace(/[^0-9]/g, "")}`} target="_blank" rel="noopener noreferrer" className="w-full block text-center bg-[#25D366] text-white py-2 rounded-md text-sm font-bold hover:bg-[#1ebd5b]">
+                مراسلة واتساب
+              </a>
+              <a href={`tel:${lead.phone}`} className="w-full block text-center bg-gray-100 text-gray-800 py-2 rounded-md text-sm font-bold hover:bg-gray-200">
+                اتصال
+              </a>
+            </div>
+          </div>
+
           {/* Status Update */}
           <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-100">
-            <h3 className="text-lg font-bold text-gray-900 mb-4 border-b pb-2">تحديث حالة العميل</h3>
+            <h3 className="text-sm font-bold text-gray-900 mb-4 border-b pb-2">تحديث الحالة</h3>
             <LeadStatusForm 
               leadId={lead.id} 
               currentStatus={lead.status} 
@@ -123,7 +200,7 @@ export default async function LeadDetailsPage({ params }: { params: Promise<{ id
           {/* Assignment (Admin Only) */}
           {userRole === "ADMIN" && (
             <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-100">
-              <h3 className="text-lg font-bold text-gray-900 mb-4 border-b pb-2">تعيين العميل لموظف</h3>
+              <h3 className="text-sm font-bold text-gray-900 mb-4 border-b pb-2">تعيين موظف</h3>
               <LeadAssignForm 
                 leadId={lead.id} 
                 currentAssignee={lead.assignedToId} 
@@ -131,72 +208,104 @@ export default async function LeadDetailsPage({ params }: { params: Promise<{ id
               />
             </div>
           )}
-
-          {/* Contact Details */}
-          <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-100">
-            <h3 className="text-lg font-bold text-gray-900 mb-4 border-b pb-2">بيانات الاتصال</h3>
-            <div className="space-y-4 text-sm">
-              <div><span className="text-gray-500 block">الجوال:</span> <a href={`tel:${lead.phone}`} className="font-bold text-primary dir-ltr inline-block">{lead.phone}</a></div>
-              <div><span className="text-gray-500 block">البريد:</span> <a href={`mailto:${lead.email}`} className="font-bold text-primary">{lead.email || "غير متوفر"}</a></div>
-              <div><span className="text-gray-500 block">التواصل المفضل:</span> <span className="font-medium text-gray-900">{lead.preferredContactMethod || "غير محدد"}</span></div>
-              <div><span className="text-gray-500 block">الوقت المفضل:</span> <span className="font-medium text-gray-900">{lead.preferredContactTime || "غير محدد"}</span></div>
-            </div>
-            <div className="mt-6">
-              <a href={`https://wa.me/${lead.phone.replace(/[^0-9]/g, "")}`} target="_blank" rel="noopener noreferrer" className="w-full block text-center bg-[#25D366] text-white py-2 rounded-md text-sm font-bold hover:bg-[#1ebd5b]">
-                تواصل عبر واتساب
-              </a>
-            </div>
-          </div>
           
         </div>
 
-        {/* Right Column: Lead Info, UTM & Timeline */}
+        {/* Right Column: Timeline, Info & Activity Log */}
         <div className="lg:col-span-2 space-y-6">
           
-          {/* Main Info */}
-          <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-100">
-            <h3 className="text-lg font-bold text-gray-900 mb-4 border-b pb-2">تفاصيل الطلب</h3>
-            <div className="grid grid-cols-2 gap-y-4 gap-x-6 text-sm">
-              <div><span className="text-gray-500 block mb-1">تاريخ التسجيل:</span> <span className="font-medium text-gray-900" dir="ltr">{new Date(lead.createdAt).toLocaleString('ar-SA')}</span></div>
-              <div><span className="text-gray-500 block mb-1">المشروع المهتم به:</span> <span className="font-medium text-gray-900">{lead.project?.name || "غير محدد"}</span></div>
-              <div><span className="text-gray-500 block mb-1">نوع العقار:</span> <span className="font-medium text-gray-900">{lead.propertyType || "غير محدد"}</span></div>
-              <div><span className="text-gray-500 block mb-1">الميزانية التقريبية:</span> <span className="font-medium text-gray-900">{lead.budget || "غير محدد"}</span></div>
-              <div><span className="text-gray-500 block mb-1">المدينة:</span> <span className="font-medium text-gray-900">{lead.city || "غير محدد"}</span></div>
-              <div><span className="text-gray-500 block mb-1">الحي:</span> <span className="font-medium text-gray-900">{lead.district || "غير محدد"}</span></div>
-              <div className="col-span-2">
-                <span className="text-gray-500 block mb-1">رسالة العميل:</span> 
-                <p className="font-medium text-gray-900 bg-gray-50 p-3 rounded-md">{lead.message || "لا توجد رسالة."}</p>
+          {/* Lead Progress Journey (Timeline) */}
+          <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-100 overflow-hidden">
+            <h3 className="text-lg font-bold text-gray-900 mb-6">مسار العميل</h3>
+            <div className="relative">
+              <div className="overflow-x-auto pb-4 custom-scrollbar">
+                <div className="flex items-start min-w-max px-2">
+                  {pipelineStages.map((stage, idx) => {
+                    const isCompleted = currentIndex > idx;
+                    const isCurrent = currentIndex === idx && !isEndState;
+                    const isFuture = currentIndex < idx && !isEndState;
+                    const stageDate = getStageDate(stage.id);
+
+                    return (
+                      <div key={stage.id} className="relative flex flex-col items-center w-32 shrink-0">
+                        {/* Connecting Line */}
+                        {idx !== pipelineStages.length - 1 && (
+                          <div className={`absolute top-4 rtl:right-1/2 rtl:left-[-50%] ltr:left-1/2 ltr:right-[-50%] w-full h-[2px] ${
+                            isCompleted ? "bg-primary" : "bg-gray-200"
+                          }`} style={{ zIndex: 0 }}></div>
+                        )}
+                        
+                        {/* Circle */}
+                        <div className={`relative z-10 flex items-center justify-center w-8 h-8 rounded-full border-2 bg-white ${
+                          isCompleted ? "border-primary text-primary" : 
+                          isCurrent ? "border-primary ring-4 ring-primary/20 text-primary" : 
+                          "border-gray-200 text-gray-300"
+                        }`}>
+                          {isCompleted ? (
+                            <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20"><path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd"></path></svg>
+                          ) : (
+                            <span className="text-xs font-bold">{idx + 1}</span>
+                          )}
+                        </div>
+
+                        {/* Label */}
+                        <div className="mt-3 text-center">
+                          <p className={`text-xs font-bold ${isCurrent || isCompleted ? "text-gray-900" : "text-gray-400"}`}>
+                            {stage.label}
+                          </p>
+                          {stageDate && (
+                            <p className="text-[10px] text-gray-500 mt-1" dir="ltr">
+                              {stageDate.toLocaleDateString('ar-SA')}
+                            </p>
+                          )}
+                        </div>
+                      </div>
+                    );
+                  })}
+                  
+                  {/* End State Node (if applicable) */}
+                  {isEndState && (
+                    <div className="relative flex flex-col items-center w-32 shrink-0">
+                       <div className={`absolute top-4 rtl:right-[50%] rtl:w-[50%] h-[2px] bg-primary`} style={{ zIndex: 0 }}></div>
+                       <div className={`relative z-10 flex items-center justify-center w-8 h-8 rounded-full border-2 ${endStateColor}`}>
+                          <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20"><path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd"></path></svg>
+                       </div>
+                       <div className="mt-3 text-center">
+                          <p className={`text-xs font-bold text-gray-900`}>{endStateLabel}</p>
+                       </div>
+                    </div>
+                  )}
+                </div>
               </div>
             </div>
           </div>
 
-          {/* Tracking & UTM */}
+          {/* Marketing & UTM Info */}
           <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-100">
-            <h3 className="text-lg font-bold text-gray-900 mb-4 border-b pb-2">بيانات التتبع (Tracking & UTM)</h3>
-            <div className="grid grid-cols-2 md:grid-cols-3 gap-y-4 gap-x-4 text-xs">
-              <div><span className="text-gray-500 block">utm_source</span><span className="font-medium text-gray-900 break-all">{lead.utmSource || "-"}</span></div>
-              <div><span className="text-gray-500 block">utm_medium</span><span className="font-medium text-gray-900 break-all">{lead.utmMedium || "-"}</span></div>
-              <div><span className="text-gray-500 block">utm_campaign</span><span className="font-medium text-gray-900 break-all">{lead.utmCampaign || "-"}</span></div>
-              <div><span className="text-gray-500 block">utm_content</span><span className="font-medium text-gray-900 break-all">{lead.utmContent || "-"}</span></div>
-              <div><span className="text-gray-500 block">utm_term</span><span className="font-medium text-gray-900 break-all">{lead.utmTerm || "-"}</span></div>
-              <div><span className="text-gray-500 block">Device</span><span className="font-medium text-gray-900 break-all">{lead.deviceType || "-"} / {lead.platform || "-"}</span></div>
-              <div className="col-span-2 md:col-span-3"><span className="text-gray-500 block">Landing Page</span><span className="font-medium text-blue-600 break-all underline"><a href={lead.landingPageUrl || "#"} target="_blank">{lead.landingPageUrl || "-"}</a></span></div>
+            <h3 className="text-sm font-bold text-gray-900 mb-4 border-b pb-2">معلومات التسويق (Marketing & UTM)</h3>
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-y-4 gap-x-4 text-xs">
+              <div><span className="text-gray-500 block mb-1">Source</span><span className="font-medium text-gray-900">{lead.utmSource || "-"}</span></div>
+              <div><span className="text-gray-500 block mb-1">Medium</span><span className="font-medium text-gray-900">{lead.utmMedium || "-"}</span></div>
+              <div><span className="text-gray-500 block mb-1">Campaign</span><span className="font-medium text-gray-900">{lead.utmCampaign || "-"}</span></div>
+              <div><span className="text-gray-500 block mb-1">Term / Content</span><span className="font-medium text-gray-900">{lead.utmTerm || lead.utmContent || "-"}</span></div>
+              <div><span className="text-gray-500 block mb-1">Device Type</span><span className="font-medium text-gray-900">{lead.deviceType || "-"}</span></div>
+              <div className="col-span-3"><span className="text-gray-500 block mb-1">Landing Page</span><span className="font-medium text-blue-600 underline"><a href={lead.landingPageUrl || "#"} target="_blank">{lead.landingPageUrl || "-"}</a></span></div>
             </div>
           </div>
 
-          {/* Timeline & Notes */}
+          {/* Activity Log */}
           <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-100">
-            <h3 className="text-lg font-bold text-gray-900 mb-6 border-b pb-2">سجل المتابعة (Timeline)</h3>
+            <h3 className="text-lg font-bold text-gray-900 mb-6 border-b pb-2">سجل النشاطات</h3>
             
             {/* Add Note Form */}
             {(userRole === "ADMIN" || userRole === "SALES") && (
               <form action={async (formData: FormData) => {
                 "use server";
                 await addLeadNote(lead.id, formData.get("noteType") as string, formData.get("content") as string);
-              }} className="mb-8 bg-gray-50 p-4 rounded-lg border border-gray-200 space-y-4">
-                <div className="flex gap-4">
-                  <div className="w-1/3">
-                    <label className="block text-xs font-medium text-gray-700 mb-1">نوع الإجراء</label>
+              }} className="mb-8 bg-gray-50 p-4 rounded-lg border border-gray-200">
+                <h4 className="text-sm font-bold text-gray-800 mb-3">إضافة ملاحظة جديدة</h4>
+                <div className="flex flex-col md:flex-row gap-4">
+                  <div className="w-full md:w-1/3">
                     <select name="noteType" required className="w-full border-gray-300 rounded-md p-2 text-sm shadow-sm">
                       <option value="WHATSAPP_SENT">تم إرسال واتساب</option>
                       <option value="DETAILS_SENT">تم إرسال تفاصيل المشروع</option>
@@ -206,44 +315,41 @@ export default async function LeadDetailsPage({ params }: { params: Promise<{ id
                       <option value="INTERNAL_NOTE">ملاحظة داخلية</option>
                     </select>
                   </div>
-                  <div className="w-2/3">
-                    <label className="block text-xs font-medium text-gray-700 mb-1">التفاصيل / الملاحظة</label>
-                    <input type="text" name="content" className="w-full border-gray-300 rounded-md p-2 text-sm shadow-sm" placeholder="اكتب ملاحظاتك هنا..." />
+                  <div className="w-full md:w-2/3 flex gap-2">
+                    <input type="text" name="content" className="flex-1 border-gray-300 rounded-md p-2 text-sm shadow-sm" placeholder="اكتب الملاحظات أو التفاصيل..." />
+                    <button type="submit" className="bg-primary text-white px-4 py-2 rounded-md text-sm font-bold hover:bg-primary-dark whitespace-nowrap">
+                      حفظ
+                    </button>
                   </div>
-                </div>
-                <div className="flex justify-end">
-                  <button type="submit" className="bg-primary text-white px-4 py-2 rounded-md text-sm font-bold hover:bg-primary-dark">إضافة للـسجل</button>
                 </div>
               </form>
             )}
 
-            {/* Notes List */}
-            <div className="relative border-r-2 border-gray-200 mr-4 pr-6 space-y-8">
-              {lead.notes.length === 0 ? (
-                <p className="text-gray-500 text-sm italic">لا توجد ملاحظات أو إجراءات سابقة.</p>
-              ) : (
-                lead.notes.map(note => (
-                  <div key={note.id} className="relative">
-                    <span className="absolute -right-[31px] top-1 h-4 w-4 rounded-full bg-primary ring-4 ring-white"></span>
-                    <div className="bg-gray-50 p-4 rounded-lg border border-gray-100">
-                      <div className="flex justify-between items-start mb-2">
-                        <div>
-                          <span className="inline-block bg-primary bg-opacity-10 text-primary text-xs font-bold px-2 py-1 rounded-full mb-1">
-                            {getNoteTypeLabel(note.noteType)}
-                          </span>
-                          <div className="text-xs text-gray-500 font-medium">بواسطة: {note.user?.name || "مجهول"}</div>
-                        </div>
-                        <div className="text-xs text-gray-400 font-medium" dir="ltr">
-                          {new Date(note.createdAt).toLocaleString('ar-SA')}
-                        </div>
-                      </div>
-                      {note.content && (
-                        <p className="text-sm text-gray-800 mt-2">{note.content}</p>
-                      )}
+            {/* Timeline List */}
+            <div className="relative border-r-2 border-gray-100 mr-3 pr-6 space-y-6">
+              {activities.map((activity) => (
+                <div key={activity.id} className="relative">
+                  {/* Timeline dot */}
+                  <span className={`absolute -right-[31px] top-1.5 h-3 w-3 rounded-full ring-4 ring-white ${
+                    activity.type === "SYSTEM" ? "bg-gray-400" : "bg-primary"
+                  }`}></span>
+                  
+                  <div className="flex flex-col sm:flex-row sm:justify-between sm:items-start gap-1 mb-1">
+                    <div>
+                      <h5 className="text-sm font-bold text-gray-900">{activity.title}</h5>
+                      <span className="text-xs text-gray-500 font-medium">بواسطة: {activity.user}</span>
                     </div>
+                    <span className="text-xs text-gray-400 font-medium whitespace-nowrap" dir="ltr">
+                      {activity.date.toLocaleString('ar-SA')}
+                    </span>
                   </div>
-                ))
-              )}
+                  {activity.desc && (
+                    <p className="text-sm text-gray-700 bg-gray-50 p-3 rounded-md border border-gray-100 mt-2">
+                      {activity.desc}
+                    </p>
+                  )}
+                </div>
+              ))}
             </div>
             
           </div>

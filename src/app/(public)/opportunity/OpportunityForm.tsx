@@ -55,32 +55,33 @@ export default function OpportunityForm() {
   };
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-4 md:space-y-5">
+    <form onSubmit={handleSubmit} className="space-y-5 md:space-y-6 pb-8">
       {error && (
-        <div className="p-3 bg-red-50 text-red-700 rounded-md text-sm md:text-base border border-red-100">
+        <div className="p-4 bg-red-50 text-red-700 rounded-lg text-sm md:text-base border border-red-200 flex items-center gap-3">
+          <svg className="w-5 h-5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
           {error}
         </div>
       )}
 
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 md:gap-5">
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-5 md:gap-6">
         <div>
-          <label className="block text-sm md:text-base font-medium text-gray-700 mb-1.5">الاسم الكامل *</label>
-          <input type="text" name="name" required className="w-full border-gray-300 rounded-md p-3 md:p-3.5 border focus:ring-primary focus:border-primary text-base" />
+          <label className="block text-sm md:text-base font-bold text-gray-800 mb-2">الاسم الكامل <span className="text-red-500">*</span></label>
+          <input type="text" name="name" required className="w-full bg-gray-50 border-gray-200 rounded-lg p-3.5 md:p-4 border focus:bg-white focus:ring-2 focus:ring-primary/20 focus:border-primary text-base transition-colors" placeholder="اكتب اسمك الكامل" />
         </div>
         <div>
-          <label className="block text-sm md:text-base font-medium text-gray-700 mb-1.5">رقم الجوال *</label>
-          <input type="tel" name="phone" dir="ltr" required className="w-full border-gray-300 rounded-md p-3 md:p-3.5 border focus:ring-primary focus:border-primary text-right text-base" placeholder="05xxxxxxxx" />
+          <label className="block text-sm md:text-base font-bold text-gray-800 mb-2">رقم الجوال <span className="text-red-500">*</span></label>
+          <input type="tel" name="phone" dir="ltr" required className="w-full bg-gray-50 border-gray-200 rounded-lg p-3.5 md:p-4 border focus:bg-white focus:ring-2 focus:ring-primary/20 focus:border-primary text-right text-base transition-colors" placeholder="05xxxxxxxx" />
         </div>
       </div>
 
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 md:gap-5">
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-5 md:gap-6">
         <div>
-          <label className="block text-sm md:text-base font-medium text-gray-700 mb-1.5">البريد الإلكتروني (اختياري)</label>
-          <input type="email" name="email" dir="ltr" className="w-full border-gray-300 rounded-md p-3 md:p-3.5 border focus:ring-primary focus:border-primary text-right text-base" placeholder="example@email.com" />
+          <label className="block text-sm md:text-base font-bold text-gray-800 mb-2">البريد الإلكتروني (اختياري)</label>
+          <input type="email" name="email" dir="ltr" className="w-full bg-gray-50 border-gray-200 rounded-lg p-3.5 md:p-4 border focus:bg-white focus:ring-2 focus:ring-primary/20 focus:border-primary text-right text-base transition-colors" placeholder="example@email.com" />
         </div>
         <div>
-          <label className="block text-sm md:text-base font-medium text-gray-700 mb-1.5">نوع الفرصة *</label>
-          <select name="opportunityType" required className="w-full border-gray-300 rounded-md p-3 md:p-3.5 border focus:ring-primary focus:border-primary text-base bg-white">
+          <label className="block text-sm md:text-base font-bold text-gray-800 mb-2">نوع الفرصة <span className="text-red-500">*</span></label>
+          <select name="opportunityType" required className="w-full bg-gray-50 border-gray-200 rounded-lg p-3.5 md:p-4 border focus:bg-white focus:ring-2 focus:ring-primary/20 focus:border-primary text-base transition-colors">
             <option value="">-- اختر نوع الفرصة --</option>
             <option value="شراكة استراتيجية">شراكة استراتيجية</option>
             <option value="تطوير أرض">تطوير أرض</option>
@@ -91,29 +92,29 @@ export default function OpportunityForm() {
         </div>
       </div>
 
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 md:gap-5">
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-5 md:gap-6">
         <div>
-          <label className="block text-sm md:text-base font-medium text-gray-700 mb-1.5">المدينة *</label>
-          <input type="text" name="city" required className="w-full border-gray-300 rounded-md p-3 md:p-3.5 border focus:ring-primary focus:border-primary text-base" placeholder="مثال: جدة" />
+          <label className="block text-sm md:text-base font-bold text-gray-800 mb-2">المدينة <span className="text-red-500">*</span></label>
+          <input type="text" name="city" required className="w-full bg-gray-50 border-gray-200 rounded-lg p-3.5 md:p-4 border focus:bg-white focus:ring-2 focus:ring-primary/20 focus:border-primary text-base transition-colors" placeholder="مثال: جدة" />
         </div>
         <div>
-          <label className="block text-sm md:text-base font-medium text-gray-700 mb-1.5">الحي *</label>
-          <input type="text" name="district" required className="w-full border-gray-300 rounded-md p-3 md:p-3.5 border focus:ring-primary focus:border-primary text-base" placeholder="مثال: الشاطئ" />
+          <label className="block text-sm md:text-base font-bold text-gray-800 mb-2">الحي <span className="text-red-500">*</span></label>
+          <input type="text" name="district" required className="w-full bg-gray-50 border-gray-200 rounded-lg p-3.5 md:p-4 border focus:bg-white focus:ring-2 focus:ring-primary/20 focus:border-primary text-base transition-colors" placeholder="مثال: الشاطئ" />
         </div>
       </div>
 
-      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4 md:gap-5">
+      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-5 md:gap-6">
         <div className="sm:col-span-2 md:col-span-1">
-          <label className="block text-sm md:text-base font-medium text-gray-700 mb-1.5">موقع العقار (رابط Maps)</label>
-          <input type="url" name="propertyLocation" dir="ltr" className="w-full border-gray-300 rounded-md p-3 md:p-3.5 border focus:ring-primary focus:border-primary text-right text-base" placeholder="https://maps.google.com/..." />
+          <label className="block text-sm md:text-base font-bold text-gray-800 mb-2">موقع العقار (رابط Maps)</label>
+          <input type="url" name="propertyLocation" dir="ltr" className="w-full bg-gray-50 border-gray-200 rounded-lg p-3.5 md:p-4 border focus:bg-white focus:ring-2 focus:ring-primary/20 focus:border-primary text-right text-base transition-colors" placeholder="https://maps.google.com/..." />
         </div>
         <div>
-          <label className="block text-sm md:text-base font-medium text-gray-700 mb-1.5">مساحة الأرض (متر مربع)</label>
-          <input type="number" name="landArea" min="0" className="w-full border-gray-300 rounded-md p-3 md:p-3.5 border focus:ring-primary focus:border-primary text-base" placeholder="مثال: 500" />
+          <label className="block text-sm md:text-base font-bold text-gray-800 mb-2">مساحة الأرض (متر مربع)</label>
+          <input type="number" name="landArea" min="0" className="w-full bg-gray-50 border-gray-200 rounded-lg p-3.5 md:p-4 border focus:bg-white focus:ring-2 focus:ring-primary/20 focus:border-primary text-base transition-colors" placeholder="مثال: 500" />
         </div>
         <div>
-          <label className="block text-sm md:text-base font-medium text-gray-700 mb-1.5">نوع الملكية</label>
-          <select name="propertyOwnership" className="w-full border-gray-300 rounded-md p-3 md:p-3.5 border focus:ring-primary focus:border-primary text-base bg-white">
+          <label className="block text-sm md:text-base font-bold text-gray-800 mb-2">نوع الملكية</label>
+          <select name="propertyOwnership" className="w-full bg-gray-50 border-gray-200 rounded-lg p-3.5 md:p-4 border focus:bg-white focus:ring-2 focus:ring-primary/20 focus:border-primary text-base transition-colors">
             <option value="">-- غير محدد --</option>
             <option value="مالك مباشر">أنا المالك المباشر</option>
             <option value="وسيط معتمد">وسيط معتمد</option>
@@ -123,12 +124,12 @@ export default function OpportunityForm() {
       </div>
 
       <div>
-        <label className="block text-sm md:text-base font-medium text-gray-700 mb-1.5">ملاحظات أو وصف إضافي (اختياري)</label>
-        <textarea name="notes" rows={4} className="w-full border-gray-300 rounded-md p-3 md:p-3.5 border focus:ring-primary focus:border-primary text-base"></textarea>
+        <label className="block text-sm md:text-base font-bold text-gray-800 mb-2">ملاحظات أو وصف إضافي (اختياري)</label>
+        <textarea name="notes" rows={4} className="w-full bg-gray-50 border-gray-200 rounded-lg p-3.5 md:p-4 border focus:bg-white focus:ring-2 focus:ring-primary/20 focus:border-primary text-base transition-colors resize-y" placeholder="اكتب ملاحظاتك أو تفاصيل الفرصة هنا..."></textarea>
       </div>
 
       <div className="pt-4">
-        <button type="submit" disabled={isSubmitting} className="w-full bg-primary hover:bg-primary-dark text-white px-6 py-3.5 rounded-md font-bold text-lg disabled:opacity-70 disabled:cursor-not-allowed flex items-center justify-center transition-all shadow-sm">
+        <button type="submit" disabled={isSubmitting} className="w-full bg-primary hover:bg-primary-dark hover:-translate-y-0.5 text-white px-6 py-4 rounded-lg font-bold text-lg disabled:opacity-70 disabled:hover:translate-y-0 disabled:cursor-not-allowed transition-all duration-200 flex items-center justify-center shadow-lg shadow-primary/20">
           {isSubmitting ? (
             <>
               <svg className="animate-spin -ml-1 mr-3 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
@@ -137,7 +138,12 @@ export default function OpportunityForm() {
               </svg>
               جاري إرسال الفرصة...
             </>
-          ) : "إرسال الفرصة للدراسة"}
+          ) : (
+            <>
+              إرسال الفرصة للدراسة
+              <svg className="w-5 h-5 mr-2 rtl:rotate-180" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M14 5l7 7m0 0l-7 7m7-7H3"></path></svg>
+            </>
+          )}
         </button>
       </div>
     </form>

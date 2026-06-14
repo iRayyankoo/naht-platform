@@ -53,8 +53,8 @@ export default async function PublicProjectsPage() {
                 <p className="text-sm md:text-base text-gray-600 mb-4 line-clamp-2">{project.shortDesc || "لا يوجد وصف مختصر لهذا المشروع."}</p>
                 
                 <div className="mt-auto pt-4 border-t border-gray-100 flex flex-col sm:flex-row items-center justify-between gap-4">
-                  <span className="text-sm font-medium text-gray-500 self-start sm:self-center">الحي: {project.neighborhood}</span>
-                  <Link href={`/projects/${project.slug}`} className="w-full sm:w-auto text-center bg-gray-50 hover:bg-primary hover:text-white text-primary border border-gray-200 hover:border-primary font-bold py-2 px-4 rounded-md transition-colors text-sm">
+                  <span className="text-base font-medium text-gray-500 self-start sm:self-center">الحي: {project.neighborhood}</span>
+                  <Link href={`/projects/${project.slug}`} className="w-full sm:w-auto text-center bg-gray-50 hover:bg-primary hover:text-white text-primary border border-gray-200 hover:border-primary font-bold py-2.5 px-5 rounded-md transition-colors text-base shadow-sm">
                     عرض التفاصيل
                   </Link>
                 </div>
