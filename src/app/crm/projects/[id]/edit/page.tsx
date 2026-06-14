@@ -3,6 +3,7 @@ import { updateProject } from "@/actions/projects";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import ImageUpload from "@/components/crm/ImageUpload";
+import ClientForm from "@/components/crm/ClientForm";
 
 export default async function EditProjectPage({ params }: { params: Promise<{ id: string }> }) {
   const id = (await params).id;
@@ -27,7 +28,7 @@ export default async function EditProjectPage({ params }: { params: Promise<{ id
       </div>
 
       <div className="bg-white shadow sm:rounded-lg">
-        <form action={updateAction} className="space-y-6 p-6">
+        <ClientForm action={updateAction} successMessage="تم تحديث المشروع بنجاح" className="space-y-6 p-6">
           <div className="grid grid-cols-1 gap-y-6 gap-x-4 sm:grid-cols-6">
             <div className="sm:col-span-3">
               <label htmlFor="name" className="block text-sm font-medium text-gray-700">اسم المشروع</label>
@@ -125,7 +126,7 @@ export default async function EditProjectPage({ params }: { params: Promise<{ id
               حفظ التعديلات
             </button>
           </div>
-        </form>
+        </ClientForm>
       </div>
     </div>
   );

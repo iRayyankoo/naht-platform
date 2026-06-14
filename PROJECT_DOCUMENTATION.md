@@ -10,6 +10,33 @@ A comprehensive property management, sales, and content management platform for 
 - **Authentication:** NextAuth.js (Session-based)
 - **File Storage:** Local for now (Planned Cloudflare R2)
 
+## Current Status After Batch 6
+
+### 1. اعتمادات الدفعات:
+* تم اعتماد **Batch 5** (تحسينات الفلاتر الشاملة وإدارة الصور الرئيسية للمشاريع).
+* تم اعتماد **Batch 6** بنجاح.
+
+### 2. الإنجازات في Batch 6:
+* **تطوير Dashboard**: إنشاء لوحة قيادة متكاملة `/crm` تعرض بيانات حيّة من قاعدة البيانات للإحصائيات (العملاء الجدد، إجمالي الطلبات، نقرات الواتساب/الاتصال) وجداول بآخر العملاء والطلبات.
+* **إضافة ContactPageContent**: إنشاء جدول جديد في Prisma مختص بإدارة محتوى صفحة "تواصل معنا" (النصوص، زر الإرسال، خلفية الهيرو، و SEO).
+* **إدارة محتوى تواصل معنا**: تصميم وبناء صفحة `/crm/cms/contact` للتحكم في كافة نصوص الصفحة وصورها.
+* **إدارة طلبات تواصل معنا**: تصميم وبناء صفحة مخصصة `/crm/requests/contact` للتحكم المباشر في العملاء القادمين من نموذج التواصل.
+
+### 3. حالة الميزات الحالية:
+* **الفلاتر (Filters)**: تعمل بشكل سليم في جميع صفحات CRM المعتمدة، مع إضافة خيار البحث النصي `searchPlaceholder`.
+* **رفع الصور والوسائط**: مكونات `UploadButton` و `ImageUpload` تعمل بشكل ممتاز في الـ CMS.
+* **Toast Notifications**: إشعارات حفظ وتعديل البيانات تظهر بشكل سليم في جميع أجزاء النظام.
+* **Featured Projects**: الصفحة الرئيسية تقرأ وتتحكم في المشاريع المميزة.
+* **Tracking و النماذج**: استقبال العملاء، والـ UTM Tracking، وتتبع `form_submit` يعمل بشكل ممتاز ولم يتأثر بالتعديلات الأخيرة.
+
+### 4. المهام المعلقة (لم يتم تنفيذها بعد):
+* **الصلاحيات (Roles/Permissions)**
+* **اللغة الإنجليزية (English Localization)**
+* **الاستضافة (Hosting)**
+* **ربط Vercel**
+* **ربط Supabase / Cloudflare R2**
+* **تغيير DNS**
+
 ---
 
 ## Current Status After Batch 4 Revision (Revision 2)
