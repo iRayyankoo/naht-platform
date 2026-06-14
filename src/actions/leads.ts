@@ -5,18 +5,10 @@ import { revalidatePath } from "next/cache";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 
-// Helper to check Auth
-async function requireAuth(roles: string[]) {
-  const session = await getServerSession(authOptions);
-  const userRole = (session?.user as any)?.role;
-  if (!session || !roles.includes(userRole)) {
-    throw new Error("غير مصرح لك بإجراء هذه العملية");
-  }
-  return { session, userRole };
-}
+import { actionRequireRole } from "@/lib/auth-helpers";
 
 export async function updateLeadStatus(id: string, newStatus: string) {
-  const { session } = await requireAuth(["ADMIN", "SALES"]);
+  const user = await actionRequireRole(["ADMIN", "SALES"]);
   
   const lead = await prisma.lead.findUnique({ where: { id } });
   if (!lead) return;
@@ -53,7 +45,7 @@ export async function updateLeadStatus(id: string, newStatus: string) {
     await prisma.leadNote.create({
       data: {
         leadId: id,
-        userId: (session.user as any).id,
+        userId: user.id,
         noteType: "INTERNAL_NOTE",
         content: `تم تغيير حالة العميل من "${oldLabel}" إلى "${newLabel}"`,
       },
@@ -65,7 +57,7 @@ export async function updateLeadStatus(id: string, newStatus: string) {
 }
 
 export async function assignLead(id: string, assignedToId: string | null) {
-  const { session } = await requireAuth(["ADMIN"]); // Only Admin can assign leads
+  const user = await actionRequireRole(["ADMIN"]); // Only Admin can assign leads
   
   const lead = await prisma.lead.findUnique({ where: { id }, include: { assignedTo: true } });
   if (!lead) return;
@@ -86,7 +78,7 @@ export async function assignLead(id: string, assignedToId: string | null) {
   await prisma.leadNote.create({
     data: {
       leadId: id,
-      userId: (session.user as any).id,
+      userId: user.id,
       noteType: "INTERNAL_NOTE",
       content: `تم تعيين العميل إلى الموظف: ${newName}`,
     },
@@ -97,12 +89,12 @@ export async function assignLead(id: string, assignedToId: string | null) {
 }
 
 export async function addLeadNote(leadId: string, noteType: string, content: string) {
-  const { session } = await requireAuth(["ADMIN", "SALES"]);
+  const user = await actionRequireRole(["ADMIN", "SALES"]);
   
   await prisma.leadNote.create({
     data: {
       leadId,
-      userId: (session.user as any).id,
+      userId: user.id,
       noteType,
       content,
     },
@@ -119,7 +111,7 @@ export async function addLeadNote(leadId: string, noteType: string, content: str
 }
 
 export async function deleteLead(id: string) {
-  await requireAuth(["ADMIN"]);
+  await actionRequireRole(["ADMIN"]);
   
   await prisma.lead.delete({
     where: { id },

@@ -9,16 +9,30 @@ export default async function LeadsPage({ searchParams }: { searchParams: { type
   const session = await getServerSession(authOptions);
   const userRole = (session?.user as any)?.role;
 
-  if (!session || userRole === "VIEWER") {
-    redirect("/crm"); // Viewers cannot access leads
+  if (!session) {
+    redirect("/auth/login");
   }
+  const userId = (session.user as any).id;
 
   const leadTypeFilter = searchParams.type || undefined;
   const statusFilter = searchParams.status || undefined;
   const projectFilter = searchParams.project || undefined;
 
+  let roleWhereClause = {};
+  if (userRole === "SALES") {
+    roleWhereClause = {
+      OR: [
+        { assignedToId: userId },
+        { assignedToId: null }
+      ]
+    };
+  } else if (userRole !== "ADMIN" && userRole !== "MARKETING") {
+    redirect("/crm");
+  }
+
   const leads = await prisma.lead.findMany({
     where: {
+      ...roleWhereClause,
       ...(leadTypeFilter && { leadType: leadTypeFilter }),
       ...(statusFilter && { status: statusFilter }),
       ...(projectFilter && { projectId: projectFilter }),

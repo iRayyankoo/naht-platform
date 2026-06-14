@@ -4,8 +4,10 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import ImageUpload from "@/components/crm/ImageUpload";
 import ClientForm from "@/components/crm/ClientForm";
+import { requireRole } from "@/lib/auth-helpers";
 
 export default async function EditProjectPage({ params }: { params: Promise<{ id: string }> }) {
+  await requireRole(["ADMIN", "MARKETING"]);
   const id = (await params).id;
   const project = await prisma.project.findUnique({
     where: { id: id }

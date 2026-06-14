@@ -12,9 +12,11 @@ export default async function LeadDetailsPage({ params }: { params: Promise<{ id
   const session = await getServerSession(authOptions);
   const userRole = (session?.user as any)?.role;
 
-  if (!session || userRole === "VIEWER") {
-    redirect("/crm");
+  if (!session) {
+    redirect("/auth/login");
   }
+
+  const userId = (session.user as any).id;
 
   const lead = await prisma.lead.findUnique({
     where: { id },
@@ -29,6 +31,14 @@ export default async function LeadDetailsPage({ params }: { params: Promise<{ id
   });
 
   if (!lead) notFound();
+
+  if (userRole === "SALES" && lead.assignedToId !== userId && lead.assignedToId !== null) {
+    redirect("/crm/leads");
+  } else if (userRole !== "ADMIN" && userRole !== "MARKETING" && userRole !== "SALES") {
+    redirect("/crm");
+  }
+
+
 
   let users: any[] = [];
   if (userRole === "ADMIN") {

@@ -28,16 +28,16 @@ export const authOptions: NextAuthOptions = {
           throw new Error("يجب إدخال البريد الإلكتروني وكلمة المرور");
         }
 
-        const user = await prisma.user.findUnique({
-          where: { email: "admin@naht-re.sa" }, // temporary bypass, replace with dynamic
-        });
-
         const realUser = await prisma.user.findUnique({
           where: { email: credentials.email },
         });
 
         if (!realUser || !realUser.password) {
           throw new Error("بيانات الدخول غير صحيحة");
+        }
+
+        if (!realUser.isActive) {
+          throw new Error("هذا الحساب معطل. يرجى مراجعة إدارة النظام.");
         }
 
         const isPasswordValid = await bcrypt.compare(credentials.password, realUser.password);
@@ -51,6 +51,7 @@ export const authOptions: NextAuthOptions = {
           email: realUser.email,
           name: realUser.name,
           role: realUser.role,
+          isActive: realUser.isActive,
         };
       },
     }),
@@ -60,6 +61,7 @@ export const authOptions: NextAuthOptions = {
       if (user) {
         token.role = user.role;
         token.id = user.id;
+        token.isActive = (user as any).isActive;
       }
       return token;
     },
@@ -67,6 +69,7 @@ export const authOptions: NextAuthOptions = {
       if (session.user) {
         (session.user as any).role = token.role;
         (session.user as any).id = token.id;
+        (session.user as any).isActive = token.isActive;
       }
       return session;
     },

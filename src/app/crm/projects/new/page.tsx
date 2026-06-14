@@ -2,8 +2,10 @@ import { createProject } from "@/actions/projects";
 import Link from "next/link";
 import ImageUpload from "@/components/crm/ImageUpload";
 import ClientForm from "@/components/crm/ClientForm";
+import { requireRole } from "@/lib/auth-helpers";
 
-export default function NewProjectPage() {
+export default async function NewProjectPage() {
+  await requireRole(["ADMIN", "MARKETING"]);
   return (
     <div className="space-y-6 max-w-4xl mx-auto">
       <div className="flex items-center justify-between">

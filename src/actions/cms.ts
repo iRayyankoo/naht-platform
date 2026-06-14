@@ -2,21 +2,11 @@
 
 import { prisma } from "@/lib/prisma";
 import { revalidatePath } from "next/cache";
-import { getServerSession } from "next-auth";
-import { authOptions } from "@/lib/auth";
-
-async function requireAuth() {
-  const session = await getServerSession(authOptions);
-  const userRole = (session?.user as any)?.role;
-  if (!session || !["ADMIN", "MARKETING"].includes(userRole)) {
-    throw new Error("غير مصرح لك بإجراء هذه العملية");
-  }
-  return { session, userRole };
-}
+import { actionRequireRole } from "@/lib/auth-helpers";
 
 // === Site Settings ===
 export async function updateSiteSettings(data: any) {
-  await requireAuth();
+  await actionRequireRole(["ADMIN", "MARKETING"]);
 
   const sanitizedData = {
     ...data,
@@ -36,7 +26,7 @@ export async function updateSiteSettings(data: any) {
 
 // === Home Page Content ===
 export async function updateHomePageContent(data: any) {
-  await requireAuth();
+  await actionRequireRole(["ADMIN", "MARKETING"]);
   await prisma.homePageContent.upsert({
     where: { id: "global" },
     update: data,
@@ -48,7 +38,7 @@ export async function updateHomePageContent(data: any) {
 
 // === About Page Content ===
 export async function updateAboutPageContent(data: any) {
-  await requireAuth();
+  await actionRequireRole(["ADMIN", "MARKETING"]);
   await prisma.aboutPageContent.upsert({
     where: { id: "global" },
     update: data,
@@ -60,7 +50,7 @@ export async function updateAboutPageContent(data: any) {
 
 // === Contact Page Content ===
 export async function updateContactPageContent(data: any) {
-  await requireAuth();
+  await actionRequireRole(["ADMIN", "MARKETING"]);
   await prisma.contactPageContent.upsert({
     where: { id: "global" },
     update: data,
@@ -72,7 +62,7 @@ export async function updateContactPageContent(data: any) {
 
 // === Social Links ===
 export async function upsertSocialLink(data: { id?: string; platformName: string; url: string; icon?: string | null; order?: number; isVisible?: boolean }) {
-  await requireAuth();
+  await actionRequireRole(["ADMIN", "MARKETING"]);
   if (data.id) {
     await prisma.socialLink.update({ where: { id: data.id }, data });
   } else {
@@ -83,7 +73,7 @@ export async function upsertSocialLink(data: { id?: string; platformName: string
 }
 
 export async function deleteSocialLink(id: string) {
-  await requireAuth();
+  await actionRequireRole(["ADMIN", "MARKETING"]);
   await prisma.socialLink.delete({ where: { id } });
   revalidatePath("/");
   revalidatePath("/crm/cms/social-links");
@@ -91,7 +81,7 @@ export async function deleteSocialLink(id: string) {
 
 // === Services ===
 export async function upsertService(data: { id?: string; slug?: string | null; title: string; description: string; fullDescription?: string | null; icon?: string | null; image?: string | null; order?: number; isVisible?: boolean; seoTitle?: string | null; seoDescription?: string | null }) {
-  await requireAuth();
+  await actionRequireRole(["ADMIN", "MARKETING"]);
   if (data.id) {
     await prisma.service.update({ where: { id: data.id }, data });
   } else {
@@ -103,7 +93,7 @@ export async function upsertService(data: { id?: string; slug?: string | null; t
 }
 
 export async function deleteService(id: string) {
-  await requireAuth();
+  await actionRequireRole(["ADMIN", "MARKETING"]);
   await prisma.service.delete({ where: { id } });
   revalidatePath("/");
   revalidatePath("/services");
@@ -112,7 +102,7 @@ export async function deleteService(id: string) {
 
 // === FAQs ===
 export async function upsertFaq(data: { id?: string; category?: string | null; question: string; answer: string; order?: number; isVisible?: boolean }) {
-  await requireAuth();
+  await actionRequireRole(["ADMIN", "MARKETING"]);
   if (data.id) {
     await prisma.faq.update({ where: { id: data.id }, data });
   } else {
@@ -123,7 +113,7 @@ export async function upsertFaq(data: { id?: string; category?: string | null; q
 }
 
 export async function deleteFaq(id: string) {
-  await requireAuth();
+  await actionRequireRole(["ADMIN", "MARKETING"]);
   await prisma.faq.delete({ where: { id } });
   revalidatePath("/");
   revalidatePath("/crm/cms/faqs");

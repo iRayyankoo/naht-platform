@@ -4,24 +4,16 @@ import { prisma } from "@/lib/prisma";
 import { revalidatePath } from "next/cache";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
-
-async function requireAuth(roles: string[]) {
-  const session = await getServerSession(authOptions);
-  const userRole = (session?.user as any)?.role;
-  if (!session || !roles.includes(userRole)) {
-    throw new Error("غير مصرح لك بإجراء هذه العملية");
-  }
-  return { session, userRole };
-}
+import { actionRequireRole } from "@/lib/auth-helpers";
 
 export async function createCampaignLink(data: any) {
-  const { session } = await requireAuth(["ADMIN", "MARKETING"]);
+  const user = await actionRequireRole(["ADMIN", "MARKETING"]);
   
   // Clean empty strings to null
   const cleanData: Record<string, string | null> = {};
-  for (const [k, v] of Object.entries(data)) {
-    cleanData[k] = v === "" ? null : (v as string);
-  }
+  Object.keys(data).forEach(key => {
+    cleanData[key] = data[key] === "" ? null : data[key];
+  });
 
   const campaign = await prisma.campaignLink.create({
     data: {
@@ -37,7 +29,7 @@ export async function createCampaignLink(data: any) {
       notes: cleanData.notes,
       shortCode: cleanData.shortCode,
       projectId: cleanData.projectId,
-      createdByUserId: (session.user as any).id,
+      createdByUserId: user.id,
     },
   });
 
@@ -46,7 +38,7 @@ export async function createCampaignLink(data: any) {
 }
 
 export async function deleteCampaignLink(id: string) {
-  await requireAuth(["ADMIN"]); // Only Admin can delete
+  await actionRequireRole(["ADMIN"]); // Only Admin can delete
   await prisma.campaignLink.delete({
     where: { id },
   });

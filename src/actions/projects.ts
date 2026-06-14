@@ -7,13 +7,10 @@ import { redirect } from "next/navigation";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 
-export async function createProject(formData: FormData) {
-  const session = await getServerSession(authOptions);
-  const userRole = (session?.user as any)?.role;
+import { actionRequireRole } from "@/lib/auth-helpers";
 
-  if (userRole !== "ADMIN" && userRole !== "MARKETING") {
-    throw new Error("غير مصرح لك بإضافة مشاريع");
-  }
+export async function createProject(formData: FormData) {
+  await actionRequireRole(["ADMIN", "MARKETING"]);
 
   const name = formData.get("name") as string;
   const slug = formData.get("slug") as string;
@@ -47,12 +44,7 @@ export async function createProject(formData: FormData) {
 }
 
 export async function updateProject(id: string, formData: FormData) {
-  const session = await getServerSession(authOptions);
-  const userRole = (session?.user as any)?.role;
-
-  if (userRole !== "ADMIN" && userRole !== "MARKETING") {
-    throw new Error("غير مصرح لك بتعديل المشاريع");
-  }
+  await actionRequireRole(["ADMIN", "MARKETING"]);
 
   const name = formData.get("name") as string;
   const slug = formData.get("slug") as string;
@@ -88,13 +80,7 @@ export async function updateProject(id: string, formData: FormData) {
 }
 
 export async function deleteProject(id: string) {
-  const session = await getServerSession(authOptions);
-  const userRole = (session?.user as any)?.role;
-
-  // Only ADMIN can delete projects
-  if (userRole !== "ADMIN") {
-    throw new Error("غير مصرح لك بحذف المشاريع");
-  }
+  await actionRequireRole(["ADMIN"]);
 
   await prisma.project.delete({
     where: { id },
