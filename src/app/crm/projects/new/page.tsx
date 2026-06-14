@@ -1,5 +1,6 @@
 import { createProject } from "@/actions/projects";
 import Link from "next/link";
+import ImageUpload from "@/components/crm/ImageUpload";
 
 export default function NewProjectPage() {
   return (
@@ -63,6 +64,10 @@ export default function NewProjectPage() {
                   <option value="COMING_SOON">قريباً</option>
                 </select>
               </div>
+            </div>
+
+            <div className="sm:col-span-6">
+              <ImageUpload name="mainImage" label="صورة الغلاف (Main Image)" />
             </div>
 
             <div className="sm:col-span-6">

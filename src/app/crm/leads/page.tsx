@@ -3,8 +3,9 @@ import Link from "next/link";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { redirect } from "next/navigation";
+import FilterBar from "@/components/crm/FilterBar";
 
-export default async function LeadsPage({ searchParams }: { searchParams: { type?: string } }) {
+export default async function LeadsPage({ searchParams }: { searchParams: { type?: string, status?: string, project?: string } }) {
   const session = await getServerSession(authOptions);
   const userRole = (session?.user as any)?.role;
 
@@ -13,15 +14,62 @@ export default async function LeadsPage({ searchParams }: { searchParams: { type
   }
 
   const leadTypeFilter = searchParams.type || undefined;
+  const statusFilter = searchParams.status || undefined;
+  const projectFilter = searchParams.project || undefined;
 
   const leads = await prisma.lead.findMany({
-    where: leadTypeFilter ? { leadType: leadTypeFilter } : undefined,
+    where: {
+      ...(leadTypeFilter && { leadType: leadTypeFilter }),
+      ...(statusFilter && { status: statusFilter }),
+      ...(projectFilter && { projectId: projectFilter }),
+    },
     orderBy: { createdAt: "desc" },
     include: {
       project: true,
       assignedTo: true,
     },
   });
+
+  const projects = await prisma.project.findMany({
+    select: { id: true, name: true },
+    orderBy: { name: "asc" }
+  });
+
+  const filterFields = [
+    {
+      key: "type",
+      label: "نوع العميل",
+      options: [
+        { value: "GENERAL", label: "عملاء عام / مشاريع" },
+        { value: "CONTACT_US", label: "تواصل معنا" },
+        { value: "REAL_ESTATE_OPPORTUNITY", label: "فرص عقارية" }
+      ]
+    },
+    {
+      key: "status",
+      label: "الحالة",
+      options: [
+        { value: "NEW", label: "جديد" },
+        { value: "CONTACTED", label: "تم التواصل" },
+        { value: "NO_ANSWER", label: "لم يتم الرد" },
+        { value: "INTERESTED", label: "مهتم" },
+        { value: "DETAILS_SENT", label: "تم إرسال التفاصيل" },
+        { value: "VISIT_SCHEDULED", label: "تم جدولة زيارة" },
+        { value: "VISIT_DONE", label: "تمت الزيارة" },
+        { value: "NEGOTIATION", label: "تفاوض" },
+        { value: "SOLD", label: "تم البيع" },
+        { value: "LOST", label: "خاسر" },
+        { value: "UNQUALIFIED", label: "غير مؤهل" },
+        { value: "DUPLICATE", label: "مكرر" },
+        { value: "POSTPONED", label: "مؤجل" }
+      ]
+    },
+    {
+      key: "project",
+      label: "المشروع",
+      options: projects.map(p => ({ value: p.id, label: p.name }))
+    }
+  ];
 
   const getStatusColor = (status: string) => {
     switch (status) {
@@ -61,21 +109,7 @@ export default async function LeadsPage({ searchParams }: { searchParams: { type
         <h1 className="text-2xl font-bold text-gray-900">العملاء المحتملين (Leads)</h1>
       </div>
 
-      {/* Filter Bar */}
-      <div className="bg-white p-4 rounded-lg shadow-sm border border-gray-100 flex gap-4 overflow-x-auto">
-        <Link href="/crm/leads" className={`px-4 py-2 rounded-md text-sm font-medium whitespace-nowrap ${!leadTypeFilter ? "bg-primary text-white" : "bg-gray-100 text-gray-700 hover:bg-gray-200"}`}>
-          جميع العملاء
-        </Link>
-        <Link href="/crm/leads?type=GENERAL" className={`px-4 py-2 rounded-md text-sm font-medium whitespace-nowrap ${leadTypeFilter === "GENERAL" ? "bg-primary text-white" : "bg-gray-100 text-gray-700 hover:bg-gray-200"}`}>
-          عملاء عام / مشاريع
-        </Link>
-        <Link href="/crm/leads?type=CONTACT_US" className={`px-4 py-2 rounded-md text-sm font-medium whitespace-nowrap ${leadTypeFilter === "CONTACT_US" ? "bg-primary text-white" : "bg-gray-100 text-gray-700 hover:bg-gray-200"}`}>
-          تواصل معنا
-        </Link>
-        <Link href="/crm/leads?type=REAL_ESTATE_OPPORTUNITY" className={`px-4 py-2 rounded-md text-sm font-medium whitespace-nowrap ${leadTypeFilter === "REAL_ESTATE_OPPORTUNITY" ? "bg-primary text-white" : "bg-gray-100 text-gray-700 hover:bg-gray-200"}`}>
-          فرص عقارية
-        </Link>
-      </div>
+      <FilterBar searchPlaceholder="ابحث بالاسم، الجوال، البريد..." fields={filterFields} />
 
       <div className="bg-white shadow overflow-hidden sm:rounded-lg">
         <div className="overflow-x-auto">

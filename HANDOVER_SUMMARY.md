@@ -1,52 +1,30 @@
-# ملخص التسليم النهائي (Handover Summary)
+# Handover Summary
 
-تم إعداد هذا الملف ليكون دليلاً مختصراً لكافة أطراف العمل (إدارة، مسوقين، ومطورين) لمعرفة حالة المشروع وكيفية إدارته.
+**Date:** June 14, 2026
+**Branch:** `ui-refinements`
+**Status:** Stable for Review (Batch 4 Revision 2 Completed)
 
-## 1. ماذا تم إنجازه؟
-تم بناء **نظام متكامل** لشركة نحت الأصول العقارية يجمع بين:
-- **الموقع العام (الواجهة):** مبني بتصميم Mobile-First لعرض المشاريع، الخدمات، استقبال الطلبات من العملاء والمقاولين.
-- **لوحة التحكم (CRM & CMS):** نظام إداري محمي يمكّن فريق المبيعات من استلام طلبات المهتمين (Leads)، ويمكن التسويق من بناء روابط الحملات (UTMs)، ويمكن الإدارة من تعديل محتوى الموقع وإعدادات التتبع والسيو بدون أي كود برمجي.
-- **تتبع التحويل (Conversions):** ربط أوتوماتيكي مع GTM, Facebook Pixel, TikTok Pixel وغيرها عبر لوحة تحكم מخصصة لتسجيل الأحداث (`form_submit`, `whatsapp_click`, `project_view`).
+## Current State
+The project is in a highly stable state following the completion of **Batch 4 Revision 2**. The public website now features a premium, luxury real estate developer aesthetic. The CRM, Leads, CMS, and Tracking systems are all fully functional and heavily integrated.
 
-## 2. ماذا تبقى؟
-النظام تقنياً جاهز **100% للإنتاج (Production-ready)**. الخطوات المتبقية تعتمد على قرارك بالإطلاق:
-1. استضافة المشروع (موصى بـ Vercel).
-2. تجهيز قاعدة بيانات إنتاجية (مثل Supabase).
-3. إعداد مساحة تخزين للملفات السحابية (Cloudflare R2).
-4. تحويل الدومين الحقيقي `naht-re.sa` إلى خوادم الاستضافة وتفعيل SSL.
-5. التحسينات الجمالية النهائية على التصميم في حال رغبتم بتطوير الواجهات مستقبلاً.
+**We are currently paused** as per the user's explicit instructions. No new batches, features, or deployment steps are to be initiated until explicitly requested.
 
-## 3. كيف أشغل المشروع؟ (للمطورين)
-تأكد من تواجد `Node.js` في جهازك، ثم في سطر الأوامر:
-```bash
-# 1. تثبيت الحزم
-npm install
+## Latest Updates
+- **Latest Commit:** "Batch 4 Revision 2: Premium UI Refinements, Hero Slider, Navbar Spacing"
+- **Latest Backup:** A clean backup folder named `naht-platform-backup-premium-homepage-final-review` has been created alongside the project folder.
+- **Hero Slider:** The homepage Hero section now intelligently handles single images, `.mp4` video backgrounds, and multi-image auto-playing sliders based entirely on the existing `heroBackgroundImage` CMS field.
 
-# 2. بناء قواعد البيانات المحلية
-npx prisma generate
-npx prisma migrate dev
+## Key Testing Links
+- **Public Homepage:** `http://localhost:3000/` (Test the transparent navbar, hero slider/video, and featured projects fallback)
+- **CMS Homepage:** `http://localhost:3000/crm/cms/homepage` (Test adding multiple URLs to the media field)
 
-# 3. تشغيل سيرفر التطوير
-npm run dev
-```
-الموقع سيعمل على: `http://localhost:3000`
+## What to do next (When returning to the project)
+1. The user will review the `ui-refinements` branch locally.
+2. If approved, the next logical step (only when directed by the user) would be **Phase 7: Production Readiness**.
+3. Phase 7 will involve:
+   - Migrating the local database to Supabase.
+   - Setting up Cloudflare R2 for media storage.
+   - Deploying the application to Vercel.
+   - Updating DNS records.
 
-## 4. روابط مهمة للاختبار
-- **الرئيسية:** `http://localhost:3000`
-- **إدارة النظام (CRM):** `http://localhost:3000/crm`
-- **التسجيل الأولي (فقط في التطوير):** `http://localhost:3000/auth/login` (استخدم حساباً وهمياً للتجربة لو لم تفرض الحماية محلياً، أو أنشئ Admin مباشرة في قاعدة البيانات).
-- **الخرائط:** `http://localhost:3000/sitemap.xml`
-
-## 5. بيانات الدخول التجريبية
-- لا توجد بيانات ثابتة حالياً في الـ Production لحماية النظام.
-- يمكنك استخدام أداة Prisma (`npx prisma studio`) لإضافة مستخدم وتعيين صلاحيته لـ `ADMIN` في بيئة التطوير المحلية للتحكم باللوحة.
-
-## 6. تحذيرات هامة
-> [!WARNING]
-> - **إياك** رفع ملف `dev.db` المحلى لبيئة الـ Production.
-> - **إياك** رفع ملفات البيئة `.env` و `.env.local` للمستودع العام GitHub.
-> - لا تقم بتعديل الجداول في الإنتاج يدوياً، بل دائماً استخدم `Prisma Migrations`.
-
-## 7. ملاحظات قبل الاستضافة
-- راجع ملف `.env.example` لتعرف بدقة كافة المفاتيح التي ستحتاج لإدخالها في لوحة التحكم الخاصة بـ (Vercel) لضمان عمل الموقع دون أعطال.
-- عند الربط بـ R2 تأكد أن الـ `Bucket` معرّف كـ (Public) أو مرتبط بدومين فرعي مثل `cdn.naht-re.sa` لتتمكن الواجهات من عرض الصور.
+**Do not proceed to Phase 7 until the user gives the green light.**

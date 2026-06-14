@@ -4,8 +4,9 @@ import { authOptions } from "@/lib/auth";
 import { redirect } from "next/navigation";
 import RequestStatusForm from "@/components/RequestStatusForm";
 import Link from "next/link";
+import FilterBar from "@/components/crm/FilterBar";
 
-export default async function CRMVendorRequests() {
+export default async function CRMVendorRequests({ searchParams }: { searchParams: { status?: string } }) {
   const session = await getServerSession(authOptions);
   const userRole = (session?.user as any)?.role;
 
@@ -13,7 +14,12 @@ export default async function CRMVendorRequests() {
     redirect("/crm");
   }
 
+  const statusFilter = searchParams.status || undefined;
+
   const requests = await prisma.vendorApplication.findMany({
+    where: {
+      ...(statusFilter && { status: statusFilter }),
+    },
     orderBy: { createdAt: "desc" }
   });
 
@@ -34,11 +40,26 @@ export default async function CRMVendorRequests() {
     }
   };
 
+  const filterFields = [
+    {
+      key: "status",
+      label: "الحالة",
+      options: [
+        { value: "NEW", label: "جديد" },
+        { value: "IN_PROGRESS", label: "قيد المراجعة" },
+        { value: "RESOLVED", label: "تم الموافقة" },
+        { value: "CANCELLED", label: "مرفوض" }
+      ]
+    }
+  ];
+
   return (
     <div className="space-y-6 max-w-7xl mx-auto pb-12">
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <h1 className="text-2xl font-bold text-gray-900">إدارة طلبات الموردين والمقاولين</h1>
       </div>
+
+      <FilterBar fields={filterFields} />
 
       {/* Stats Cards */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">

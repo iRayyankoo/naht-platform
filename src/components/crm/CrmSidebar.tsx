@@ -78,6 +78,7 @@ const navGroups: NavGroup[] = [
       { name: "الخدمات", href: "/crm/cms/services" },
       { name: "الأسئلة الشائعة", href: "/crm/cms/faqs" },
       { name: "الروابط الاجتماعية", href: "/crm/cms/social-links" },
+      { name: "صفحة تواصل معنا", href: "/crm/cms/contact" },
     ],
   },
   {
@@ -101,6 +102,7 @@ const navGroups: NavGroup[] = [
       { name: "المقاولون والموردون", href: "/crm/requests/vendors" },
       { name: "التوظيف", href: "/crm/requests/careers" },
       { name: "الفرص العقارية", href: "/crm/requests/opportunity" },
+      { name: "تواصل معنا", href: "/crm/requests/contact" },
     ],
   },
   {

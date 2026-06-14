@@ -27,8 +27,8 @@ export default async function PublicProjectsPage() {
 
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 md:gap-8">
           {projects.map((project) => (
-            <div key={project.id} className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden hover:shadow-lg transition-shadow duration-300 flex flex-col">
-              <Link href={`/projects/${project.slug}`} className="relative h-56 md:h-64 bg-gray-200 block group">
+            <div key={project.id} className="bg-white rounded-3xl shadow-sm border border-gray-100 overflow-hidden hover:shadow-lg transition-shadow duration-300 flex flex-col">
+              <Link href={`/projects/${project.slug}`} className="relative h-56 md:h-64 bg-gray-200 block group overflow-hidden">
                 {project.mainImage ? (
                   // eslint-disable-next-line @next/next/no-img-element
                   <img src={project.mainImage} alt={project.name} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />

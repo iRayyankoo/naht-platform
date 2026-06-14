@@ -3,17 +3,16 @@
 import { useState } from "react";
 import { updateTrackingSettings } from "@/actions/trackingSettings";
 import { useRouter } from "next/navigation";
+import toast from "react-hot-toast";
 
 export default function TrackingSettingsForm({ initialData }: { initialData: any }) {
   const [activeTab, setActiveTab] = useState("google");
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [success, setSuccess] = useState(false);
   const router = useRouter();
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     setIsSubmitting(true);
-    setSuccess(false);
 
     const formData = new FormData(e.currentTarget);
     const data: any = {};
@@ -23,11 +22,10 @@ export default function TrackingSettingsForm({ initialData }: { initialData: any
 
     try {
       await updateTrackingSettings(data);
-      setSuccess(true);
+      toast.success("تم الحفظ بنجاح!");
       router.refresh();
-      setTimeout(() => setSuccess(false), 3000);
     } catch (err: any) {
-      alert(err.message || "حدث خطأ");
+      toast.error(err.message || "حدث خطأ");
     } finally {
       setIsSubmitting(false);
     }
@@ -220,10 +218,7 @@ export default function TrackingSettingsForm({ initialData }: { initialData: any
         </div>
       </div>
 
-      <div className="mt-8 pt-6 border-t flex items-center justify-between">
-        {success && <span className="text-green-600 font-bold">تم الحفظ بنجاح!</span>}
-        {!success && <span></span>}
-        
+      <div className="mt-8 pt-6 border-t flex items-center justify-end">
         <button
           type="submit"
           disabled={isSubmitting}

@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { createCampaignLink } from "@/actions/campaigns";
 import { useRouter } from "next/navigation";
+import toast from "react-hot-toast";
 
 const PLATFORMS = [
   "Snapchat", "TikTok", "Instagram", "Facebook", "Google Ads", "Google Search", 
@@ -15,7 +16,6 @@ export default function CampaignBuilderForm({ projects }: { projects: { id: stri
   const router = useRouter();
   const [isSaving, setIsSaving] = useState(false);
   const [generatedUrl, setGeneratedUrl] = useState<string>("");
-  const [error, setError] = useState("");
 
   const [formData, setFormData] = useState({
     campaignName: "",
@@ -74,7 +74,6 @@ export default function CampaignBuilderForm({ projects }: { projects: { id: stri
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsSaving(true);
-    setError("");
 
     try {
       const finalUrl = generatePreviewUrl();
@@ -87,16 +86,16 @@ export default function CampaignBuilderForm({ projects }: { projects: { id: stri
         finalUrl,
       });
 
+      toast.success("تم إنشاء الحملة بنجاح!");
       router.push("/crm/campaigns");
     } catch (err: any) {
-      setError(err.message || "حدث خطأ غير متوقع");
+      toast.error(err.message || "حدث خطأ غير متوقع");
       setIsSaving(false);
     }
   };
 
   return (
     <form onSubmit={handleSubmit} className="space-y-6 max-w-4xl">
-      {error && <div className="bg-red-50 text-red-600 p-4 rounded-md">{error}</div>}
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         <div className="space-y-4 bg-white p-6 rounded-lg shadow-sm border border-gray-100">

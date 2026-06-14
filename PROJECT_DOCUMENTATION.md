@@ -1,133 +1,67 @@
-# توثيق نظام إدارة علاقات العملاء (CRM) والموقع العام لشركة نحت الأصول العقارية
+# Naht Platform (ERP, CRM, and CMS)
 
-## 1. نبذة عن النظام
-نظام شامل لإدارة المحتوى (CMS) وإدارة علاقات العملاء (CRM)، مبني كمنصة موحدة تخدم الموقع العام لشركة نحت الأصول العقارية من جهة، وتوفر لوحة تحكم إدارية متقدمة من جهة أخرى لتتبع الحملات، إدارة المشاريع، واستقبال طلبات العملاء.
+## Overview
+A comprehensive property management, sales, and content management platform for Naht Real Estate. Built with Next.js 15, React, Tailwind CSS, and Prisma (PostgreSQL).
 
-## 2. التقنيات المستخدمة
-- **إطار العمل**: Next.js 14+ (App Router)
-- **لغة البرمجة**: TypeScript
-- **قاعدة البيانات**: PostgreSQL (عبر Prisma ORM)
-- **التصميم**: Tailwind CSS
-- **المصادقة**: NextAuth.js
-- **التخزين السحابي**: Cloudflare R2 / AWS S3 (جاهز للاستخدام)
-- **الأيقونات**: Heroicons
+## Tech Stack
+- **Framework:** Next.js 15 (App Router)
+- **Database:** PostgreSQL (via Supabase) + Prisma ORM
+- **Styling:** Tailwind CSS + Custom CSS modules
+- **Authentication:** NextAuth.js (Session-based)
+- **File Storage:** Local for now (Planned Cloudflare R2)
 
-## 3. هيكلة المشروع
-- `prisma/`: يحتوي على مخطط قاعدة البيانات `schema.prisma`.
-- `public/`: الصور الثابتة والملفات المرفوعة محلياً.
-- `src/actions/`: الـ Server Actions للتعامل مع قاعدة البيانات بشكل آمن ومباشر.
-- `src/app/(public)/`: مسارات الموقع العام (الواجهة).
-- `src/app/api/`: واجهات برمجة التطبيقات (API) الخاصة برفع الملفات، واستقبال الـ Leads والتتبع.
-- `src/app/auth/`: مسارات تسجيل الدخول (Login).
-- `src/app/crm/`: لوحة التحكم الإدارية الخاصة بموظفي نحت.
-- `src/components/`: المكونات التفاعلية (Client/Server Components).
-- `src/lib/`: وظائف مساعدة مثل `prisma.ts`, `auth.ts`, `events.ts`, `seo.ts`.
+---
 
-## 4. شرح مسارات الموقع العام
-- `/`: الصفحة الرئيسية، تسحب بياناتها من CMS وتبرز الخدمات والمشاريع المميزة.
-- `/about`: صفحة من نحن.
-- `/services`: صفحة الخدمات.
-- `/projects`: صفحة المشاريع العقارية المتاحة والمباعة.
-- `/projects/[slug]`: صفحة تفاصيل المشروع ووحداته، مع نماذج اهتمام مباشرة.
-- `/contact`: صفحة تواصل معنا الرئيسية.
-- `/careers`, `/vendors`, `/maintenance`, `/opportunity`: نماذج الطلبات المتخصصة.
-- `/thank-you/*`: صفحات الشكر التي تتضمن تتبع التحويل (Conversions).
+## Current Status After Batch 4 Revision (Revision 2)
 
-## 5. شرح مسارات لوحة التحكم CRM
-اللوحة موجودة تحت مسار `/crm` وتحتوي على:
-- **المشاريع (`/crm/projects`)**: إضافة وتعديل وحذف مشاريع ووحداتها العقارية.
-- **إدارة العملاء (`/crm/leads`)**: استقبال الطلبات المهتمين، وتغيير حالاتها.
-- **طلبات النماذج (`/crm/requests/*`)**: التوظيف، الموردين، الصيانة.
-- **الحملات التسويقية (`/crm/campaigns`)**: بناء روابط UTM وحفظ الحملات.
-- **سجل التتبع (`/crm/tracking`)**: تتبع النقرات على أزرار الواتساب والاتصال.
-- **إدارة المحتوى (`/crm/cms/*`)**: التحكم الكامل في نصوص وصور الرئيسية، الخدمات، من نحن، روابط التواصل، إعدادات السيو، وأكواد التتبع.
+### Where We Are Now
+We have successfully completed all core features up to **Batch 4 (Revision 2)**. The platform is currently fully functional locally on the `ui-refinements` branch. We have deliberately paused before entering Phase 7 (Hosting & Deployment) to ensure all features meet the premium standard required.
 
-## 6. شرح قاعدة البيانات والجداول الرئيسية
-- **Project & Unit**: تمثل المشاريع العقارية وتفرعات الوحدات.
-- **Lead**: العملاء المهتمين، مع حفظ الـ UTMs ونوع الطلب.
-- **Campaign & CampaignLink**: لإدارة روابط الحملات التسويقية.
-- **ClickEvent**: لتسجيل نقرات الواتساب والاتصال.
-- **MaintenanceRequest, VendorRequest, CareerRequest**: جداول النماذج المتخصصة.
-- **SiteSettings, HomePageContent, AboutPageContent, Service, Faq**: جداول التحكم بالمحتوى العام للموقع.
-- **TrackingSettings**: حفظ معرفات بيكسلات التتبع وأكواد السكربتات المخصصة.
+### Branch Status
+- **Current Branch:** `ui-refinements`
+- **State:** Stable, tested, and backed up.
 
-## 7. شرح نظام تسجيل الدخول والصلاحيات
-يتم الاعتماد على `NextAuth` بوجود جدول `User`. الصلاحيات الحالية مقسمة كالتالي:
-- `ADMIN`: وصول كامل لكافة المسارات ولإعدادات التتبع.
-- `SALES`: وصول لإدارة العملاء والمشاريع.
-- `MARKETING`: وصول للمسارات التسويقية والحملات والمحتوى.
+### What Has Been Accomplished:
 
-## 8. شرح إدارة المشاريع والوحدات
-- يدعم النظام إضافة مشاريع (Slug, Description, Images, Amenities, Features, Location).
-- داخل كل مشروع يمكن إضافة وحدات سكنية متعددة وتحديد أسعارها وحالاتها (Available, Sold, Reserved).
+**Batch 1 (Admin & Sidebar Refinement):**
+- Rebuilt the CRM sidebar (`CrmSidebar.tsx`) to be robust, modern, and expandable.
+- Implemented smooth transitions, proper active states, and categorized navigation (Sales, Marketing, Content, Settings).
 
-## 9. شرح إدارة العملاء Leads
-- تصل رسائل (الاهتمام، تواصل معنا، فرصة عقارية) إلى جدول `Lead`.
-- تسجل الـ UTMs وتفاصيل الجهاز المتصل.
-- يمكن لموظف المبيعات تغيير حالة הـ Lead (New, Contacted, Qualified, Closed).
+**Batch 2 (Leads System & UI):**
+- Redesigned the Leads table to display more context (Source, Temperature, Next Action).
+- Refined the individual Lead details page (`/crm/leads/[id]`) to act as a proper CRM dashboard (showing follow-ups, timeline, and internal notes).
+- Ensured seamless status transitions.
 
-## 10. شرح UTM Tracking
-يتم تمرير وسائط (utm_source, utm_campaign, إلخ) تلقائياً من الرابط لتبقى في المتصفح أو يتم تمريرها خفية داخل النماذج (Hidden Inputs) لضمان ربط التحويل بالحملة.
+**Batch 3 (Public Forms & CRM Requests):**
+- Polished all public-facing forms (Contact, Maintenance, Vendors, Careers, Opportunity).
+- Unified form layouts with clear indicators for required fields, better spacing, and loading states.
+- Created and linked dedicated CRM detail pages for all request types (e.g., `/crm/requests/maintenance/[id]`).
+- Fixed Next.js 15 routing issues (`await params.id`) to ensure no runtime errors when accessing details.
 
-## 11. شرح Campaign Link Builder
-أداة تسويقية في הـ CRM (`/crm/campaigns/new`) تتيح للمسوق إنشاء روابط جاهزة ومختصرة بـ UTMs مضبوطة مسبقاً لحفظها وتوزيعها في الإعلانات.
+**Batch 4 (Premium Public Website Redesign):**
+- **Revision 1 & 2:** Redesigned the homepage to match the luxury aesthetics of top-tier real estate developers.
+- **Hero Section:** Dark overlay, massive typography, transparent header on scroll, and a smart media background.
+- **Featured Projects:** Massive portfolio-style layout for the top project, with a sleek grid for the rest. Added a fallback to show latest projects if none are marked as featured.
+- **About Brief:** Grayscale imagery that regains color on hover, set against a deep dark background.
+- **Project Types (Communities):** Replaced generic SaaS icons with deep, abstract image cards representing communities.
+- **Stats & Why Choose Us:** Elegant serif numbers and subtle background numbering.
+- **Navbar:** Transparent on the top of the homepage, solid white elsewhere.
 
-## 12. شرح WhatsApp / Call Tracking
-يتم استخدام المكون `TrackedButton` الذي يسجل النقر باستخدام `navigator.sendBeacon` في الخلفية لجدول `ClickEvent` ثم يحول المستخدم للواتساب المباشر لخدمة العملاء.
+### Latest Feature: Smart Hero Slider
+The Hero section background is now fully controllable via the CMS (`/crm/cms/homepage`) without any Prisma schema modifications.
+- **How to edit:** Go to `/crm/cms/homepage` and look for the "الوسائط" (Media) field.
+- **Single Image:** Paste a single image URL.
+- **Video:** Paste a single URL ending in `.mp4`. It will auto-play muted in the background.
+- **Slider:** Paste multiple image URLs (each on a new line or separated by commas). The Hero will automatically turn into a smooth, auto-playing slider.
 
-## 13. شرح CMS
-يتيح للمستخدم تغيير كل الكلمات والمحتويات في الرئيسية، صفحة من نحن، وإضافة أسئلة شائعة وتغيير روابط السوشيال ميديا وفوتر الموقع مباشرة من لوحة التحكم، مما يستدعي تجديداً للصفحة دون برمجة (`revalidatePath`).
+### Status of Features
+- **Featured Projects:** Working perfectly. Uses a fallback mechanism.
+- **Tracking & Forms:** Untouched and fully operational. `TrackedButton` and `TrackedForm` continue to send precise UTM parameters and click events to the CRM.
+- **CRM:** Fully operational.
 
-## 14. شرح النماذج الإضافية
-- النماذج تم تصميمها بنهج Mobile First لتكون سهلة على الجوال.
-- طلبات الصيانة، الموردين، والتوظيف يتم تحويلها لجداولها الخاصة ورفع ملفاتها المرفقة بأمان.
-
-## 15. شرح رفع الملفات
-يتم الرفع عبر الـ Route: `api/upload`. يعمل حالياً مع `aws-sdk/client-s3` لحفظ المرفقات (كالصور والسير الذاتية) في Cloudflare R2، وإن لم يتم تفعيلها يتم الرفع المحلى لـ `public/uploads`.
-
-## 16. شرح إعدادات SEO و Tracking
-- `SiteSettings` توفر وسوم وصفية افتراضية و Open Graph و Canonical Base URL.
-- يتم إنشاء `sitemap.xml` و `robots.txt` برمجياً بالاعتماد على قاعدة البيانات.
-- يمكن للمسوق تفعيل بيكسلات (Google, Meta, Snapchat, TikTok, X, LinkedIn) من הـ CRM برقم البيكسل فقط بدون كتابة أي أكواد. الأحداث المركزية (`form_submit` وغيره) ترسل تلقائياً.
-
-## 17. شرح Environment Variables المطلوبة
-يرجى الاطلاع على ملف `env.example` المرفق مع المشروع. يشمل المتغيرات المطلوبة للاتصال بـ PostgreSQL، مصادقة NextAuth، ومفاتيح Cloudflare R2.
-
-## 18. طريقة تشغيل المشروع محلياً
-```bash
-npm install
-npx prisma generate
-npx prisma migrate dev
-npm run dev
-```
-
-## 19. طريقة تحديث قاعدة البيانات Prisma
-عند إضافة جدول أو تعديله في `schema.prisma`:
-1. `npx prisma migrate dev --name <migration_name>` لبيئة التطوير.
-2. `npx prisma migrate deploy` لبيئة الإنتاج.
-3. `npx prisma generate` لتحديث أنواع TypeScript.
-
-## 20. طريقة إنشاء Admin جديد
-بناءً على التشفير القوي لـ NextAuth، يتم إنشاء الآدمن عبر سكربت بسيط باستخدام `bcryptjs`:
-يمكنك الدخول لـ `Prisma Studio` عبر `npx prisma studio`، لكن يفضل كتابة سكربت تسجيل (`register api`) مؤقت لإنشاء مدير ثم مسحه، أو التعديل المباشر في قاعدة البيانات عبر أداة إدارة.
-
-## 21. طريقة أخذ نسخة احتياطية
-- مع Supabase أو موفر PostgreSQL، يتم النسخ الاحتياطي تلقائياً عبر موفر الخدمة (PITR).
-- يمكن عمل `pg_dump` لتنزيل قاعدة البيانات كملف SQL محلياً.
-
-## 22. ملاحظات مهمة قبل النشر
-- تأكد من تفعيل متغيرات البيئة السرية.
-- تأكد أن الدومين مسجل بشكل صحيح `https://naht-re.sa` في `NEXT_PUBLIC_BASE_URL`.
-
-## 23. خطوات النشر المقترحة لاحقاً
-1. إنشاء قاعدة PostgreSQL (عبر Supabase مثلاً).
-2. تشغيل الأمر `npx prisma migrate deploy` على القاعدة الجديدة.
-3. إنشاء مساحة R2 Bucket وتجهيز مفاتيحها.
-4. ربط الـ GitHub بـ Vercel.
-5. توجيه الـ DNS لـ Vercel وإصدار شهادة SSL.
-
-## 24. قائمة المهام المتبقية قبل الإطلاق
-- [ ] توفير مفاتيح الـ Production.
-- [ ] تغيير الدومين وتفعيل الـ SSL الفعلي.
-- [ ] إنشاء المدير الأول (Admin) في قاعدة البيانات الإنتاجية.
-- [ ] تعبئة المحتوى التسويقي الأساسي عبر الـ CMS.
+### Important Note on Deliberate Omissions
+As per strict user instructions:
+- **No Supabase/Vercel/Cloudflare R2** integration has been initialized yet.
+- **No DNS** changes have been made.
+- **No merging** into `main` or `master`.
+- **No Prisma** schema modifications were made for the slider (we creatively used the existing `heroBackgroundImage` string field).

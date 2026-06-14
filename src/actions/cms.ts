@@ -58,6 +58,18 @@ export async function updateAboutPageContent(data: any) {
   revalidatePath("/crm/cms/about");
 }
 
+// === Contact Page Content ===
+export async function updateContactPageContent(data: any) {
+  await requireAuth();
+  await prisma.contactPageContent.upsert({
+    where: { id: "global" },
+    update: data,
+    create: { id: "global", ...data },
+  });
+  revalidatePath("/contact");
+  revalidatePath("/crm/cms/contact");
+}
+
 // === Social Links ===
 export async function upsertSocialLink(data: { id?: string; platformName: string; url: string; icon?: string | null; order?: number; isVisible?: boolean }) {
   await requireAuth();

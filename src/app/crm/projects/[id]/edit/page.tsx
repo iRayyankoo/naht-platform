@@ -2,6 +2,7 @@ import { prisma } from "@/lib/prisma";
 import { updateProject } from "@/actions/projects";
 import Link from "next/link";
 import { notFound } from "next/navigation";
+import ImageUpload from "@/components/crm/ImageUpload";
 
 export default async function EditProjectPage({ params }: { params: Promise<{ id: string }> }) {
   const id = (await params).id;
@@ -77,6 +78,10 @@ export default async function EditProjectPage({ params }: { params: Promise<{ id
                   <option value="COMING_SOON">قريباً</option>
                 </select>
               </div>
+            </div>
+
+            <div className="sm:col-span-6">
+              <ImageUpload name="mainImage" defaultValue={project.mainImage || ""} label="صورة الغلاف (Main Image)" />
             </div>
 
             <div className="sm:col-span-6">

@@ -2,14 +2,18 @@ import { prisma } from "@/lib/prisma";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { redirect } from "next/navigation";
+import FilterBar from "@/components/crm/FilterBar";
 
-export default async function TrackingDashboardPage() {
+export default async function TrackingDashboardPage({ searchParams }: { searchParams: { actionType?: string, platform?: string } }) {
   const session = await getServerSession(authOptions);
   const userRole = (session?.user as any)?.role;
 
   if (!session || userRole === "VIEWER") {
     redirect("/crm");
   }
+
+  const actionTypeFilter = searchParams.actionType || undefined;
+  const platformFilter = searchParams.platform || undefined;
 
   // Aggregate stats
   const totalWhatsApp = await prisma.clickEvent.count({ where: { actionType: "WHATSAPP" } });
@@ -41,16 +45,44 @@ export default async function TrackingDashboardPage() {
 
   // Recent clicks
   const recentClicks = await prisma.clickEvent.findMany({
+    where: {
+      ...(actionTypeFilter && { actionType: actionTypeFilter }),
+      ...(platformFilter && { utmSource: platformFilter }),
+    },
     orderBy: { createdAt: "desc" },
-    take: 20,
+    take: 50,
     include: { project: { select: { name: true } }, campaignLink: { select: { campaignName: true } } }
   });
+
+  const filterFields = [
+    {
+      key: "actionType",
+      label: "نوع الحدث",
+      options: [
+        { value: "WHATSAPP", label: "واتساب" },
+        { value: "CALL", label: "اتصال" }
+      ]
+    },
+    {
+      key: "platform",
+      label: "المنصة (UTM Source)",
+      options: [
+        { value: "Snapchat", label: "سناب شات" },
+        { value: "TikTok", label: "تيك توك" },
+        { value: "Instagram", label: "انستجرام" },
+        { value: "Google", label: "جوجل" },
+        { value: "Facebook", label: "فيسبوك" }
+      ]
+    }
+  ];
 
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between mb-8">
         <h1 className="text-2xl font-bold text-gray-900">إحصائيات تتبع النقرات</h1>
       </div>
+
+      <FilterBar fields={filterFields} />
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
         <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-100 flex items-center">

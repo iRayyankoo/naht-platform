@@ -22,6 +22,7 @@ export async function createProject(formData: FormData) {
   const neighborhood = formData.get("neighborhood") as string;
   const status = formData.get("status") as "AVAILABLE" | "SOLD" | "COMING_SOON";
   const shortDesc = formData.get("shortDesc") as string;
+  const mainImage = formData.get("mainImage") as string;
   const isFeatured = formData.get("isFeatured") === "on";
   const isVisible = formData.get("isVisible") === "on";
 
@@ -34,6 +35,7 @@ export async function createProject(formData: FormData) {
       neighborhood,
       status,
       shortDesc,
+      mainImage,
       isFeatured,
       isVisible,
     },
@@ -59,6 +61,7 @@ export async function updateProject(id: string, formData: FormData) {
   const neighborhood = formData.get("neighborhood") as string;
   const status = formData.get("status") as "AVAILABLE" | "SOLD" | "COMING_SOON";
   const shortDesc = formData.get("shortDesc") as string;
+  const mainImage = formData.get("mainImage") as string;
   const isFeatured = formData.get("isFeatured") === "on";
   const isVisible = formData.get("isVisible") === "on";
 
@@ -72,6 +75,7 @@ export async function updateProject(id: string, formData: FormData) {
       neighborhood,
       status,
       shortDesc,
+      mainImage,
       isFeatured,
       isVisible,
     },

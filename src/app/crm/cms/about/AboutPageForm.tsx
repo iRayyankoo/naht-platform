@@ -2,25 +2,23 @@
 
 import { useState } from "react";
 import { updateAboutPageContent } from "@/actions/cms";
+import toast from "react-hot-toast";
 
 export default function AboutPageForm({ content }: { content: any }) {
   const [isSaving, setIsSaving] = useState(false);
-  const [message, setMessage] = useState<{type: "success" | "error", text: string} | null>(null);
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     setIsSaving(true);
-    setMessage(null);
 
     const formData = new FormData(e.currentTarget);
     const data = Object.fromEntries(formData.entries());
 
     try {
       await updateAboutPageContent(data);
-      setMessage({ type: "success", text: "تم حفظ محتوى صفحة من نحن بنجاح" });
-      setTimeout(() => setMessage(null), 3000);
+      toast.success("تم حفظ محتوى صفحة من نحن بنجاح");
     } catch (err: any) {
-      setMessage({ type: "error", text: err.message || "حدث خطأ أثناء الحفظ" });
+      toast.error(err.message || "حدث خطأ أثناء الحفظ");
     } finally {
       setIsSaving(false);
     }
@@ -28,12 +26,6 @@ export default function AboutPageForm({ content }: { content: any }) {
 
   return (
     <form onSubmit={handleSubmit} className="space-y-6 bg-white p-6 rounded-lg shadow-sm border border-gray-100">
-      {message && (
-        <div className={`p-4 rounded-md ${message.type === "success" ? "bg-green-50 text-green-700" : "bg-red-50 text-red-700"}`}>
-          {message.text}
-        </div>
-      )}
-
       <div>
         <label className="block text-sm font-medium text-gray-700 mb-1">العنوان الرئيسي</label>
         <input type="text" name="title" defaultValue={content.title} required className="w-full border-gray-300 rounded-md p-2 border" />

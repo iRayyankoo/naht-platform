@@ -4,7 +4,12 @@ import { useState, useEffect } from "react";
 import { submitContactUs } from "@/actions/forms";
 import { useRouter } from "next/navigation";
 
-export default function ContactForm() {
+interface ContactFormProps {
+  submitButtonText?: string;
+  helperText?: string;
+}
+
+export default function ContactForm({ submitButtonText, helperText }: ContactFormProps) {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [utmData, setUtmData] = useState<any>({});
@@ -92,6 +97,9 @@ export default function ContactForm() {
       </div>
 
       <div className="pt-2">
+        {helperText && (
+          <p className="text-sm text-gray-600 mb-4 text-center">{helperText}</p>
+        )}
         <button type="submit" disabled={isSubmitting} className="w-full bg-primary hover:bg-primary-dark hover:-translate-y-0.5 text-white px-6 py-4 rounded-lg font-bold text-lg disabled:opacity-70 disabled:hover:translate-y-0 disabled:cursor-not-allowed transition-all duration-200 flex items-center justify-center shadow-lg shadow-primary/20">
           {isSubmitting ? (
             <>
@@ -103,7 +111,7 @@ export default function ContactForm() {
             </>
           ) : (
             <>
-              إرسال الرسالة
+              {submitButtonText || "إرسال الرسالة"}
               <svg className="w-5 h-5 mr-2 rtl:rotate-180" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M14 5l7 7m0 0l-7 7m7-7H3"></path></svg>
             </>
           )}

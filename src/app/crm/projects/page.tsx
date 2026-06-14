@@ -2,10 +2,21 @@ import { prisma } from "@/lib/prisma";
 import Link from "next/link";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
+import FilterBar from "@/components/crm/FilterBar";
 
-export default async function ProjectsPage() {
+export default async function ProjectsPage({ searchParams }: { searchParams: { status?: string, type?: string, city?: string } }) {
   const session = await getServerSession(authOptions);
+  
+  const statusFilter = searchParams.status || undefined;
+  const typeFilter = searchParams.type || undefined;
+  const cityFilter = searchParams.city || undefined;
+
   const projects = await prisma.project.findMany({
+    where: {
+      ...(statusFilter && { status: statusFilter }),
+      ...(typeFilter && { type: typeFilter }),
+      ...(cityFilter && { city: cityFilter }),
+    },
     orderBy: { createdAt: "desc" },
     include: {
       _count: {
@@ -13,6 +24,36 @@ export default async function ProjectsPage() {
       },
     },
   });
+
+  const allProjectsForFilter = await prisma.project.findMany({ select: { city: true } });
+  const uniqueCities = Array.from(new Set(allProjectsForFilter.map(p => p.city).filter(Boolean))) as string[];
+
+  const filterFields = [
+    {
+      key: "status",
+      label: "الحالة",
+      options: [
+        { value: "AVAILABLE", label: "متاح" },
+        { value: "SOLD", label: "مباع" },
+        { value: "COMING_SOON", label: "قريباً" }
+      ]
+    },
+    {
+      key: "type",
+      label: "نوع المشروع",
+      options: [
+        { value: "RESIDENTIAL", label: "سكني" },
+        { value: "COMMERCIAL", label: "تجاري" },
+        { value: "MIXED_USE", label: "متعدد الاستخدامات" },
+        { value: "LAND", label: "أراضي" }
+      ]
+    },
+    {
+      key: "city",
+      label: "المدينة",
+      options: uniqueCities.map(c => ({ value: c, label: c }))
+    }
+  ];
 
   return (
     <div className="space-y-6">
@@ -26,11 +67,13 @@ export default async function ProjectsPage() {
         </Link>
       </div>
 
+      <FilterBar fields={filterFields} />
+
       <div className="bg-white shadow overflow-hidden sm:rounded-md">
         <ul className="divide-y divide-gray-200">
           {projects.length === 0 ? (
             <li className="px-6 py-12 text-center text-gray-500">
-              لا توجد مشاريع مضافة حتى الآن.
+              لا توجد مشاريع مضافة أو تطابق الفلتر حتى الآن.
             </li>
           ) : (
             projects.map((project) => (

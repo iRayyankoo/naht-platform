@@ -2,15 +2,14 @@
 
 import { useState } from "react";
 import { upsertService } from "@/actions/cms";
+import toast from "react-hot-toast";
 
 export default function ServiceForm() {
   const [isSaving, setIsSaving] = useState(false);
-  const [message, setMessage] = useState<{type: "success" | "error", text: string} | null>(null);
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     setIsSaving(true);
-    setMessage(null);
 
     const formData = new FormData(e.currentTarget);
     const data = {
@@ -28,11 +27,10 @@ export default function ServiceForm() {
 
     try {
       await upsertService(data);
-      setMessage({ type: "success", text: "تمت إضافة الخدمة بنجاح" });
+      toast.success("تمت إضافة الخدمة بنجاح");
       (e.target as HTMLFormElement).reset();
-      setTimeout(() => setMessage(null), 3000);
     } catch (err: any) {
-      setMessage({ type: "error", text: err.message || "حدث خطأ" });
+      toast.error(err.message || "حدث خطأ");
     } finally {
       setIsSaving(false);
     }
@@ -40,12 +38,6 @@ export default function ServiceForm() {
 
   return (
     <form onSubmit={handleSubmit} className="space-y-4">
-      {message && (
-        <div className={`p-3 rounded-md text-sm ${message.type === "success" ? "bg-green-50 text-green-700" : "bg-red-50 text-red-700"}`}>
-          {message.text}
-        </div>
-      )}
-
       <div>
         <label className="block text-sm font-medium text-gray-700 mb-1">اسم الخدمة *</label>
         <input type="text" name="title" required className="w-full border-gray-300 rounded-md p-2 border text-sm" />

@@ -6,9 +6,8 @@ generator client {
 }
 
 datasource db {
-  provider  = "postgresql"
+  provider  = "sqlite"
   url       = env("DATABASE_URL")
-  directUrl = env("DIRECT_URL")
 }
 
 enum Role {
@@ -413,4 +412,20 @@ model JobApplication {
   notes           String?
   createdAt       DateTime @default(now())
   updatedAt       DateTime @updatedAt
+}
+
+model ContactPageContent {
+  id String @id @default("global")
+
+  title            String  @default("تواصل معنا")
+  description      String?
+  formTitle        String  @default("أرسل رسالتك")
+  submitButtonText String  @default("إرسال الرسالة")
+  helperText       String?
+  heroImage        String?
+
+  seoTitle       String?
+  seoDescription String?
+
+  updatedAt DateTime @updatedAt
 }

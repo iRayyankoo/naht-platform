@@ -5,7 +5,8 @@ export default function FeaturedProjects({ projects }: { projects: Project[] }) 
   if (!projects || projects.length === 0) return null;
 
   const mainProject = projects[0];
-  const otherProjects = projects.slice(1, 5); // Up to 4 other projects
+  const row2Projects = projects.slice(1, 3); // Up to 2 projects
+  const row3Projects = projects.slice(3, 6); // Up to 3 projects
 
   return (
     <section className="py-32 bg-[#FAFAFA]">
@@ -25,7 +26,7 @@ export default function FeaturedProjects({ projects }: { projects: Project[] }) 
         </div>
 
         {/* Main Featured Project - Massive Portfolio Style */}
-        <Link href={`/projects/${mainProject.slug}`} className="group block mb-12 relative overflow-hidden bg-gray-900">
+        <Link href={`/projects/${mainProject.slug}`} className="group block mb-12 relative rounded-3xl overflow-hidden bg-gray-900">
           <div className="relative h-[65vh] md:h-[85vh] w-full overflow-hidden">
             <img 
               src={mainProject.mainImage || "https://placehold.co/1600x900/111111/333333?text=Project"} 
@@ -60,19 +61,19 @@ export default function FeaturedProjects({ projects }: { projects: Project[] }) 
           </div>
         </Link>
 
-        {/* Other Featured Projects - Sleek Grid */}
-        {otherProjects.length > 0 && (
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-10 md:gap-12">
-            {otherProjects.map((project) => (
+        {/* Row 2: 2 Projects */}
+        {row2Projects.length > 0 && (
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-10 md:gap-12 mb-12">
+            {row2Projects.map((project) => (
               <Link key={project.id} href={`/projects/${project.slug}`} className="group block">
-                <div className="relative h-[400px] md:h-[500px] overflow-hidden bg-gray-100 mb-8">
+                <div className="relative h-[400px] md:h-[500px] rounded-3xl overflow-hidden bg-gray-100 mb-8">
                   <img 
                     src={project.mainImage || "https://placehold.co/800x800/111111/333333?text=Project"} 
                     alt={project.name} 
                     className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-[1.5s] ease-out grayscale-[20%] group-hover:grayscale-0" 
                   />
                   <div className="absolute inset-0 bg-black/10 group-hover:bg-transparent transition-colors duration-700"></div>
-                  <div className="absolute top-6 right-6 bg-white px-5 py-2 text-xs font-bold text-gray-900 tracking-widest uppercase shadow-xl">
+                  <div className="absolute top-6 right-6 bg-white px-5 py-2 text-xs font-bold text-gray-900 tracking-widest uppercase shadow-xl rounded-full">
                     {project.status === "AVAILABLE" ? "متاح" : project.status === "SOLD_OUT" ? "مباع" : "تحت الإنشاء"}
                   </div>
                 </div>
@@ -83,6 +84,35 @@ export default function FeaturedProjects({ projects }: { projects: Project[] }) 
                     <span>{project.neighborhood}</span>
                   </div>
                   <h3 className="text-3xl font-bold text-gray-900 mb-4 group-hover:text-primary transition-colors tracking-tight">{project.name}</h3>
+                </div>
+              </Link>
+            ))}
+          </div>
+        )}
+
+        {/* Row 3: 3 Projects */}
+        {row3Projects.length > 0 && (
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-8 md:gap-10">
+            {row3Projects.map((project) => (
+              <Link key={project.id} href={`/projects/${project.slug}`} className="group block">
+                <div className="relative h-[300px] md:h-[400px] rounded-3xl overflow-hidden bg-gray-100 mb-6">
+                  <img 
+                    src={project.mainImage || "https://placehold.co/600x600/111111/333333?text=Project"} 
+                    alt={project.name} 
+                    className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-[1.5s] ease-out grayscale-[20%] group-hover:grayscale-0" 
+                  />
+                  <div className="absolute inset-0 bg-black/10 group-hover:bg-transparent transition-colors duration-700"></div>
+                  <div className="absolute top-4 right-4 bg-white px-4 py-1.5 text-xs font-bold text-gray-900 tracking-widest uppercase shadow-xl rounded-full">
+                    {project.status === "AVAILABLE" ? "متاح" : project.status === "SOLD_OUT" ? "مباع" : "تحت الإنشاء"}
+                  </div>
+                </div>
+                <div>
+                  <div className="flex items-center gap-3 text-sm font-bold text-gray-400 mb-2 tracking-widest uppercase">
+                    <span>{project.type}</span>
+                    <span className="w-1 h-1 rounded-full bg-gray-300"></span>
+                    <span>{project.neighborhood}</span>
+                  </div>
+                  <h3 className="text-2xl font-bold text-gray-900 mb-3 group-hover:text-primary transition-colors tracking-tight">{project.name}</h3>
                 </div>
               </Link>
             ))}

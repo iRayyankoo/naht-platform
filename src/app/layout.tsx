@@ -15,6 +15,7 @@ export const metadata: Metadata = {
 
 import TrackingScripts from "@/components/tracking/TrackingScripts";
 import { prisma } from "@/lib/prisma";
+import ToastProvider from "@/components/ToastProvider";
 
 export default async function RootLayout({
   children,
@@ -41,7 +42,9 @@ export default async function RootLayout({
           />
         )}
         
-        {children}
+        <ToastProvider>
+          {children}
+        </ToastProvider>
 
         {trackingSettings?.isCustomScriptsEnabled && trackingSettings.customBodyEndScript && (
           <div dangerouslySetInnerHTML={{ __html: trackingSettings.customBodyEndScript }} />

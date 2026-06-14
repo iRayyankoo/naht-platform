@@ -2,38 +2,37 @@
 
 import { useState } from "react";
 import { updateHomePageContent } from "@/actions/cms";
+import UploadButton from "@/components/crm/UploadButton";
+import toast from "react-hot-toast";
 
 export default function HomePageForm({ content }: { content: any }) {
   const [isSaving, setIsSaving] = useState(false);
-  const [message, setMessage] = useState<{type: "success" | "error", text: string} | null>(null);
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     setIsSaving(true);
-    setMessage(null);
 
     const formData = new FormData(e.currentTarget);
     const data = Object.fromEntries(formData.entries());
 
     try {
       await updateHomePageContent(data);
-      setMessage({ type: "success", text: "تم حفظ محتوى الصفحة الرئيسية بنجاح" });
-      setTimeout(() => setMessage(null), 3000);
+      toast.success("تم حفظ محتوى الصفحة الرئيسية بنجاح");
     } catch (err: any) {
-      setMessage({ type: "error", text: err.message || "حدث خطأ أثناء الحفظ" });
+      toast.error(err.message || "حدث خطأ أثناء الحفظ");
     } finally {
       setIsSaving(false);
     }
   };
 
+  const [heroMedia, setHeroMedia] = useState(content.heroBackgroundImage || "");
+
+  const handleMediaUpload = (url: string) => {
+    setHeroMedia((prev: string) => prev ? `${prev}\n${url}` : url);
+  };
+
   return (
     <form onSubmit={handleSubmit} className="space-y-8">
-      {message && (
-        <div className={`p-4 rounded-md ${message.type === "success" ? "bg-green-50 text-green-700" : "bg-red-50 text-red-700"}`}>
-          {message.text}
-        </div>
-      )}
-
       {/* Hero Section */}
       <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-100 space-y-4">
         <h2 className="text-lg font-bold text-gray-900 border-b pb-2">قسم البداية (Hero Section)</h2>
@@ -47,16 +46,20 @@ export default function HomePageForm({ content }: { content: any }) {
             <input type="text" name="heroSubtitle" defaultValue={content.heroSubtitle} required className="w-full border-gray-300 rounded-md p-2 border" />
           </div>
           <div className="md:col-span-2">
-            <label className="block text-sm font-medium text-gray-700 mb-1">الوسائط (صورة، فيديو، أو سلايدر)</label>
+            <div className="flex items-center justify-between mb-1">
+              <label className="block text-sm font-medium text-gray-700">الوسائط (صورة، فيديو، أو سلايدر)</label>
+              <UploadButton onUpload={handleMediaUpload} label="رفع وسائط" />
+            </div>
             <textarea 
               dir="ltr" 
               name="heroBackgroundImage" 
-              defaultValue={content.heroBackgroundImage || ""} 
+              value={heroMedia}
+              onChange={(e) => setHeroMedia(e.target.value)}
               rows={3}
               className="w-full border-gray-300 rounded-md p-2 border text-left" 
             ></textarea>
             <p className="text-xs text-gray-500 mt-1">
-              يمكنك إدخال رابط صورة واحدة، أو رابط فيديو MP4، أو عدة روابط صور (كل رابط في سطر منفصل أو مفصولة بفاصلة) لعرضها كسلايدر.
+              يمكنك إدخال رابط صورة واحدة، أو رابط فيديو MP4، أو عدة روابط صور (كل رابط في سطر منفصل) لعرضها كسلايدر.
             </p>
           </div>
           <div>

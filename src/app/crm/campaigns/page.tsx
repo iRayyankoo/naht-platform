@@ -5,8 +5,9 @@ import { authOptions } from "@/lib/auth";
 import { redirect } from "next/navigation";
 import { deleteCampaignLink } from "@/actions/campaigns";
 import CopyButton from "@/components/CopyButton";
+import FilterBar from "@/components/crm/FilterBar";
 
-export default async function CampaignsPage() {
+export default async function CampaignsPage({ searchParams }: { searchParams: { platform?: string } }) {
   const session = await getServerSession(authOptions);
   const userRole = (session?.user as any)?.role;
 
@@ -14,7 +15,12 @@ export default async function CampaignsPage() {
     redirect("/crm");
   }
 
+  const platformFilter = searchParams.platform || undefined;
+
   const campaigns = await prisma.campaignLink.findMany({
+    where: {
+      ...(platformFilter && { platform: platformFilter }),
+    },
     orderBy: { createdAt: "desc" },
     include: {
       project: true,
@@ -22,6 +28,22 @@ export default async function CampaignsPage() {
       _count: { select: { clickEvents: true } }
     },
   });
+
+  const filterFields = [
+    {
+      key: "platform",
+      label: "المنصة",
+      options: [
+        { value: "Snapchat", label: "سناب شات" },
+        { value: "TikTok", label: "تيك توك" },
+        { value: "Instagram", label: "انستجرام" },
+        { value: "X", label: "إكس (تويتر)" },
+        { value: "Google", label: "جوجل" },
+        { value: "Facebook", label: "فيسبوك" },
+        { value: "Other", label: "أخرى" }
+      ]
+    }
+  ];
 
   return (
     <div className="space-y-6">
@@ -34,6 +56,8 @@ export default async function CampaignsPage() {
           </Link>
         )}
       </div>
+
+      <FilterBar fields={filterFields} />
 
       <div className="bg-white shadow overflow-hidden sm:rounded-lg">
         <div className="overflow-x-auto">

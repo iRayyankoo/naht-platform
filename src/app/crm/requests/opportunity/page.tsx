@@ -3,9 +3,9 @@ import { authOptions } from "@/lib/auth";
 import { redirect } from "next/navigation";
 import { prisma } from "@/lib/prisma";
 import Link from "next/link";
+import FilterBar from "@/components/crm/FilterBar";
 
-
-export default async function CRMOpportunityRequests() {
+export default async function CRMOpportunityRequests({ searchParams }: { searchParams: { status?: string } }) {
   const session = await getServerSession(authOptions);
   const userRole = (session?.user as any)?.role;
 
@@ -13,9 +13,14 @@ export default async function CRMOpportunityRequests() {
     redirect("/crm");
   }
 
+  const statusFilter = searchParams.status || undefined;
+
   // Fetch only leads of type REAL_ESTATE_OPPORTUNITY
   const opportunities = await prisma.lead.findMany({
-    where: { leadType: "REAL_ESTATE_OPPORTUNITY" },
+    where: { 
+      leadType: "REAL_ESTATE_OPPORTUNITY",
+      ...(statusFilter && { status: statusFilter })
+    },
     orderBy: { createdAt: "desc" }
   });
 
@@ -46,11 +51,25 @@ export default async function CRMOpportunityRequests() {
     }
   };
 
+  const filterFields = [
+    {
+      key: "status",
+      label: "الحالة",
+      options: [
+        { value: "NEW", label: "جديد" },
+        { value: "IN_PROGRESS", label: "قيد المراجعة" },
+        { value: "RESOLVED", label: "مكتمل" }
+      ]
+    }
+  ];
+
   return (
     <div className="space-y-6 max-w-7xl mx-auto pb-12">
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <h1 className="text-2xl font-bold text-gray-900">إدارة الفرص العقارية</h1>
       </div>
+
+      <FilterBar fields={filterFields} />
 
       {/* Stats Cards */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">

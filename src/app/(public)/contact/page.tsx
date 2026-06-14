@@ -3,24 +3,37 @@ import ContactForm from "./ContactForm";
 import { getBaseMetadata } from "@/lib/seo";
 
 export async function generateMetadata() {
+  const content = await prisma.contactPageContent.findUnique({ where: { id: "global" } });
   return getBaseMetadata({
-    title: "تواصل معنا | نحت العقارية",
-    description: "يسعدنا تواصلكم معنا للإجابة على استفساراتكم وتقديم أفضل الخدمات العقارية.",
+    title: content?.seoTitle || content?.title || "تواصل معنا | نحت العقارية",
+    description: content?.seoDescription || content?.description || "يسعدنا تواصلكم معنا للإجابة على استفساراتكم وتقديم أفضل الخدمات العقارية.",
   });
 }
 
 export default async function ContactPage() {
   const settings = await prisma.siteSettings.findUnique({ where: { id: "global" } });
+  const content = await prisma.contactPageContent.findUnique({ where: { id: "global" } });
   const socials = await prisma.socialLink.findMany({ where: { isVisible: true }, orderBy: { order: "asc" } });
+
+  const isColor = content?.heroImage?.startsWith("#");
+  const heroStyle = content?.heroImage
+    ? isColor
+      ? { backgroundColor: content.heroImage }
+      : { backgroundImage: `url(${content.heroImage})`, backgroundSize: "cover", backgroundPosition: "center" }
+    : {};
 
   return (
     <div>
       {/* Header */}
-      <section className="bg-primary text-white py-24 text-center">
-        <div className="max-w-4xl mx-auto px-6">
-          <h1 className="text-4xl md:text-5xl font-bold mb-6">تواصل معنا</h1>
-          <p className="text-xl md:text-2xl text-primary-light">
-            نحن هنا لخدمتك والإجابة على كافة استفساراتك
+      <section 
+        className={`relative text-white py-24 text-center ${!content?.heroImage ? "bg-primary" : ""}`}
+        style={heroStyle}
+      >
+        {content?.heroImage && !isColor && <div className="absolute inset-0 bg-black/50"></div>}
+        <div className="relative max-w-4xl mx-auto px-6">
+          <h1 className="text-4xl md:text-5xl font-bold mb-6">{content?.title || "تواصل معنا"}</h1>
+          <p className="text-xl md:text-2xl text-gray-100">
+            {content?.description || "نحن هنا لخدمتك والإجابة على كافة استفساراتك"}
           </p>
         </div>
       </section>
@@ -100,8 +113,11 @@ export default async function ContactPage() {
 
           {/* Contact Form */}
           <div className="bg-white p-8 rounded-2xl shadow-xl border border-gray-100">
-            <h3 className="text-2xl font-bold text-gray-900 mb-6">أرسل رسالتك</h3>
-            <ContactForm />
+            <h3 className="text-2xl font-bold text-gray-900 mb-6">{content?.formTitle || "أرسل رسالتك"}</h3>
+            <ContactForm 
+              submitButtonText={content?.submitButtonText || "إرسال الرسالة"}
+              helperText={content?.helperText || ""}
+            />
           </div>
 
         </div>
