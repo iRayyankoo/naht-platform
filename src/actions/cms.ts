@@ -118,3 +118,22 @@ export async function deleteFaq(id: string) {
   revalidatePath("/");
   revalidatePath("/crm/cms/faqs");
 }
+
+// === Footer Links ===
+export async function upsertFooterLink(data: { id?: string; label: string; url: string; isExternal?: boolean; isVisible?: boolean; order?: number }) {
+  await actionRequireRole(["ADMIN", "MARKETING"]);
+  if (data.id) {
+    await prisma.footerLink.update({ where: { id: data.id }, data });
+  } else {
+    await prisma.footerLink.create({ data });
+  }
+  revalidatePath("/");
+  revalidatePath("/crm/cms/footer");
+}
+
+export async function deleteFooterLink(id: string) {
+  await actionRequireRole(["ADMIN", "MARKETING"]);
+  await prisma.footerLink.delete({ where: { id } });
+  revalidatePath("/");
+  revalidatePath("/crm/cms/footer");
+}

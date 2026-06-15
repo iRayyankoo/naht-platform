@@ -257,7 +257,28 @@ model SiteSettings {
   textColor      String?
   borderColor    String?
 
+  // Batch 10 Footer Management
+  footerCompanyName   String?
+  footerDescription   String?
+  footerLogoUrl       String?
+  showFooterLogo      Boolean @default(true)
+  showImportantLinks  Boolean @default(true)
+  showContactInfo     Boolean @default(true)
+  showEmployeePortal  Boolean @default(true)
+  showSocialLinks     Boolean @default(true)
+
   updatedAt DateTime @updatedAt
+}
+
+model FooterLink {
+  id         String   @id @default(cuid())
+  label      String
+  url        String
+  isExternal Boolean  @default(false)
+  isVisible  Boolean  @default(true)
+  order      Int      @default(0)
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
 }
 
 model TrackingSettings {
