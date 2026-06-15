@@ -133,6 +133,53 @@ export default function HomePageForm({ content }: { content: any }) {
         </div>
       </div>
 
+      {/* Naht Standard Section */}
+      <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-100 space-y-4">
+        <h2 className="text-lg font-bold text-gray-900 border-b pb-2">قسم معايير نحت (Naht Standard)</h2>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div className="md:col-span-2">
+            <label className="block text-sm font-medium text-gray-700 mb-1">العنوان الصغير</label>
+            <input type="text" name="nahtStandardTitle" defaultValue={content.nahtStandardTitle || ""} className="w-full border-gray-300 rounded-md p-2 border" placeholder="The Naht Standard" />
+          </div>
+          <div className="md:col-span-2">
+            <label className="block text-sm font-medium text-gray-700 mb-1">العنوان الرئيسي</label>
+            <input type="text" name="nahtStandardSubtitle" defaultValue={content.nahtStandardSubtitle || ""} className="w-full border-gray-300 rounded-md p-2 border" placeholder="نرتقي بمفهوم التطوير العقاري" />
+          </div>
+          <div className="md:col-span-2">
+            <label className="block text-sm font-medium text-gray-700 mb-1">الوصف العام</label>
+            <textarea name="nahtStandardDescription" defaultValue={content.nahtStandardDescription || ""} rows={3} className="w-full border-gray-300 rounded-md p-2 border"></textarea>
+          </div>
+        </div>
+
+        <h3 className="text-md font-bold mt-6 mb-2">المميزات الأربعة</h3>
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <div className="border p-3 rounded-md bg-gray-50">
+            <label className="block text-xs font-bold text-gray-700 mb-1">ميزة 1: العنوان</label>
+            <input type="text" name="nahtFeature1Title" defaultValue={content.nahtFeature1Title || ""} className="w-full border-gray-300 rounded p-1 text-sm border mb-2" />
+            <label className="block text-xs font-bold text-gray-700 mb-1">ميزة 1: الوصف</label>
+            <textarea name="nahtFeature1Desc" defaultValue={content.nahtFeature1Desc || ""} rows={2} className="w-full border-gray-300 rounded p-1 text-sm border"></textarea>
+          </div>
+          <div className="border p-3 rounded-md bg-gray-50">
+            <label className="block text-xs font-bold text-gray-700 mb-1">ميزة 2: العنوان</label>
+            <input type="text" name="nahtFeature2Title" defaultValue={content.nahtFeature2Title || ""} className="w-full border-gray-300 rounded p-1 text-sm border mb-2" />
+            <label className="block text-xs font-bold text-gray-700 mb-1">ميزة 2: الوصف</label>
+            <textarea name="nahtFeature2Desc" defaultValue={content.nahtFeature2Desc || ""} rows={2} className="w-full border-gray-300 rounded p-1 text-sm border"></textarea>
+          </div>
+          <div className="border p-3 rounded-md bg-gray-50">
+            <label className="block text-xs font-bold text-gray-700 mb-1">ميزة 3: العنوان</label>
+            <input type="text" name="nahtFeature3Title" defaultValue={content.nahtFeature3Title || ""} className="w-full border-gray-300 rounded p-1 text-sm border mb-2" />
+            <label className="block text-xs font-bold text-gray-700 mb-1">ميزة 3: الوصف</label>
+            <textarea name="nahtFeature3Desc" defaultValue={content.nahtFeature3Desc || ""} rows={2} className="w-full border-gray-300 rounded p-1 text-sm border"></textarea>
+          </div>
+          <div className="border p-3 rounded-md bg-gray-50">
+            <label className="block text-xs font-bold text-gray-700 mb-1">ميزة 4: العنوان</label>
+            <input type="text" name="nahtFeature4Title" defaultValue={content.nahtFeature4Title || ""} className="w-full border-gray-300 rounded p-1 text-sm border mb-2" />
+            <label className="block text-xs font-bold text-gray-700 mb-1">ميزة 4: الوصف</label>
+            <textarea name="nahtFeature4Desc" defaultValue={content.nahtFeature4Desc || ""} rows={2} className="w-full border-gray-300 rounded p-1 text-sm border"></textarea>
+          </div>
+        </div>
+      </div>
+
       <div className="flex justify-end pt-4">
         <button type="submit" disabled={isSaving} className="bg-primary hover:bg-primary-dark text-white px-8 py-3 rounded-md font-bold text-lg disabled:opacity-50">
           {isSaving ? "جاري الحفظ..." : "حفظ محتوى الصفحة الرئيسية"}

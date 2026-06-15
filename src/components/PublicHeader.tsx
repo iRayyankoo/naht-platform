@@ -8,9 +8,11 @@ interface PublicHeaderProps {
   siteName: string;
   logoUrl?: string | null;
   logoDarkUrl?: string | null;
+  headerCtaText?: string | null;
+  headerCtaUrl?: string | null;
 }
 
-export default function PublicHeader({ siteName, logoUrl, logoDarkUrl }: PublicHeaderProps) {
+export default function PublicHeader({ siteName, logoUrl, logoDarkUrl, headerCtaText, headerCtaUrl }: PublicHeaderProps) {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [isScrolled, setIsScrolled] = useState(false);
   const pathname = usePathname();
@@ -83,14 +85,14 @@ export default function PublicHeader({ siteName, logoUrl, logoDarkUrl }: PublicH
             );
           })}
           <Link 
-            href="/auth/login" 
+            href={headerCtaUrl || "/auth/login"} 
             className={`text-sm font-bold tracking-wide border rounded-none px-8 py-3 ml-4 transition-all duration-300 ${
               isTransparent 
                 ? "border-white/50 text-white hover:border-white hover:bg-white hover:text-gray-900" 
                 : "border-gray-300 text-gray-700 hover:border-primary hover:bg-primary hover:text-white"
             }`}
           >
-            بوابة الشركاء
+            {headerCtaText || "بوابة الشركاء"}
           </Link>
         </nav>
 
@@ -125,11 +127,11 @@ export default function PublicHeader({ siteName, logoUrl, logoDarkUrl }: PublicH
             ))}
             <div className="pt-6 border-t border-gray-100">
               <Link 
-                href="/auth/login" 
+                href={headerCtaUrl || "/auth/login"} 
                 className="block text-center text-lg font-bold text-white bg-primary rounded-none px-4 py-4"
                 onClick={() => setIsMobileMenuOpen(false)}
               >
-                بوابة الشركاء
+                {headerCtaText || "بوابة الشركاء"}
               </Link>
             </div>
           </nav>

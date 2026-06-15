@@ -137,3 +137,15 @@ export async function deleteFooterLink(id: string) {
   revalidatePath("/");
   revalidatePath("/crm/cms/footer");
 }
+
+// === Projects Page Content ===
+export async function updateProjectsPageContent(data: any) {
+  await actionRequireRole(["ADMIN", "MARKETING"]);
+  await prisma.projectsPageContent.upsert({
+    where: { id: "global" },
+    update: data,
+    create: { id: "global", ...data },
+  });
+  revalidatePath("/projects");
+  revalidatePath("/crm/cms/projects");
+}

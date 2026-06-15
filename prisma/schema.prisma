@@ -267,6 +267,10 @@ model SiteSettings {
   showEmployeePortal  Boolean @default(true)
   showSocialLinks     Boolean @default(true)
 
+  // Batch 12 Header
+  headerCtaText       String? @default("بوابة الشركاء")
+  headerCtaUrl        String? @default("/auth/login")
+
   updatedAt DateTime @updatedAt
 }
 
@@ -346,6 +350,34 @@ model HomePageContent {
   aboutBriefTitle String?
   aboutBriefText  String?
   aboutBriefImage String?
+
+  // Batch 12 NahtStandard
+  nahtStandardTitle       String? @default("The Naht Standard")
+  nahtStandardSubtitle    String? @default("نرتقي بمفهوم التطوير العقاري.")
+  nahtStandardDescription String? @default("نلتزم في \"نحت\" بأعلى معايير الجودة العالمية، حيث ندمج بين التصميم المعماري العبقري، واستدامة التنفيذ، واختيار أميز المواقع لنخلق أصولاً عقارية تتوارثها الأجيال.")
+  
+  nahtFeature1Title       String? @default("مواقع استراتيجية")
+  nahtFeature1Desc        String? @default("انتقاء دقيق لأرقى الأحياء وأكثرها نمواً لضمان جودة الحياة والعائد الاستثماري.")
+  nahtFeature2Title       String? @default("جودة البناء")
+  nahtFeature2Desc        String? @default("استخدام أفضل المواد وتطبيق أدق معايير الكود السعودي للبناء.")
+  nahtFeature3Title       String? @default("تصاميم استثنائية")
+  nahtFeature3Desc        String? @default("واجهات عصرية وتقسيمات داخلية ذكية تلبي تطلعات العائلة العصرية.")
+  nahtFeature4Title       String? @default("ضمانات ممتدة")
+  nahtFeature4Desc        String? @default("نقدم ضمانات حقيقية تمتد لسنوات لحماية استثمارك وراحتك.")
+
+  updatedAt DateTime @updatedAt
+}
+
+// Batch 12 Projects Page Content
+model ProjectsPageContent {
+  id String @id @default("global")
+
+  title          String  @default("مشاريعنا العقارية")
+  description    String? @default("اكتشف أحدث مشاريع شركة نحت الأصول العقارية في أرقى أحياء المملكة.")
+  emptyStateText String? @default("لا توجد مشاريع حالياً. نعمل على إضافة مشاريع جديدة قريباً.")
+
+  seoTitle       String?
+  seoDescription String?
 
   updatedAt DateTime @updatedAt
 }

@@ -69,6 +69,21 @@ export default function SettingsForm({ settings }: { settings: any }) {
         </div>
       </div>
 
+      {/* Header CTA Settings */}
+      <div className="mt-8 pt-8 border-t border-gray-200">
+        <h3 className="text-lg font-bold text-gray-900 mb-4">القائمة العلوية (Header)</h3>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">نص زر الهيدر (CTA)</label>
+            <input type="text" name="headerCtaText" defaultValue={settings.headerCtaText || ""} className="w-full border-gray-300 rounded-md p-2 border" placeholder="بوابة الشركاء" />
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">رابط زر الهيدر (CTA URL)</label>
+            <input type="text" dir="ltr" name="headerCtaUrl" defaultValue={settings.headerCtaUrl || ""} className="w-full border-gray-300 rounded-md p-2 border text-left" placeholder="/auth/login" />
+          </div>
+        </div>
+      </div>
+
       {/* إعدادات السيو العامة */}
       <div className="mt-8 pt-8 border-t border-gray-200">
         <h3 className="text-lg font-bold text-gray-900 mb-4">إعدادات الـ SEO العامة (افتراضية)</h3>

@@ -15,8 +15,18 @@ A comprehensive property management, sales, and content management platform for 
 ### 1. اعتمادات الدفعات:
 * تم اعتماد **Batch 8** (Luxury Homepage Real Estate Showcase Redesign).
 * تم اعتماد **Batch 9** (Brand Identity & Theme Control from CRM).
+* تم اعتماد **Batch 10** (Footer Management from CRM).
+* تم إنجاز **Batch 12** (CMS-first Hardcoded Cleanup) - في انتظار الاختبار.
 
-### 2. الإنجازات في Batch 8 و Batch 9:
+### 2. الإنجازات في Batch 10 و Batch 12:
+* **إدارة الفوتر (Batch 10)**: إضافة تحكم كامل في الفوتر وروابطه من لوحة التحكم `/crm/cms/footer`.
+* **إزالة القيم الثابتة (Batch 12)**: 
+  - ربط `whatsappNumber` و `contactPhone` من `SiteSettings` بـ `StickyMobileCta` و `projects/[slug]/page.tsx` مع الإخفاء في حال عدم وجودها.
+  - إعداد `ProjectsPageContent` كجدول لإدارة صفحة المشاريع العامة والـ SEO الخاص بها (`/crm/cms/projects`).
+  - ربط محتوى `NahtStandard` في الصفحة الرئيسية بنموذج `HomePageContent`.
+  - إضافة تحكم `headerCtaText` و `headerCtaUrl` في إعدادات الموقع للتحكم في زر الهيدر العام.
+
+### 3. الإنجازات في Batch 8 و Batch 9:
 * **تحديث الصفحة الرئيسية (Batch 8)**: تحسين تصميم الصفحة لتكون Editorial Luxury، مع إضافة `NahtStandard` وتعديل `HeroSection` و `FeaturedProjects` وإضافة زر الشاشة العائمة `StickyMobileCta` للموبايل، وتنعيم الحواف والتصميم.
 * **إدارة الهوية البصرية (Batch 9)**: 
   - إضافة صفحة إدارة الهوية البصرية `/crm/cms/brand`.
@@ -25,7 +35,7 @@ A comprehensive property management, sales, and content management platform for 
   - استخدام CSS Variables في الموقع العام لتطبيق الهوية دون التأثير على لوحة تحكم الـ CRM.
 * **قواعد الأمان**: لم تتأثر الصلاحيات أو أنظمة التتبع أو وظائف הـ CRM بتاتاً بهذا التعديل.
 
-### 3. حالة الميزات الحالية:
+### 4. حالة الميزات الحالية:
 * لا يوجد دمج مع `Main / Master`.
 * لا يوجد ربط للخدمات الخارجية (Vercel, Supabase, Cloudflare R2, DNS).
 * لم يتم البدء في دعم اللغة الإنجليزية أو الاستضافة.

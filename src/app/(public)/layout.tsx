@@ -45,7 +45,13 @@ export default async function PublicLayout({
         `
       }} />
 
-      <PublicHeader siteName={settings?.siteName || "نحت العقارية"} logoUrl={settings?.logoUrl} logoDarkUrl={settings?.logoDarkUrl} />
+      <PublicHeader 
+        siteName={settings?.siteName || "نحت العقارية"} 
+        logoUrl={settings?.logoUrl} 
+        logoDarkUrl={settings?.logoDarkUrl} 
+        headerCtaText={settings?.headerCtaText}
+        headerCtaUrl={settings?.headerCtaUrl}
+      />
       
       <main className="flex-1 pb-24 md:pb-0">
         {children}

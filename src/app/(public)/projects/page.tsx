@@ -3,13 +3,15 @@ import Link from "next/link";
 import { getBaseMetadata } from "@/lib/seo";
 
 export async function generateMetadata() {
+  const content = await prisma.projectsPageContent.findUnique({ where: { id: "global" } });
   return getBaseMetadata({
-    title: "مشاريعنا | نحت العقارية",
-    description: "تصفح أحدث المشاريع العقارية والاستثمارية التي تقدمها شركة نحت الأصول العقارية.",
+    title: content?.seoTitle || "مشاريعنا | نحت العقارية",
+    description: content?.seoDescription || "تصفح أحدث المشاريع العقارية والاستثمارية التي تقدمها شركة نحت الأصول العقارية.",
   });
 }
 
 export default async function PublicProjectsPage() {
+  const content = await prisma.projectsPageContent.findUnique({ where: { id: "global" } });
   const projects = await prisma.project.findMany({
     where: { isVisible: true },
     orderBy: { createdAt: "desc" },
@@ -19,10 +21,12 @@ export default async function PublicProjectsPage() {
     <div className="bg-gray-50 min-h-screen py-16">
       <div className="max-w-7xl mx-auto px-6">
         <div className="text-center mb-16">
-          <h1 className="text-4xl font-bold text-gray-900 mb-4">مشاريعنا العقارية</h1>
-          <p className="text-xl text-gray-600 max-w-2xl mx-auto">
-            اكتشف أحدث مشاريع شركة نحت الأصول العقارية في أرقى أحياء المملكة.
-          </p>
+          <h1 className="text-4xl font-bold text-gray-900 mb-4">{content?.title || "مشاريعنا العقارية"}</h1>
+          {content?.description && (
+            <p className="text-xl text-gray-600 max-w-2xl mx-auto">
+              {content.description}
+            </p>
+          )}
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 md:gap-8">
@@ -66,7 +70,7 @@ export default async function PublicProjectsPage() {
         {projects.length === 0 && (
           <div className="text-center py-20">
             <h3 className="text-2xl font-bold text-gray-900 mb-2">لا توجد مشاريع حالياً</h3>
-            <p className="text-gray-600">نعمل على إضافة مشاريع جديدة قريباً.</p>
+            <p className="text-gray-600">{content?.emptyStateText || "نعمل على إضافة مشاريع جديدة قريباً."}</p>
           </div>
         )}
       </div>

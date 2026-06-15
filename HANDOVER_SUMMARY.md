@@ -2,26 +2,27 @@
 
 **Date:** June 15, 2026
 **Branch:** `ui-refinements`
-**Status:** Stable for Review (Batch 10 Completed)
+**Status:** Stable for Review (Batch 12 Completed)
 
 ## 🔄 Status Snapshot
 - **Current Git Branch:** `ui-refinements`
-- **Latest Commit:** `Batch 10: Footer management from CRM`
-- **Latest Backup Folder:** `naht-platform-backup-after-batch-10-footer-management-stable`
-- **Current State:** Stable after Batch 10. 
-  - Batch 10 (Footer Management from CRM) is complete and approved.
-  - Built a dynamic `PublicFooter` controlled entirely via `/crm/cms/footer`.
-  - Added Prisma model `FooterLink` and updated `SiteSettings`.
-  - Adopted strict **CMS-first / Admin-first** architecture principle for all upcoming elements.
-  - Batch 8 & 9 remain stable.
+- **Latest Commit:** `Batch 12: CMS-first Hardcoded Cleanup`
+- **Latest Backup Folder:** `naht-platform-backup-after-batch-10-footer-management-stable` (need to create a new backup)
+- **Current State:** Stable after Batch 12. 
+  - Batch 12 (CMS-first Hardcoded Cleanup) is complete and tested via `npm run build`.
+  - Migrated hardcoded WhatsApp and Contact numbers in `StickyMobileCta` and `/projects/[slug]/page.tsx` to use `SiteSettings` with clean Fallback handling.
+  - Implemented dynamic `NahtStandard` content connected to `HomePageContent`.
+  - Implemented dynamic `ProjectsPageContent` for `/projects` page and SEO.
+  - Implemented Dynamic Header CTA via `SiteSettings`.
+  - Adopted strict **CMS-first / Admin-first** architecture principle.
+  - Batch 8, 9 & 10 remain stable.
   - Tracking, Lead Forms, WhatsApp integration, and Role Permissions were completely unaffected.
   - No merge with Main/Master, and no external services were linked.
 
 ## 📋 Recommended Next Steps (For next agent/session)
-1. Wait for User's explicit approval to start any new features.
-2. Maintain strict constraint obedience (NO Vercel, NO Supabase, NO English, NO roles/permissions changes yet).
-3. Always adopt the **CMS-first / Admin-first** principle: hardcode nothing if it can logically be in the CMS.
-4. If requested, proceed to next Batch.
+1. Wait for User's explicit approval.
+2. Proceed to Batch 13 if the user requests it.
+3. Maintain strict constraint obedience (NO Vercel, NO Supabase, NO English, NO roles/permissions changes yet).
 
 ## Key Testing Links
 - **Public Homepage:** `http://localhost:3000/`

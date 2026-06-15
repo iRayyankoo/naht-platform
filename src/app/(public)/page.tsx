@@ -54,7 +54,7 @@ export default async function HomePage() {
     <div className="bg-[#050505]"> {/* Main luxury background */}
       <HeroSection content={content} />
       <FeaturedProjects projects={featuredProjects} />
-      <NahtStandard />
+      <NahtStandard content={content} />
       <div className="bg-[#F9F9F7]"> {/* Light background for the rest */}
         <AboutBrief content={content} />
         <ProjectTypes types={projectTypes} />
@@ -63,7 +63,7 @@ export default async function HomePage() {
         <HomeFaq faqs={faqs} />
         <HomeContact settings={settings} />
       </div>
-      <StickyMobileCta />
+      <StickyMobileCta whatsappNumber={settings?.whatsappNumber} contactPhone={settings?.contactPhone} />
     </div>
   );
 }
