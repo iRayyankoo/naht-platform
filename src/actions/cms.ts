@@ -141,6 +141,9 @@ export async function deleteFooterLink(id: string) {
 // === Projects Page Content ===
 export async function updateProjectsPageContent(data: any) {
   await actionRequireRole(["ADMIN", "MARKETING"]);
+  if (!prisma.projectsPageContent) {
+    throw new Error("قاعدة البيانات قيد التحديث. يرجى إعادة تشغيل الخادم.");
+  }
   await prisma.projectsPageContent.upsert({
     where: { id: "global" },
     update: data,

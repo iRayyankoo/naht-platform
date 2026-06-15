@@ -16,14 +16,17 @@ A comprehensive property management, sales, and content management platform for 
 * تم اعتماد **Batch 8** (Luxury Homepage Real Estate Showcase Redesign).
 * تم اعتماد **Batch 9** (Brand Identity & Theme Control from CRM).
 * تم اعتماد **Batch 10** (Footer Management from CRM).
-* تم إنجاز **Batch 12** (CMS-first Hardcoded Cleanup) - في انتظار الاختبار.
+* تم اعتماد **Batch 12** (CMS-first Hardcoded Cleanup).
 
 ### 2. الإنجازات في Batch 10 و Batch 12:
 * **إدارة الفوتر (Batch 10)**: إضافة تحكم كامل في الفوتر وروابطه من لوحة التحكم `/crm/cms/footer`.
 * **إزالة القيم الثابتة (Batch 12)**: 
-  - ربط `whatsappNumber` و `contactPhone` من `SiteSettings` بـ `StickyMobileCta` و `projects/[slug]/page.tsx` مع الإخفاء في حال عدم وجودها.
-  - إعداد `ProjectsPageContent` كجدول لإدارة صفحة المشاريع العامة والـ SEO الخاص بها (`/crm/cms/projects`).
-  - ربط محتوى `NahtStandard` في الصفحة الرئيسية بنموذج `HomePageContent`.
+  - إزالة أرقام التواصل الثابتة وربط واتساب والاتصال بـ `SiteSettings`.
+  - ربط `NahtStandard` في الصفحة الرئيسية بالـ CMS.
+  - إضافة إدارة محتوى صفحة المشاريع (`/crm/cms/projects`).
+  - إصلاح `/crm/cms/projects` باستخدام Safe Fallbacks.
+  - تحسين عنوان وتصميم صفحة المشاريع العامة مع إضافة فلاتر متقدمة (النوع، الحالة، المدينة، البحث).
+  - تحسين وضوح الـ Select Dropdowns لضمان تجربة مستخدم فخمة.
   - إضافة تحكم `headerCtaText` و `headerCtaUrl` في إعدادات الموقع للتحكم في زر الهيدر العام.
 
 ### 3. الإنجازات في Batch 8 و Batch 9:

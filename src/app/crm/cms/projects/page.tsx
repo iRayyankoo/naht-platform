@@ -9,7 +9,12 @@ export const metadata = {
 
 export default async function CmsProjectsPage() {
   await requireRole(["ADMIN", "MARKETING"]);
-  const content = await prisma.projectsPageContent.findUnique({ where: { id: "global" } });
+  
+  // Safe fallback if Prisma Client hasn't been re-generated or server restarted
+  let content = null;
+  if (prisma.projectsPageContent) {
+    content = await prisma.projectsPageContent.findUnique({ where: { id: "global" } });
+  }
 
   return (
     <div className="space-y-6">

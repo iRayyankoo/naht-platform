@@ -6,14 +6,17 @@
 
 ## 🔄 Status Snapshot
 - **Current Git Branch:** `ui-refinements`
-- **Latest Commit:** `Batch 12: CMS-first Hardcoded Cleanup`
-- **Latest Backup Folder:** `naht-platform-backup-after-batch-10-footer-management-stable` (need to create a new backup)
+- **Latest Commit:** `Fix: Projects filters select UI and CMS projects page stability`
+- **Latest Backup Folder:** `naht-platform-backup-after-batch-12-cms-hardcoded-cleanup-stable`
 - **Current State:** Stable after Batch 12. 
-  - Batch 12 (CMS-first Hardcoded Cleanup) is complete and tested via `npm run build`.
-  - Migrated hardcoded WhatsApp and Contact numbers in `StickyMobileCta` and `/projects/[slug]/page.tsx` to use `SiteSettings` with clean Fallback handling.
+  - Batch 12 (CMS-first Hardcoded Cleanup) is complete and approved.
+  - Migrated hardcoded WhatsApp and Contact numbers in `StickyMobileCta` and `/projects/[slug]/page.tsx` to use `SiteSettings`.
   - Implemented dynamic `NahtStandard` content connected to `HomePageContent`.
-  - Implemented dynamic `ProjectsPageContent` for `/projects` page and SEO.
+  - Added Projects Page Content Management (`/crm/cms/projects`).
+  - Improved the UI of the Projects Page with a Luxury Hero Section.
+  - Added Public Projects Filters (Type, Status, City, Text Search) with elegant Select Dropdowns.
   - Implemented Dynamic Header CTA via `SiteSettings`.
+  - Fixed CMS projects page stability with smart fallbacks.
   - Adopted strict **CMS-first / Admin-first** architecture principle.
   - Batch 8, 9 & 10 remain stable.
   - Tracking, Lead Forms, WhatsApp integration, and Role Permissions were completely unaffected.
