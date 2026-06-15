@@ -246,6 +246,17 @@ model SiteSettings {
   canonicalBaseUrl      String?
   defaultRobotsIndex    Boolean @default(true)
 
+  // Batch 9 Brand Identity
+  logoDarkUrl    String?
+  brandTagline   String?
+  primaryColor   String?
+  secondaryColor String?
+  accentColor    String?
+  darkBgColor    String?
+  buttonColor    String?
+  textColor      String?
+  borderColor    String?
+
   updatedAt DateTime @updatedAt
 }
 

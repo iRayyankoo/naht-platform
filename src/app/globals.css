@@ -3,17 +3,30 @@
 :root {
   --background: #ffffff;
   --foreground: #171717;
-  --primary: #c09d73; /* لون نحت الذهبي */
-  --primary-dark: #9b7e5c;
-  --secondary: #2c3e50;
+  
+  /* Fallbacks for brand settings */
+  --brand-primary: #c09d73; /* لون نحت الذهبي */
+  --brand-secondary: #2c3e50;
+  --brand-accent: #d4af37;
+  --brand-dark-bg: #050505;
+  --brand-button: var(--brand-primary);
+  --brand-text: #111827;
+  --brand-border: #e5e7eb;
 }
 
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
-  --color-primary: var(--primary);
-  --color-primary-dark: var(--primary-dark);
-  --color-secondary: var(--secondary);
+  
+  /* Map Tailwind colors to CSS Variables injected from DB or fallbacks */
+  --color-primary: var(--color-primary-override, var(--brand-primary));
+  --color-secondary: var(--color-secondary-override, var(--brand-secondary));
+  --color-accent: var(--color-accent-override, var(--brand-accent));
+  --color-dark-bg: var(--color-dark-bg-override, var(--brand-dark-bg));
+  --color-button: var(--color-button-override, var(--brand-button));
+  --color-brand-text: var(--color-text-override, var(--brand-text));
+  --color-brand-border: var(--color-border-override, var(--brand-border));
+  
   --font-sans: var(--font-tajawal), ui-sans-serif, system-ui, sans-serif;
   --font-tajawal: var(--font-tajawal);
 }

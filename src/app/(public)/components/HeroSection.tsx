@@ -24,13 +24,13 @@ export default function HeroSection({ content }: { content: HomePageContent | nu
     if (!isSlider) return;
     const interval = setInterval(() => {
       setCurrentSlide((prev) => (prev + 1) % mediaUrls.length);
-    }, 5000); // Change slide every 5 seconds
+    }, 6000); // Slower, more elegant 6 seconds
     return () => clearInterval(interval);
   }, [isSlider, mediaUrls.length]);
 
   return (
-    <section className="relative bg-[#0A0F16] text-white h-[95vh] min-h-[700px] flex items-center justify-center pt-20 md:pt-0 overflow-hidden">
-      {/* Background Media with Dark Luxury Overlay */}
+    <section className="relative bg-[#050505] text-white h-[100svh] min-h-[600px] flex items-center pt-20 md:pt-0 overflow-hidden">
+      {/* Background Media with Dark Luxury Overlay & Ken Burns */}
       <div className="absolute inset-0 z-0 bg-gray-950">
         {isVideo && (
           <video 
@@ -38,8 +38,7 @@ export default function HeroSection({ content }: { content: HomePageContent | nu
             loop 
             muted 
             playsInline 
-            className="w-full h-full object-cover opacity-80"
-            style={{ filter: "brightness(0.6)" }}
+            className="w-full h-full object-cover opacity-70"
           >
             <source src={mediaUrls[0]} type="video/mp4" />
           </video>
@@ -49,58 +48,72 @@ export default function HeroSection({ content }: { content: HomePageContent | nu
           <img 
             src={singleImage} 
             alt="Hero Background" 
-            className="w-full h-full object-cover opacity-80" 
-            style={{ filter: "brightness(0.55)" }}
+            className="w-full h-full object-cover opacity-70 animate-[kenburns_20s_ease-out_infinite_alternate]" 
           />
         )}
 
         {isSlider && mediaUrls.map((url, index) => (
           <div 
             key={index} 
-            className={`absolute inset-0 transition-opacity duration-1000 ease-in-out ${index === currentSlide ? 'opacity-100' : 'opacity-0'}`}
+            className={`absolute inset-0 transition-opacity duration-[2000ms] ease-in-out ${index === currentSlide ? 'opacity-100 z-10' : 'opacity-0 z-0'}`}
           >
             <img 
               src={url} 
               alt={`Hero Slide ${index + 1}`} 
-              className="w-full h-full object-cover opacity-80" 
-              style={{ filter: "brightness(0.55)" }}
+              className={`w-full h-full object-cover opacity-70 ${index === currentSlide ? 'animate-[kenburns_20s_ease-out_forwards]' : ''} scale-105`} 
             />
           </div>
         ))}
 
-        {/* Subtle vignette and bottom gradient for that premium real estate feel */}
-        <div className="absolute inset-0 bg-gradient-to-t from-[#0A0A0A] via-transparent to-black/40 mix-blend-multiply pointer-events-none"></div>
-        <div className="absolute inset-0 bg-black/10 pointer-events-none"></div>
+        {/* Elegant cinematic gradients */}
+        <div className="absolute inset-0 z-20 bg-gradient-to-t from-[#050505] via-[#050505]/20 to-black/40 pointer-events-none"></div>
+        <div className="absolute inset-0 z-20 bg-gradient-to-r from-black/60 to-transparent pointer-events-none hidden md:block"></div>
       </div>
       
-      <div className="relative z-10 max-w-7xl mx-auto px-6 w-full flex flex-col items-start justify-center text-right mt-12 md:mt-0 pt-20 md:pt-32">
-        <div className="max-w-4xl">
-          <div className="w-16 h-1 bg-primary mb-8 md:mb-12 hidden md:block"></div>
-          <h1 className="text-4xl md:text-6xl lg:text-7xl xl:text-8xl font-bold mb-6 md:mb-8 leading-[1.1] tracking-tight drop-shadow-2xl">
+      <div className="relative z-30 max-w-7xl mx-auto px-6 w-full flex flex-col items-start justify-center text-right mt-10 md:mt-0 pt-16 md:pt-24">
+        <div className="max-w-3xl">
+          <div className="flex items-center gap-4 mb-6 md:mb-10 opacity-0 animate-[fadeInUp_1s_ease-out_0.2s_forwards]">
+            <div className="w-12 h-[1px] bg-primary/80"></div>
+            <span className="text-xs md:text-sm font-bold tracking-[0.2em] text-primary uppercase">نحت للأصول العقارية</span>
+          </div>
+          
+          <h1 className="text-4xl md:text-6xl lg:text-[5rem] font-bold mb-6 md:mb-8 leading-[1.1] tracking-tight drop-shadow-2xl opacity-0 animate-[fadeInUp_1s_ease-out_0.4s_forwards]">
             {content?.heroTitle || "نحت الأصول العقارية"}
           </h1>
-          <p className="text-xl md:text-2xl lg:text-3xl mb-12 max-w-3xl text-gray-200 drop-shadow-xl font-light leading-relaxed tracking-wide">
-            {content?.heroSubtitle || "نبني مساحات تلهم الحياة وترتقي بجودة المعيشة نحو آفاق جديدة."}
+          
+          <p className="text-lg md:text-2xl mb-10 md:mb-14 max-w-2xl text-gray-300 font-light leading-relaxed tracking-wide opacity-0 animate-[fadeInUp_1s_ease-out_0.6s_forwards] drop-shadow-md">
+            {content?.heroSubtitle || "نبني مساحات تلهم الحياة وترتقي بجودة المعيشة نحو آفاق جديدة بتصاميم استثنائية."}
           </p>
-          <div className="flex flex-col sm:flex-row gap-6 w-full sm:w-auto mt-8">
-            <Link href={content?.ctaButtonUrl || "/projects"} className="w-full sm:w-auto bg-white text-gray-950 hover:bg-gray-100 px-12 py-5 font-bold text-lg text-center transition-all duration-500 shadow-2xl hover:scale-105 tracking-widest uppercase">
-              {content?.ctaButtonText || "استكشف مشاريعنا"}
+          
+          <div className="flex flex-col sm:flex-row gap-5 w-full sm:w-auto opacity-0 animate-[fadeInUp_1s_ease-out_0.8s_forwards]">
+            <Link href={content?.ctaButtonUrl || "/projects"} className="group relative flex items-center justify-center gap-4 w-full sm:w-auto bg-white/95 text-gray-950 px-10 py-4 rounded-3xl font-bold text-sm md:text-base transition-all duration-500 hover:bg-white hover:shadow-[0_8px_30px_rgba(255,255,255,0.15)] hover:-translate-y-1 tracking-widest uppercase overflow-hidden">
+              <span className="relative z-10">{content?.ctaButtonText || "استكشف التفاصيل"}</span>
+              <svg className="w-4 h-4 rtl:rotate-180 transition-transform duration-500 group-hover:-translate-x-2 relative z-10" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M17 8l4 4m0 0l-4 4m4-4H3"></path></svg>
             </Link>
-            <Link href="/about" className="w-full sm:w-auto bg-transparent border border-white/40 hover:border-white text-white px-12 py-5 font-bold text-lg text-center transition-all duration-500 hover:bg-white hover:text-gray-950 tracking-widest uppercase">
-              نبذة عن نحت
-            </Link>
+          </div>
+        </div>
+
+        {/* Glassmorphism Quick Stats (Hidden on very small mobile to reduce clutter) */}
+        <div className="hidden sm:flex mt-20 gap-6 opacity-0 animate-[fadeInUp_1s_ease-out_1s_forwards]">
+          <div className="bg-white/5 backdrop-blur-xl border border-white/5 p-6 rounded-3xl flex flex-col gap-1 min-w-[160px] shadow-[0_8px_32px_rgba(0,0,0,0.1)]">
+            <span className="text-3xl font-serif text-white">10+</span>
+            <span className="text-xs text-gray-400 tracking-widest uppercase">مشاريع استثنائية</span>
+          </div>
+          <div className="bg-white/5 backdrop-blur-xl border border-white/5 p-6 rounded-3xl flex flex-col gap-1 min-w-[160px] shadow-[0_8px_32px_rgba(0,0,0,0.1)]">
+            <span className="text-3xl font-serif text-white">أرقى</span>
+            <span className="text-xs text-gray-400 tracking-widest uppercase">المواقع الجغرافية</span>
           </div>
         </div>
       </div>
 
       {/* Slider Indicators (if slider) */}
       {isSlider && (
-        <div className="absolute bottom-12 right-12 z-20 flex gap-3">
+        <div className="absolute bottom-8 md:bottom-12 right-6 md:right-12 z-40 flex gap-2 md:gap-3">
           {mediaUrls.map((_, index) => (
             <button
               key={index}
               onClick={() => setCurrentSlide(index)}
-              className={`h-1 transition-all duration-300 ${index === currentSlide ? 'w-12 bg-primary' : 'w-6 bg-white/40 hover:bg-white/70'}`}
+              className={`h-1.5 rounded-full transition-all duration-700 ${index === currentSlide ? 'w-10 md:w-16 bg-white shadow-[0_0_10px_rgba(255,255,255,0.5)]' : 'w-4 md:w-8 bg-white/20 hover:bg-white/50'}`}
               aria-label={`Go to slide ${index + 1}`}
             />
           ))}
@@ -108,12 +121,27 @@ export default function HeroSection({ content }: { content: HomePageContent | nu
       )}
       
       {/* Scroll indicator - Elegant Line */}
-      <div className="absolute bottom-12 left-1/2 -translate-x-1/2 z-20 flex flex-col items-center gap-3 opacity-60 hover:opacity-100 transition-opacity cursor-pointer hidden md:flex">
-        <span className="text-xs uppercase tracking-widest font-bold rotate-90 mb-6">تمرير</span>
-        <div className="w-[1px] h-16 bg-white/30 relative overflow-hidden">
-          <div className="w-full h-full bg-white absolute top-0 left-0 animate-pulse"></div>
+      <div className="absolute bottom-10 left-1/2 -translate-x-1/2 z-40 flex flex-col items-center gap-4 opacity-50 hover:opacity-100 transition-opacity hidden md:flex">
+        <div className="w-[1px] h-20 bg-white/10 relative overflow-hidden rounded-full">
+          <div className="w-full h-1/2 bg-white/80 absolute top-0 left-0 animate-[scrollDown_2s_ease-in-out_infinite] rounded-full shadow-[0_0_8px_rgba(255,255,255,0.8)]"></div>
         </div>
       </div>
+      
+      {/* Tailwind Custom Animations injected via global.css or inline style block */}
+      <style dangerouslySetInnerHTML={{__html: `
+        @keyframes kenburns {
+          0% { transform: scale(1.05); }
+          100% { transform: scale(1.15); }
+        }
+        @keyframes fadeInUp {
+          from { opacity: 0; transform: translateY(20px); }
+          to { opacity: 1; transform: translateY(0); }
+        }
+        @keyframes scrollDown {
+          0% { transform: translateY(-100%); }
+          100% { transform: translateY(200%); }
+        }
+      `}} />
     </section>
   );
 }

@@ -14,6 +14,7 @@ interface NavLink {
   href: string;
   exact?: boolean;
   disabled?: boolean;
+  icon?: React.ReactNode;
 }
 
 interface NavGroup {
@@ -73,6 +74,13 @@ const allNavGroups: NavGroup[] = [
     ),
     links: [
       { name: "إعدادات الموقع العامة", href: "/crm/cms/settings" },
+      { 
+        name: "الهوية البصرية", 
+        href: "/crm/cms/brand",
+        icon: (
+          <svg className="w-4 h-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M7 21a4 4 0 01-4-4V5a2 2 0 012-2h4a2 2 0 012 2v12a4 4 0 01-4 4zm0 0h12a2 2 0 002-2v-4a2 2 0 00-2-2h-2.343M11 7.343l1.657-1.657a2 2 0 012.828 0l2.829 2.829a2 2 0 010 2.828l-8.486 8.485M7 17h.01"></path></svg>
+        )
+      },
       { name: "الصفحة الرئيسية", href: "/crm/cms/homepage" },
       { name: "من نحن", href: "/crm/cms/about" },
       { name: "الخدمات", href: "/crm/cms/services" },
@@ -239,12 +247,13 @@ export default function CrmSidebar({ userName, userRole }: CrmSidebarProps) {
                       <Link
                         key={idx}
                         href={link.href}
-                        className={`block px-3 py-2 text-sm rounded-md font-medium transition-colors ${
+                        className={`flex items-center gap-2 px-3 py-2 text-sm rounded-md font-medium transition-colors ${
                           active 
                             ? "bg-primary text-white shadow-sm" 
                             : "text-gray-600 hover:text-primary hover:bg-gray-50"
                         }`}
                       >
+                        {link.icon && <span className={active ? "text-white" : "text-gray-400"}>{link.icon}</span>}
                         {link.name}
                       </Link>
                     );

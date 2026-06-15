@@ -8,6 +8,8 @@ import ProjectTypes from "./components/ProjectTypes";
 import WhyChooseUs from "./components/WhyChooseUs";
 import HomeFaq from "./components/HomeFaq";
 import HomeContact from "./components/HomeContact";
+import NahtStandard from "./components/NahtStandard";
+import StickyMobileCta from "./components/StickyMobileCta";
 
 export async function generateMetadata() {
   const content = await prisma.homePageContent.findUnique({ where: { id: "global" } });
@@ -24,14 +26,14 @@ export default async function HomePage() {
   
   let featuredProjects = await prisma.project.findMany({ 
     where: { isVisible: true, isFeatured: true }, 
-    take: 6,
+    take: 5, // We take 5 for the new layout (1 signature + 4 curated)
     orderBy: { createdAt: 'desc' }
   });
 
   if (featuredProjects.length === 0) {
     featuredProjects = await prisma.project.findMany({ 
       where: { isVisible: true }, 
-      take: 6,
+      take: 5,
       orderBy: { createdAt: 'desc' }
     });
   }
@@ -49,15 +51,19 @@ export default async function HomePage() {
   });
 
   return (
-    <div className="bg-white">
+    <div className="bg-[#050505]"> {/* Main luxury background */}
       <HeroSection content={content} />
       <FeaturedProjects projects={featuredProjects} />
-      <AboutBrief content={content} />
-      <ProjectTypes types={projectTypes} />
-      <StatsSection content={content} />
-      <WhyChooseUs content={content} />
-      <HomeFaq faqs={faqs} />
-      <HomeContact settings={settings} />
+      <NahtStandard />
+      <div className="bg-[#F9F9F7]"> {/* Light background for the rest */}
+        <AboutBrief content={content} />
+        <ProjectTypes types={projectTypes} />
+        <StatsSection content={content} />
+        <WhyChooseUs content={content} />
+        <HomeFaq faqs={faqs} />
+        <HomeContact settings={settings} />
+      </div>
+      <StickyMobileCta />
     </div>
   );
 }

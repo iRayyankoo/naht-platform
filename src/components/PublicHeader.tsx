@@ -7,9 +7,10 @@ import { usePathname } from "next/navigation";
 interface PublicHeaderProps {
   siteName: string;
   logoUrl?: string | null;
+  logoDarkUrl?: string | null;
 }
 
-export default function PublicHeader({ siteName, logoUrl }: PublicHeaderProps) {
+export default function PublicHeader({ siteName, logoUrl, logoDarkUrl }: PublicHeaderProps) {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [isScrolled, setIsScrolled] = useState(false);
   const pathname = usePathname();
@@ -58,11 +59,11 @@ export default function PublicHeader({ siteName, logoUrl }: PublicHeaderProps) {
         
         {/* Logo */}
         <Link href="/" className={`text-2xl font-bold flex items-center z-50 ${isTransparent ? 'text-white' : 'text-primary'}`}>
-          {logoUrl ? (
+          {(logoUrl || logoDarkUrl) ? (
             <img 
-              src={logoUrl} 
+              src={(isTransparent && logoDarkUrl) ? logoDarkUrl : (logoUrl || logoDarkUrl || "")} 
               alt={siteName} 
-              className={`h-10 md:h-12 transition-all ${isTransparent ? 'brightness-0 invert' : ''}`} 
+              className={`h-10 md:h-12 transition-all ${(isTransparent && !logoDarkUrl) ? 'brightness-0 invert' : ''}`} 
             />
           ) : siteName}
         </Link>

@@ -5,127 +5,124 @@ export default function FeaturedProjects({ projects }: { projects: Project[] }) 
   if (!projects || projects.length === 0) return null;
 
   const mainProject = projects[0];
-  const row2Projects = projects.slice(1, 3); // Up to 2 projects
-  const row3Projects = projects.slice(3, 6); // Up to 3 projects
+  const curatedProjects = projects.slice(1, 5); // Take up to 4 curated projects
 
   return (
-    <section className="py-32 bg-[#FAFAFA]">
+    <section className="py-24 md:py-32 bg-[#F9F9F7] overflow-hidden">
       <div className="max-w-[1400px] mx-auto px-6">
-        <div className="flex flex-col md:flex-row justify-between items-end mb-20 gap-6">
+        
+        {/* Section Header */}
+        <div className="flex flex-col md:flex-row justify-between items-end mb-16 md:mb-24 gap-8">
           <div className="max-w-2xl">
-            <h2 className="text-4xl md:text-5xl lg:text-6xl font-bold text-gray-900 mb-6 tracking-tight font-serif">المشاريع المميزة</h2>
-            <div className="w-24 h-[2px] bg-primary mb-8"></div>
+            <h2 className="text-4xl md:text-5xl lg:text-6xl font-bold text-gray-950 mb-6 tracking-tight font-serif leading-tight">المشاريع<br className="hidden md:block"/> المختارة</h2>
+            <div className="w-16 h-[2px] bg-primary/70 mb-8 rounded-full"></div>
             <p className="text-lg md:text-xl text-gray-500 font-light leading-relaxed">
-              مختارات من أحدث مشاريعنا المصممة بعناية لتقديم أسلوب حياة استثنائي في أرقى المواقع الجغرافية.
+              انتقاء حصري لأرقى مشاريعنا، تعكس شغفنا بالتفاصيل وروعة التصميم المعماري الحديث في أفضل المواقع.
             </p>
           </div>
-          <Link href="/projects" className="hidden md:inline-flex items-center gap-4 text-gray-900 hover:text-primary font-bold transition-colors group uppercase tracking-widest pb-2">
-            <span className="border-b border-gray-300 group-hover:border-primary pb-1 transition-colors">استكشف جميع المشاريع</span>
+          <Link href="/projects" className="hidden md:inline-flex items-center gap-4 text-gray-950 hover:text-primary font-bold transition-all group uppercase tracking-widest pb-2 opacity-80 hover:opacity-100">
+            <span className="border-b border-gray-300/50 group-hover:border-primary pb-1 transition-colors">عرض المجموعة كاملة</span>
             <svg className="w-5 h-5 rtl:rotate-180 transition-transform group-hover:-translate-x-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M17 8l4 4m0 0l-4 4m4-4H3"></path></svg>
           </Link>
         </div>
 
-        {/* Main Featured Project - Massive Portfolio Style */}
-        <Link href={`/projects/${mainProject.slug}`} className="group block mb-12 relative rounded-3xl overflow-hidden bg-gray-900">
-          <div className="relative h-[65vh] md:h-[85vh] w-full overflow-hidden">
-            <img 
-              src={mainProject.mainImage || "https://placehold.co/1600x900/111111/333333?text=Project"} 
-              alt={mainProject.name} 
-              className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-[1.5s] ease-out opacity-90" 
-            />
-            {/* Elegant overlay */}
-            <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/30 to-transparent mix-blend-multiply"></div>
-            <div className="absolute inset-0 bg-black/10 group-hover:bg-transparent transition-colors duration-700"></div>
-            
-            <div className="absolute bottom-0 left-0 w-full p-8 md:p-20 flex flex-col md:flex-row md:items-end justify-between gap-8">
-              <div className="text-white max-w-4xl">
-                <div className="flex flex-wrap items-center gap-4 mb-6 text-sm font-bold tracking-widest text-gray-300 uppercase">
-                  <span>{mainProject.type}</span>
-                  <span className="w-1.5 h-1.5 rounded-full bg-primary/70"></span>
-                  <span>{mainProject.city}</span>
-                  <span className="w-1.5 h-1.5 rounded-full bg-primary/70"></span>
-                  <span className={
-                    mainProject.status === "AVAILABLE" ? "text-white" : 
-                    mainProject.status === "SOLD_OUT" ? "text-gray-400" : "text-white"
-                  }>
-                    {mainProject.status === "AVAILABLE" ? "متاح" : mainProject.status === "SOLD_OUT" ? "مباع بالكامل" : "قيد الإنشاء"}
-                  </span>
-                </div>
-                <h3 className="text-5xl md:text-7xl lg:text-8xl font-bold mb-6 tracking-tight leading-none drop-shadow-lg">{mainProject.name}</h3>
-                <p className="text-xl md:text-2xl text-gray-300 line-clamp-2 md:line-clamp-3 font-light max-w-3xl leading-relaxed">{mainProject.shortDesc}</p>
+        {/* The Signature Project (Editorial Style) */}
+        <div className="mb-20 md:mb-32">
+          <Link href={`/projects/${mainProject.slug}`} className="group block relative w-full h-[60vh] md:h-[80vh] overflow-hidden rounded-3xl shadow-[0_20px_60px_rgba(0,0,0,0.05)]">
+            {mainProject.mainImage ? (
+              <img 
+                src={mainProject.mainImage} 
+                alt={mainProject.name} 
+                className="w-full h-full object-cover transition-transform duration-[2s] ease-out group-hover:scale-105" 
+              />
+            ) : (
+              <div className="w-full h-full bg-gradient-to-br from-gray-200 to-gray-300 flex items-center justify-center transition-transform duration-[2s] ease-out group-hover:scale-105">
+                <span className="text-4xl text-gray-400 font-serif opacity-50">{mainProject.name}</span>
               </div>
-              <div className="hidden md:flex shrink-0 w-20 h-20 bg-white items-center justify-center text-gray-900 group-hover:bg-primary group-hover:text-white transition-all duration-500 hover:scale-110">
-                <svg className="w-8 h-8 rtl:rotate-180" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.5" d="M17 8l4 4m0 0l-4 4m4-4H3"></path></svg>
+            )}
+            
+            <div className="absolute inset-0 bg-gradient-to-t from-gray-950/70 via-gray-950/10 to-transparent"></div>
+            
+            {/* Floating Information Panel */}
+            <div className="absolute bottom-6 md:bottom-12 left-6 md:left-12 right-6 md:right-auto bg-white/10 backdrop-blur-2xl border border-white/10 p-8 md:p-10 max-w-xl text-white transform transition-all duration-700 group-hover:translate-y-[-10px] rounded-3xl shadow-[0_10px_40px_rgba(0,0,0,0.1)]">
+              <div className="flex items-center gap-3 text-xs md:text-sm font-bold text-gray-300/90 mb-4 tracking-widest uppercase">
+                <span>{mainProject.type}</span>
+                <span className="w-1.5 h-1.5 rounded-full bg-primary/80"></span>
+                <span>{mainProject.neighborhood || mainProject.city}</span>
+              </div>
+              <h3 className="text-4xl md:text-6xl font-bold mb-4 tracking-tight font-serif drop-shadow-sm">{mainProject.name}</h3>
+              <p className="text-gray-200/90 font-light line-clamp-2 md:line-clamp-3 mb-8 leading-relaxed">
+                {mainProject.shortDesc}
+              </p>
+              <div className="inline-flex items-center gap-3 text-sm font-bold tracking-widest uppercase text-white/90 group-hover:text-primary transition-colors">
+                استعرض التفاصيل
+                <svg className="w-4 h-4 rtl:rotate-180 transition-transform group-hover:-translate-x-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M17 8l4 4m0 0l-4 4m4-4H3"></path></svg>
               </div>
             </div>
-          </div>
-        </Link>
 
-        {/* Row 2: 2 Projects */}
-        {row2Projects.length > 0 && (
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-10 md:gap-12 mb-12">
-            {row2Projects.map((project) => (
-              <Link key={project.id} href={`/projects/${project.slug}`} className="group block">
-                <div className="relative h-[400px] md:h-[500px] rounded-3xl overflow-hidden bg-gray-100 mb-8">
-                  <img 
-                    src={project.mainImage || "https://placehold.co/800x800/111111/333333?text=Project"} 
-                    alt={project.name} 
-                    className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-[1.5s] ease-out grayscale-[20%] group-hover:grayscale-0" 
-                  />
-                  <div className="absolute inset-0 bg-black/10 group-hover:bg-transparent transition-colors duration-700"></div>
-                  <div className="absolute top-6 right-6 bg-white px-5 py-2 text-xs font-bold text-gray-900 tracking-widest uppercase shadow-xl rounded-full">
-                    {project.status === "AVAILABLE" ? "متاح" : project.status === "SOLD_OUT" ? "مباع" : "تحت الإنشاء"}
-                  </div>
-                </div>
-                <div>
-                  <div className="flex items-center gap-3 text-sm font-bold text-gray-400 mb-3 tracking-widest uppercase">
-                    <span>{project.type}</span>
-                    <span className="w-1 h-1 rounded-full bg-gray-300"></span>
-                    <span>{project.neighborhood}</span>
-                  </div>
-                  <h3 className="text-3xl font-bold text-gray-900 mb-4 group-hover:text-primary transition-colors tracking-tight">{project.name}</h3>
-                </div>
-              </Link>
-            ))}
-          </div>
-        )}
-
-        {/* Row 3: 3 Projects */}
-        {row3Projects.length > 0 && (
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-8 md:gap-10">
-            {row3Projects.map((project) => (
-              <Link key={project.id} href={`/projects/${project.slug}`} className="group block">
-                <div className="relative h-[300px] md:h-[400px] rounded-3xl overflow-hidden bg-gray-100 mb-6">
-                  <img 
-                    src={project.mainImage || "https://placehold.co/600x600/111111/333333?text=Project"} 
-                    alt={project.name} 
-                    className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-[1.5s] ease-out grayscale-[20%] group-hover:grayscale-0" 
-                  />
-                  <div className="absolute inset-0 bg-black/10 group-hover:bg-transparent transition-colors duration-700"></div>
-                  <div className="absolute top-4 right-4 bg-white px-4 py-1.5 text-xs font-bold text-gray-900 tracking-widest uppercase shadow-xl rounded-full">
-                    {project.status === "AVAILABLE" ? "متاح" : project.status === "SOLD_OUT" ? "مباع" : "تحت الإنشاء"}
-                  </div>
-                </div>
-                <div>
-                  <div className="flex items-center gap-3 text-sm font-bold text-gray-400 mb-2 tracking-widest uppercase">
-                    <span>{project.type}</span>
-                    <span className="w-1 h-1 rounded-full bg-gray-300"></span>
-                    <span>{project.neighborhood}</span>
-                  </div>
-                  <h3 className="text-2xl font-bold text-gray-900 mb-3 group-hover:text-primary transition-colors tracking-tight">{project.name}</h3>
-                </div>
-              </Link>
-            ))}
-          </div>
-        )}
-
-        <div className="text-center mt-16 md:hidden">
-          <Link href="/projects" className="inline-flex items-center justify-center w-full gap-3 border border-gray-900 text-gray-900 hover:bg-gray-900 hover:text-white px-8 py-5 font-bold tracking-widest uppercase transition-colors">
-            عرض كل المشاريع
-            <svg className="w-5 h-5 rtl:rotate-180" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M17 8l4 4m0 0l-4 4m4-4H3"></path></svg>
+            {/* Status Badge */}
+            <div className="absolute top-6 right-6 md:top-10 md:right-10 bg-white/95 backdrop-blur-md text-gray-950 px-6 py-2.5 text-xs font-bold tracking-widest uppercase shadow-xl rounded-full">
+              {mainProject.status === "AVAILABLE" ? "متاح" : mainProject.status === "SOLD_OUT" ? "مباع بالكامل" : "قيد الإنشاء"}
+            </div>
           </Link>
         </div>
+
+        {/* Curated Collection (Horizontal Mobile Carousel / Desktop Grid) */}
+        {curatedProjects.length > 0 && (
+          <div className="relative">
+            {/* Hide scrollbar but keep functionality for mobile */}
+            <div className="flex md:grid md:grid-cols-2 lg:grid-cols-4 gap-6 md:gap-8 overflow-x-auto pb-12 snap-x snap-mandatory hide-scrollbar -mx-6 px-6 md:mx-0 md:px-0">
+              {curatedProjects.map((project) => (
+                <Link key={project.id} href={`/projects/${project.slug}`} className="group flex-none w-[85vw] md:w-auto snap-center">
+                  <div className="relative h-[450px] md:h-[500px] overflow-hidden rounded-3xl bg-gray-100 mb-6 shadow-sm group-hover:shadow-xl transition-shadow duration-700">
+                    {project.mainImage ? (
+                      <img 
+                        src={project.mainImage} 
+                        alt={project.name} 
+                        className="w-full h-full object-cover transition-all duration-[1.5s] ease-out filter sepia-[0.05] contrast-[1.05] group-hover:scale-105 group-hover:sepia-0" 
+                      />
+                    ) : (
+                      <div className="w-full h-full bg-gradient-to-br from-gray-100 to-gray-200 flex items-center justify-center transition-transform duration-[1.5s] ease-out group-hover:scale-105">
+                        <span className="text-2xl text-gray-400 font-serif opacity-50">{project.name}</span>
+                      </div>
+                    )}
+                    <div className="absolute inset-0 bg-black/5 group-hover:bg-transparent transition-colors duration-700"></div>
+                  </div>
+                  <div className="px-2">
+                    <div className="flex items-center justify-between mb-3">
+                      <div className="text-xs font-bold text-gray-400 tracking-widest uppercase">
+                        {project.type}
+                      </div>
+                      <div className={`text-xs font-bold tracking-widest uppercase ${project.status === 'AVAILABLE' ? 'text-primary/90' : 'text-gray-400/80'}`}>
+                        {project.status === "AVAILABLE" ? "متاح" : project.status === "SOLD_OUT" ? "مباع" : "تحت الإنشاء"}
+                      </div>
+                    </div>
+                    <h3 className="text-2xl font-bold text-gray-950 mb-2 font-serif group-hover:text-primary transition-colors">{project.name}</h3>
+                    <p className="text-sm text-gray-500/80 font-light truncate">{project.neighborhood || project.city}</p>
+                  </div>
+                </Link>
+              ))}
+            </div>
+          </div>
+        )}
+
+        <div className="text-center mt-6 md:hidden">
+          <Link href="/projects" className="inline-flex items-center justify-center w-full gap-3 bg-white text-gray-950 shadow-[0_10px_30px_rgba(0,0,0,0.05)] rounded-full px-8 py-5 font-bold tracking-widest uppercase transition-all hover:-translate-y-1">
+            عرض كل المشاريع
+          </Link>
+        </div>
+
       </div>
+
+      <style dangerouslySetInnerHTML={{__html: `
+        .hide-scrollbar::-webkit-scrollbar {
+          display: none;
+        }
+        .hide-scrollbar {
+          -ms-overflow-style: none;
+          scrollbar-width: none;
+        }
+      `}} />
     </section>
   );
 }
