@@ -6,21 +6,17 @@
 
 ## 🔄 Status Snapshot
 - **Current Git Branch:** `ui-refinements`
-- **Latest Commit:** `Fix: Projects filters select UI and CMS projects page stability`
-- **Latest Backup Folder:** `naht-platform-backup-after-batch-12-cms-hardcoded-cleanup-stable`
-- **Current State:** Stable after Batch 12. 
-  - Batch 12 (CMS-first Hardcoded Cleanup) is complete and approved.
-  - Migrated hardcoded WhatsApp and Contact numbers in `StickyMobileCta` and `/projects/[slug]/page.tsx` to use `SiteSettings`.
-  - Implemented dynamic `NahtStandard` content connected to `HomePageContent`.
-  - Added Projects Page Content Management (`/crm/cms/projects`).
-  - Improved the UI of the Projects Page with a Luxury Hero Section.
-  - Added Public Projects Filters (Type, Status, City, Text Search) with elegant Select Dropdowns.
-  - Implemented Dynamic Header CTA via `SiteSettings`.
-  - Fixed CMS projects page stability with smart fallbacks.
-  - Adopted strict **CMS-first / Admin-first** architecture principle.
-  - Batch 8, 9 & 10 remain stable.
-  - Tracking, Lead Forms, WhatsApp integration, and Role Permissions were completely unaffected.
-  - No merge with Main/Master, and no external services were linked.
+- **Latest Commit:** `Batch 14: Real estate products display enhancement`
+- **Latest Backup Folder:** `naht-platform-backup-after-batch-14-real-estate-products-stable`
+- **Current State:** Stable after Batch 14. 
+  - Batch 14 (Real Estate Products Display Enhancement) is complete and approved.
+  - Refactored Prisma schema to include optional fields and relations for project features, warranties, and gallery.
+  - Updated CRM to support comprehensive product definitions with a tabbed interface.
+  - Completely revamped public `/projects` and `/projects/[slug]` pages into premium real estate product pages.
+  - Fixed UX and data linking issues with `LeadForm`, ensuring leads map correctly in `/crm/leads` and router cache is properly invalidated.
+  - Added a `demo-villa-1` product strictly for local testing.
+  - Adhered strictly to constraints: NO Vercel, NO Supabase, NO English, NO R2, NO Main Merge, NO DNS.
+  - Batch 12 (CMS Hardcoded Cleanup) and older batches remain stable.
 
 ## 📋 Recommended Next Steps (For next agent/session)
 1. Wait for User's explicit approval.
