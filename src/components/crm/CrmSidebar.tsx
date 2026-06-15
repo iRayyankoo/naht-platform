@@ -47,12 +47,12 @@ const allNavGroups: NavGroup[] = [
   },
   {
     id: "projects",
-    title: "إدارة المشاريع",
+    title: "المنتجات العقارية",
     icon: (
       <svg className="w-5 h-5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"></path></svg>
     ),
     links: [
-      { name: "المشاريع والوحدات", href: "/crm/projects" },
+      { name: "المنتجات العقارية", href: "/crm/projects" },
     ],
   },
   {
@@ -77,7 +77,7 @@ const allNavGroups: NavGroup[] = [
       { name: "الهوية البصرية", href: "/crm/cms/brand", icon: (<svg className="w-4 h-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M7 21a4 4 0 01-4-4V5a2 2 0 012-2h4a2 2 0 012 2v12a4 4 0 01-4 4zm0 0h12a2 2 0 002-2v-4a2 2 0 00-2-2h-2.343M11 7.343l1.657-1.657a2 2 0 012.828 0l2.829 2.829a2 2 0 010 2.828l-8.486 8.485M7 17h.01"></path></svg>) },
       { name: "تذييل الموقع (Footer)", href: "/crm/cms/footer" },
       { name: "الصفحة الرئيسية", href: "/crm/cms/homepage" },
-      { name: "صفحة المشاريع", href: "/crm/cms/projects" },
+      { name: "صفحة المنتجات العقارية", href: "/crm/cms/projects" },
       { name: "من نحن", href: "/crm/cms/about" },
       { name: "الخدمات", href: "/crm/cms/services" },
       { name: "الأسئلة الشائعة", href: "/crm/cms/faqs" },

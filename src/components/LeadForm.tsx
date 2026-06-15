@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
+import SelectInput from "./SelectInput";
 
 interface LeadFormProps {
   projectId?: string;
@@ -85,43 +86,47 @@ export default function LeadForm({ projectId, projectSlug, formType = "GENERAL" 
       
       <div>
         <label htmlFor="name" className="block text-sm md:text-base font-medium text-gray-700 mb-1.5">الاسم الكامل *</label>
-        <input type="text" id="name" name="name" required className="w-full border-gray-300 rounded-md shadow-sm focus:ring-primary focus:border-primary p-3 md:p-3.5 border text-base" placeholder="محمد أحمد" />
+        <input type="text" id="name" name="name" required className="w-full border border-gray-300 bg-white rounded-md shadow-sm focus:ring-2 focus:ring-primary focus:border-primary p-3 md:p-3.5 text-base text-gray-900 font-medium hover:border-gray-400 transition-colors placeholder:text-gray-400 placeholder:font-normal" placeholder="محمد أحمد" />
       </div>
       
       <div>
         <label htmlFor="phone" className="block text-sm md:text-base font-medium text-gray-700 mb-1.5">رقم الجوال *</label>
-        <input type="tel" id="phone" name="phone" required pattern="^[+\d\s]{9,20}$" className="w-full border-gray-300 rounded-md shadow-sm focus:ring-primary focus:border-primary p-3 md:p-3.5 border text-base" placeholder="05XXXXXXXX" dir="ltr" />
+        <input type="tel" id="phone" name="phone" required pattern="^[+\d\s]{9,20}$" className="w-full border border-gray-300 bg-white rounded-md shadow-sm focus:ring-2 focus:ring-primary focus:border-primary p-3 md:p-3.5 text-base text-gray-900 font-medium hover:border-gray-400 transition-colors placeholder:text-gray-400 placeholder:font-normal" placeholder="05XXXXXXXX" dir="ltr" />
       </div>
       
       <div>
         <label htmlFor="email" className="block text-sm md:text-base font-medium text-gray-700 mb-1.5">البريد الإلكتروني</label>
-        <input type="email" id="email" name="email" className="w-full border-gray-300 rounded-md shadow-sm focus:ring-primary focus:border-primary p-3 md:p-3.5 border text-base" placeholder="example@email.com" dir="ltr" />
+        <input type="email" id="email" name="email" className="w-full border border-gray-300 bg-white rounded-md shadow-sm focus:ring-2 focus:ring-primary focus:border-primary p-3 md:p-3.5 text-base text-gray-900 font-medium hover:border-gray-400 transition-colors placeholder:text-gray-400 placeholder:font-normal" placeholder="example@email.com" dir="ltr" />
       </div>
 
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-        <div>
-          <label htmlFor="propertyType" className="block text-sm md:text-base font-medium text-gray-700 mb-1.5">نوع العقار المهتم به</label>
-          <select id="propertyType" name="propertyType" className="w-full border-gray-300 rounded-md shadow-sm focus:ring-primary focus:border-primary p-3 md:p-3.5 border text-base bg-white">
-            <option value="غير محدد">غير محدد</option>
-            <option value="شقة">شقة</option>
-            <option value="فيلا">فيلا</option>
-            <option value="دور">دور</option>
-            <option value="تاون هاوس">تاون هاوس</option>
-          </select>
-        </div>
-        <div>
-          <label htmlFor="preferredContactMethod" className="block text-sm md:text-base font-medium text-gray-700 mb-1.5">التواصل المفضل</label>
-          <select id="preferredContactMethod" name="preferredContactMethod" className="w-full border-gray-300 rounded-md shadow-sm focus:ring-primary focus:border-primary p-3 md:p-3.5 border text-base bg-white">
-            <option value="اتصال">اتصال</option>
-            <option value="واتساب">واتساب</option>
-            <option value="بريد إلكتروني">بريد إلكتروني</option>
-          </select>
-        </div>
+        <SelectInput
+          id="propertyType"
+          name="propertyType"
+          label="نوع العقار المهتم به"
+          options={[
+            { value: "غير محدد", label: "غير محدد" },
+            { value: "شقة", label: "شقة" },
+            { value: "فيلا", label: "فيلا" },
+            { value: "دور", label: "دور" },
+            { value: "تاون هاوس", label: "تاون هاوس" },
+          ]}
+        />
+        <SelectInput
+          id="preferredContactMethod"
+          name="preferredContactMethod"
+          label="التواصل المفضل"
+          options={[
+            { value: "اتصال", label: "اتصال" },
+            { value: "واتساب", label: "واتساب" },
+            { value: "بريد إلكتروني", label: "بريد إلكتروني" },
+          ]}
+        />
       </div>
 
       <div>
         <label htmlFor="message" className="block text-sm md:text-base font-medium text-gray-700 mb-1.5">رسالتك (اختياري)</label>
-        <textarea id="message" name="message" rows={3} className="w-full border-gray-300 rounded-md shadow-sm focus:ring-primary focus:border-primary p-3 md:p-3.5 border text-base" placeholder="هل لديك أي استفسارات أو ملاحظات إضافية؟"></textarea>
+        <textarea id="message" name="message" rows={3} className="w-full border border-gray-300 bg-white rounded-md shadow-sm focus:ring-2 focus:ring-primary focus:border-primary p-3 md:p-3.5 text-base text-gray-900 font-medium hover:border-gray-400 transition-colors placeholder:text-gray-400 placeholder:font-normal" placeholder="هل لديك أي استفسارات أو ملاحظات إضافية؟"></textarea>
       </div>
       
       <button 

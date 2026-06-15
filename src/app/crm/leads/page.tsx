@@ -55,6 +55,7 @@ export default async function LeadsPage({ searchParams }: { searchParams: { type
       label: "نوع العميل",
       options: [
         { value: "GENERAL", label: "عملاء عام / مشاريع" },
+        { value: "PROJECT_INTEREST", label: "مهتم بمنتج عقاري" },
         { value: "CONTACT_US", label: "تواصل معنا" },
         { value: "REAL_ESTATE_OPPORTUNITY", label: "فرص عقارية" }
       ]

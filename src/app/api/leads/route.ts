@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
+import { revalidatePath } from "next/cache";
 
 // A simple in-memory rate limit Map (for demo/development purposes)
 const rateLimit = new Map<string, { count: number; timestamp: number }>();
@@ -95,8 +96,12 @@ export async function POST(request: Request) {
         deviceType,
         platform,
         status: "NEW",
+        leadType: formType === "PROJECT_SPECIFIC" ? "PROJECT_INTEREST" : "GENERAL",
       },
     });
+
+    revalidatePath("/crm/leads");
+    revalidatePath("/crm");
 
     return NextResponse.json({ status: "success", data: { id: lead.id } }, { status: 201 });
   } catch (error) {
