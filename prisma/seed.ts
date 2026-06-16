@@ -1,4 +1,4 @@
-﻿import { PrismaClient } from '@prisma/client';
+import { PrismaClient } from '@prisma/client';
 import bcrypt from 'bcryptjs';
 
 const prisma = new PrismaClient();
@@ -40,7 +40,13 @@ async function main() {
   // 2. Site Settings
   const siteSettings = await prisma.siteSettings.upsert({
     where: { id: 'global' },
-    update: {},
+    update: {
+      siteName: 'نحت العقارية - معاينة',
+      contactEmail: 'info@naht-re.sa',
+      contactPhone: '920000000',
+      whatsappNumber: '966500000000',
+      address: 'المملكة العربية السعودية، الرياض، طريق الملك فهد',
+    },
     create: {
       id: 'global',
       siteName: 'نحت العقارية - معاينة',
@@ -54,7 +60,12 @@ async function main() {
   // 3. Home Page Content
   const homePage = await prisma.homePageContent.upsert({
     where: { id: 'global' },
-    update: {},
+    update: {
+      heroTitle: 'نحت العقارية - فن البناء الحديث',
+      heroSubtitle: 'نقدم لك مشاريع سكنية استثنائية ترتقي بجودة حياتك وتجسد أعلى معايير الرفاهية.',
+      heroBackgroundImage: '/images/hero/hero-1.jpg',
+      mapBackgroundImage: '/images/saudi-map-default.svg',
+    },
     create: {
       id: 'global',
       heroTitle: 'نحت العقارية - فن البناء الحديث',
@@ -88,7 +99,16 @@ async function main() {
   // 4. Tracking Settings
   await prisma.trackingSettings.upsert({
     where: { id: 'global' },
-    update: {},
+    update: {
+      ga4MeasurementId: 'G-XXXXXXXXXX',
+      isGa4Enabled: true,
+      metaPixelId: '1234567890',
+      isMetaPixelEnabled: true,
+      snapchatPixelId: 'SNAP-XXXXX',
+      isSnapchatPixelEnabled: true,
+      tiktokPixelId: 'TT-XXXXX',
+      isTiktokPixelEnabled: true,
+    },
     create: {
       id: 'global',
       ga4MeasurementId: 'G-XXXXXXXXXX',
@@ -234,7 +254,27 @@ async function main() {
   for (const p of projectsData) {
     const project = await prisma.project.upsert({
       where: { slug: p.slug },
-      update: {},
+      update: {
+        name: p.name,
+        type: p.type,
+        city: p.city,
+        neighborhood: p.neighborhood,
+        status: p.status,
+        shortDesc: p.shortDesc,
+        fullDesc: p.fullDesc,
+        isFeatured: p.isFeatured,
+        isVisible: p.isVisible,
+        showOnHomeMap: p.showOnHomeMap,
+        mapLat: p.mapLat, mapLng: p.mapLng,
+        mapX: p.mapX, mapY: p.mapY,
+        price: p.price,
+        area: p.area,
+        rooms: p.rooms,
+        baths: p.baths,
+        progressPercent: p.progressPercent,
+        progressLabel: p.progressLabel,
+        mainImage: p.mainImage,
+      },
       create: {
         slug: p.slug,
         name: p.name,
@@ -333,6 +373,17 @@ async function main() {
   }
 
   console.log('Staging UAT Seeding finished successfully.');
+
+  // Validation
+  const projectCount = await prisma.project.count();
+  const firstProject = await prisma.project.findFirst({ select: { name: true, mainImage: true }});
+  const homePageCheck = await prisma.homePageContent.findUnique({ where: { id: 'global' }, select: { heroBackgroundImage: true }});
+  
+  console.log('--- DB Validation After Seed ---');
+  console.log(`Total Projects: ${projectCount}`);
+  console.log(`First Project: ${firstProject?.name} | mainImage: ${firstProject?.mainImage}`);
+  console.log(`HomePage heroBackgroundImage: ${homePageCheck?.heroBackgroundImage}`);
+  console.log('--------------------------------');
 }
 
 main()
