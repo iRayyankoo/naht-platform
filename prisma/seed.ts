@@ -64,11 +64,59 @@ async function main() {
       shortDesc: "شقق فاخرة بإطلالة بحرية",
       isFeatured: false,
       isVisible: true,
+      showOnHomeMap: true,
+      mapX: 45,
+      mapY: 65,
+    }
+  });
+
+  const p3 = await prisma.project.upsert({
+    where: { slug: "naht-demo" },
+    update: {},
+    create: {
+      name: "فيلا ديمو العرض",
+      slug: "naht-demo",
+      type: "فيلا",
+      city: "الرياض",
+      neighborhood: "الياسمين",
+      status: "AVAILABLE",
+      shortDesc: "فيلا العرض المميزة بتفاصيل استثنائية",
+      isFeatured: true,
+      isVisible: true,
+      showOnHomeMap: true,
+      mapX: 55,
+      mapY: 45,
+    }
+  });
+
+  const siteSettings = await prisma.siteSettings.upsert({
+    where: { id: "global" },
+    update: {},
+    create: {
+      id: "global",
+      siteName: "نحت العقارية - Staging",
+      contactEmail: "info@naht-re.sa",
+      contactPhone: "920000000",
+      whatsappNumber: "966500000000",
+    }
+  });
+
+  const homePage = await prisma.homePageContent.upsert({
+    where: { id: "global" },
+    update: {},
+    create: {
+      id: "global",
+      heroTitle: "مرحباً بكم في مسودة نحت العقارية",
+      heroSubtitle: "هذه النسخة التجريبية مخصصة للعرض الإداري",
+      mapTitle: "خريطة المشاريع",
+      mapSubtitle: "تصفح مشاريعنا بأسلوب تفاعلي",
+      mapIsImageBased: true,
+      mapImageBg: "/images/saudi-map-default.svg"
     }
   });
 
   console.log("Seeding finished.");
-  console.log({ admin, sales, p1, p2 });
+  console.log({ admin, sales, p1, p2, p3, siteSettings, homePage });
 }
 
 main()
