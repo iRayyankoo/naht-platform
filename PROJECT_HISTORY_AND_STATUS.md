@@ -154,3 +154,8 @@ npm.cmd run dev
 ### Vercel Preview Build Fix
 - **المشكلة:** فشل بناء مسودة Vercel (PrismaClientInitializationError) بسبب عدم تواجد مجلد .prisma/client داخل الحاوية.
 - **الحل:** تم إضافة prisma generate في سكريبت postinstall و uild داخل package.json ليتم توليد الـ Client أوتوماتيكياً في بيئة Vercel.
+
+ # # #   V e r c e l   P r e v i e w   D a t a b a s e   S y n c  
+ -   * * 'DE4CD): * *   A4D  (F'!  E3H/)  V e r c e l   'D+'FJ  D9/E  H,H/  'D,/'HD:   S u p a b a s e   S t a g i n g   D B   w a s   e m p t y   a n d   P r i s m a   t a b l e s   w e r e   n o t   p u s h e d   b e f o r e   N e x t . j s   p r e r e n d e r .  
+ -   * * 'D-D: * *   *E  *9/JD  #H'E1  'D(F'!:   R u n   p r i s m a   d b   p u s h   b e f o r e   n e x t   b u i l d   i n   s t a g i n g - p r e v i e w   o n l y .  
+ 
