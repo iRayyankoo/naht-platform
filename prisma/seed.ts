@@ -108,10 +108,15 @@ async function main() {
       id: "global",
       heroTitle: "مرحباً بكم في مسودة نحت العقارية",
       heroSubtitle: "هذه النسخة التجريبية مخصصة للعرض الإداري",
-      mapTitle: "خريطة المشاريع",
-      mapSubtitle: "تصفح مشاريعنا بأسلوب تفاعلي",
-      mapIsImageBased: true,
-      mapImageBg: "/images/saudi-map-default.svg"
+      showMapSection: true,
+      mapSectionTitle: "خريطة المشاريع",
+      mapSectionDesc: "تصفح مشاريعنا بأسلوب تفاعلي",
+      mapMode: "geographic",
+      mapCenterLat: 24.7136,
+      mapCenterLng: 46.6753,
+      mapZoom: 5,
+      mapTileStyle: "warm",
+      mapBackgroundImage: "/images/saudi-map-default.svg"
     }
   });
 
