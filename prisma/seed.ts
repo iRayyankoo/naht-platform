@@ -1,127 +1,331 @@
-import { PrismaClient } from "@prisma/client";
-import bcrypt from "bcryptjs";
+﻿import { PrismaClient } from '@prisma/client';
+import bcrypt from 'bcryptjs';
 
 const prisma = new PrismaClient();
 
 async function main() {
-  const hashedPassword = await bcrypt.hash("admin123", 10);
+  const adminEmail = process.env.STAGING_ADMIN_EMAIL || 'admin@naht-re.sa';
+  const adminPassword = process.env.STAGING_ADMIN_PASSWORD || 'adminUAT2026';
+  const hashedPassword = await bcrypt.hash(adminPassword, 10);
 
+  if (process.env.RESET_STAGING_DB === 'true') {
+    console.log('RESET_STAGING_DB is true. Wiping data for clean seed...');
+    await prisma.lead.deleteMany();
+    await prisma.projectWarranty.deleteMany();
+    await prisma.projectFeature.deleteMany();
+    await prisma.projectGalleryImage.deleteMany();
+    await prisma.unit.deleteMany();
+    await prisma.project.deleteMany();
+    await prisma.service.deleteMany();
+    await prisma.faq.deleteMany();
+    await prisma.trackingSettings.deleteMany();
+    await prisma.siteSettings.deleteMany();
+    await prisma.homePageContent.deleteMany();
+    await prisma.aboutPageContent.deleteMany();
+    await prisma.user.deleteMany();
+  }
+
+  // 1. Admin User
   const admin = await prisma.user.upsert({
-    where: { email: "admin@naht-re.sa" },
-    update: {},
+    where: { email: adminEmail },
+    update: { password: hashedPassword, role: 'ADMIN', name: 'المدير العام (UAT)' },
     create: {
-      email: "admin@naht-re.sa",
-      name: "المدير العام",
+      email: adminEmail,
+      name: 'المدير العام (UAT)',
       password: hashedPassword,
-      role: "ADMIN",
+      role: 'ADMIN',
     },
   });
 
-  const sales = await prisma.user.upsert({
-    where: { email: "sales@naht-re.sa" },
-    update: {},
-    create: {
-      email: "sales@naht-re.sa",
-      name: "موظف مبيعات",
-      password: hashedPassword,
-      role: "SALES",
-    },
-  });
-
-  const p1 = await prisma.project.upsert({
-    where: { slug: "naht-15" },
-    update: {},
-    create: {
-      name: "مشروع نحت 15",
-      slug: "naht-15",
-      type: "فيلا",
-      city: "الرياض",
-      neighborhood: "النرجس",
-      status: "AVAILABLE",
-      shortDesc: "مشروع فلل فاخرة في حي النرجس بتصاميم عصرية",
-      fullDesc: "مشروع نحت 15 يمثل نقلة نوعية في عالم العقارات، يوفر فلل سكنية بأعلى المعايير وجودة البناء العالية مع ضمانات شاملة تصل إلى 10 سنوات.",
-      isFeatured: true,
-      isVisible: true,
-      units: {
-        create: [
-          { unitNum: "V-1", type: "فيلا", area: 350, rooms: 5, baths: 6, status: "AVAILABLE" },
-          { unitNum: "V-2", type: "فيلا", area: 400, rooms: 6, baths: 7, status: "SOLD" },
-        ]
-      }
-    }
-  });
-
-  const p2 = await prisma.project.upsert({
-    where: { slug: "naht-tower" },
-    update: {},
-    create: {
-      name: "برج نحت",
-      slug: "naht-tower",
-      type: "شقة",
-      city: "جدة",
-      neighborhood: "الشاطئ",
-      status: "COMING_SOON",
-      shortDesc: "شقق فاخرة بإطلالة بحرية",
-      isFeatured: false,
-      isVisible: true,
-      showOnHomeMap: true,
-      mapX: 45,
-      mapY: 65,
-    }
-  });
-
-  const p3 = await prisma.project.upsert({
-    where: { slug: "naht-demo" },
-    update: {},
-    create: {
-      name: "فيلا ديمو العرض",
-      slug: "naht-demo",
-      type: "فيلا",
-      city: "الرياض",
-      neighborhood: "الياسمين",
-      status: "AVAILABLE",
-      shortDesc: "فيلا العرض المميزة بتفاصيل استثنائية",
-      isFeatured: true,
-      isVisible: true,
-      showOnHomeMap: true,
-      mapX: 55,
-      mapY: 45,
-    }
-  });
-
+  // 2. Site Settings
   const siteSettings = await prisma.siteSettings.upsert({
-    where: { id: "global" },
+    where: { id: 'global' },
     update: {},
     create: {
-      id: "global",
-      siteName: "نحت العقارية - Staging",
-      contactEmail: "info@naht-re.sa",
-      contactPhone: "920000000",
-      whatsappNumber: "966500000000",
+      id: 'global',
+      siteName: 'نحت العقارية - معاينة',
+      contactEmail: 'info@naht-re.sa',
+      contactPhone: '920000000',
+      whatsappNumber: '966500000000',
+      address: 'المملكة العربية السعودية، الرياض، طريق الملك فهد',
     }
   });
 
+  // 3. Home Page Content
   const homePage = await prisma.homePageContent.upsert({
-    where: { id: "global" },
+    where: { id: 'global' },
     update: {},
     create: {
-      id: "global",
-      heroTitle: "مرحباً بكم في مسودة نحت العقارية",
-      heroSubtitle: "هذه النسخة التجريبية مخصصة للعرض الإداري",
+      id: 'global',
+      heroTitle: 'نحت العقارية - فن البناء الحديث',
+      heroSubtitle: 'نقدم لك مشاريع سكنية استثنائية ترتقي بجودة حياتك وتجسد أعلى معايير الرفاهية.',
+      ctaButtonText: 'تصفح مشاريعنا',
+      ctaButtonUrl: '/projects',
+      statsTitle: 'أرقامنا تتحدث',
+      stat1Label: 'مشروع منجز', stat1Value: '25+',
+      stat2Label: 'عميل سعيد', stat2Value: '500+',
+      stat3Label: 'سنوات خبرة', stat3Value: '10+',
+      whyNahtTitle: 'لماذا تختار نحت العقارية؟',
+      whyNahtDescription: 'لأننا نلتزم بأعلى معايير الجودة والشفافية في كل خطوة.',
+      nahtFeature1Title: 'تصاميم عصرية', nahtFeature1Desc: 'نعتمد أحدث التصاميم المعمارية.',
+      nahtFeature2Title: 'مواقع استراتيجية', nahtFeature2Desc: 'نختار مواقع مشاريعنا بعناية فائقة.',
+      nahtFeature3Title: 'جودة البناء', nahtFeature3Desc: 'مواد بناء وفق أعلى المعايير.',
+      nahtFeature4Title: 'ضمانات ممتدة', nahtFeature4Desc: 'نقدم ضمانات تصل إلى 10 سنوات.',
       showMapSection: true,
-      mapSectionTitle: "خريطة المشاريع",
-      mapSectionDesc: "تصفح مشاريعنا بأسلوب تفاعلي",
-      mapMode: "geographic",
+      mapSectionTitle: 'خريطة مشاريع نحت',
+      mapSectionDesc: 'تصفح مشاريعنا بأسلوب تفاعلي عبر خريطة المملكة',
+      mapMode: 'geographic',
       mapCenterLat: 24.7136,
       mapCenterLng: 46.6753,
       mapZoom: 5,
-      mapTileStyle: "warm",
-      mapBackgroundImage: "/images/saudi-map-default.svg"
+      mapTileStyle: 'warm',
+      mapBackgroundImage: '/images/saudi-map-default.svg',
+      pinLogoSize: 32,
     }
   });
 
-  console.log("Seeding finished.");
-  console.log({ admin, sales, p1, p2, p3, siteSettings, homePage });
+  // 4. Tracking Settings
+  await prisma.trackingSettings.upsert({
+    where: { id: 'global' },
+    update: {},
+    create: {
+      id: 'global',
+      ga4MeasurementId: 'G-XXXXXXXXXX',
+      isGa4Enabled: true,
+      metaPixelId: '1234567890',
+      isMetaPixelEnabled: true,
+      snapchatPixelId: 'SNAP-XXXXX',
+      isSnapchatPixelEnabled: true,
+      tiktokPixelId: 'TT-XXXXX',
+      isTiktokPixelEnabled: true,
+    }
+  });
+
+  // 5. Projects
+  const projectsData = [
+    {
+      slug: 'naht-demo',
+      name: 'فيلا ديمو العرض (كاملة)',
+      type: 'فيلا',
+      city: 'الرياض',
+      neighborhood: 'الياسمين',
+      status: 'AVAILABLE',
+      shortDesc: 'فيلا عرض مميزة بتفاصيل استثنائية، تستعرض قدرات نحت العقارية في بناء الفلل الفاخرة.',
+      fullDesc: 'تعتبر فيلا ديمو العرض نموذجاً مثالياً لما تقدمه نحت العقارية لعملائها. تتكون الفيلا من دورين وملحق، وتضم صالات واسعة، مطبخ رئيسي ومطبخ تحضيري، غرف نوم ماستر، بالإضافة إلى حديقة خارجية ومسبح وموقف سيارتين.',
+      isFeatured: true,
+      isVisible: true,
+      showOnHomeMap: true,
+      mapLat: 24.8150,
+      mapLng: 46.6350,
+      mapX: 55, mapY: 45,
+      price: 2500000,
+      area: 350,
+      rooms: 5,
+      baths: 6,
+      progressPercent: 100,
+      progressLabel: 'مكتمل وجاهز للتسليم',
+      features: ['سمارت هوم', 'تكييف مخفي', 'مسبح خاص', 'حديقة خارجية', 'مصعد راكب'],
+      warranties: ['الهيكل الإنشائي - 10 سنوات', 'السباكة والكهرباء - 5 سنوات', 'العزل المائي - 10 سنوات']
+    },
+    {
+      slug: 'naht-15',
+      name: 'مشروع نحت 15',
+      type: 'فيلا',
+      city: 'الرياض',
+      neighborhood: 'النرجس',
+      status: 'AVAILABLE',
+      shortDesc: 'مشروع فلل فاخرة في حي النرجس بتصاميم عصرية.',
+      fullDesc: 'مشروع نحت 15 يمثل نقلة نوعية في عالم العقارات، يوفر فلل سكنية بأعلى المعايير وجودة البناء العالية مع ضمانات شاملة.',
+      isFeatured: true,
+      isVisible: true,
+      showOnHomeMap: true,
+      mapLat: 24.8350,
+      mapLng: 46.6550,
+      mapX: 45, mapY: 35,
+      price: 3200000,
+      area: 400,
+      rooms: 6,
+      baths: 7,
+      progressPercent: 85,
+      progressLabel: 'قيد التشطيب النهائي',
+      features: ['واجهات مودرن', 'تكييف مركزي', 'شرفة واسعة'],
+      warranties: ['الهيكل الإنشائي - 10 سنوات']
+    },
+    {
+      slug: 'naht-tower',
+      name: 'برج نحت (جدة)',
+      type: 'شقة',
+      city: 'جدة',
+      neighborhood: 'الشاطئ',
+      status: 'COMING_SOON',
+      shortDesc: 'شقق فاخرة بإطلالة بحرية ساحرة في قلب مدينة جدة.',
+      fullDesc: 'يقع برج نحت في حي الشاطئ بجدة، ويقدم شققاً سكنية بإطلالات خلابة على البحر الأحمر، مع مرافق متكاملة من نادي رياضي ومسبح مشترك وحراسة على مدار الساعة.',
+      isFeatured: false,
+      isVisible: true,
+      showOnHomeMap: true,
+      mapLat: 21.5833,
+      mapLng: 39.1333,
+      mapX: 25, mapY: 65,
+      price: 1800000,
+      area: 220,
+      rooms: 4,
+      baths: 4,
+      progressPercent: 40,
+      progressLabel: 'مرحلة العظم',
+      features: ['نادي رياضي', 'حراسة 24/7', 'إطلالة بحرية', 'مواقف تحت الأرض'],
+      warranties: ['الهيكل الإنشائي - 10 سنوات', 'مصاعد - 5 سنوات']
+    },
+    {
+      slug: 'naht-east',
+      name: 'نحت الشرق (الدمام)',
+      type: 'شقة',
+      city: 'الدمام',
+      neighborhood: 'الفيصلية',
+      status: 'SOLD_OUT',
+      shortDesc: 'مجمع سكني متكامل الخدمات في المنطقة الشرقية.',
+      fullDesc: 'مشروع سكني يقدم شققاً بمساحات ذكية تناسب العائلات الحديثة.',
+      isFeatured: false,
+      isVisible: true,
+      showOnHomeMap: true,
+      mapLat: 26.4207,
+      mapLng: 50.0888,
+      mapX: 75, mapY: 30,
+      price: 850000,
+      area: 150,
+      rooms: 3,
+      baths: 3,
+      progressPercent: 100,
+      progressLabel: 'مباع بالكامل',
+      features: ['دخول ذكي', 'مواقف خاصة'],
+      warranties: ['الهيكل الإنشائي - 10 سنوات']
+    },
+    {
+      slug: 'naht-plots',
+      name: 'مخطط نحت السكني',
+      type: 'أرض',
+      city: 'الرياض',
+      neighborhood: 'المهدية',
+      status: 'AVAILABLE',
+      shortDesc: 'أراضي سكنية مطورة ومكتملة الخدمات بأسعار تنافسية.',
+      fullDesc: 'مخطط سكني نموذجي يوفر أراضي جاهزة للبناء، مع توفر جميع الخدمات من كهرباء وماء وسفلتة وإنارة.',
+      isFeatured: true,
+      isVisible: true,
+      showOnHomeMap: true,
+      mapLat: 24.6436,
+      mapLng: 46.5453,
+      mapX: 40, mapY: 55,
+      price: 900000,
+      area: 500,
+      rooms: 0,
+      baths: 0,
+      progressPercent: 100,
+      progressLabel: 'مكتمل التطوير',
+      features: ['مكتمل الخدمات', 'شوارع فسيحة', 'قريب من الطرق الرئيسية'],
+      warranties: []
+    }
+  ];
+
+  for (const p of projectsData) {
+    const project = await prisma.project.upsert({
+      where: { slug: p.slug },
+      update: {},
+      create: {
+        slug: p.slug,
+        name: p.name,
+        type: p.type,
+        city: p.city,
+        neighborhood: p.neighborhood,
+        status: p.status,
+        shortDesc: p.shortDesc,
+        fullDesc: p.fullDesc,
+        isFeatured: p.isFeatured,
+        isVisible: p.isVisible,
+        showOnHomeMap: p.showOnHomeMap,
+        mapLat: p.mapLat, mapLng: p.mapLng,
+        mapX: p.mapX, mapY: p.mapY,
+        price: p.price,
+        area: p.area,
+        rooms: p.rooms,
+        baths: p.baths,
+        progressPercent: p.progressPercent,
+        progressLabel: p.progressLabel,
+      }
+    });
+
+    await prisma.projectFeature.deleteMany({ where: { projectId: project.id } });
+    await prisma.projectWarranty.deleteMany({ where: { projectId: project.id } });
+    await prisma.projectGalleryImage.deleteMany({ where: { projectId: project.id } });
+
+    if (p.features.length > 0) {
+      await prisma.projectFeature.createMany({
+        data: p.features.map(f => ({ projectId: project.id, title: f }))
+      });
+    }
+
+    if (p.warranties.length > 0) {
+      await prisma.projectWarranty.createMany({
+        data: p.warranties.map(w => ({ projectId: project.id, title: w }))
+      });
+    }
+
+    await prisma.projectGalleryImage.create({
+      data: {
+        projectId: project.id,
+        url: '/images/saudi-map-default.svg',
+        alt: p.name + ' - صورة 1',
+        order: 1
+      }
+    });
+  }
+
+  // 6. Demo Units for Naht-15
+  const project15 = await prisma.project.findUnique({ where: { slug: 'naht-15' } });
+  if (project15) {
+    await prisma.unit.deleteMany({ where: { projectId: project15.id } });
+    await prisma.unit.createMany({
+      data: [
+        { projectId: project15.id, unitNum: 'V-1', type: 'فيلا', area: 350, rooms: 5, baths: 6, status: 'AVAILABLE', price: 3200000, isVisible: true },
+        { projectId: project15.id, unitNum: 'V-2', type: 'فيلا', area: 400, rooms: 6, baths: 7, status: 'SOLD', price: 3500000, isVisible: true }
+      ]
+    });
+  }
+
+  // 7. FAQs
+  await prisma.faq.deleteMany({});
+  await prisma.faq.createMany({
+    data: [
+      { question: 'هل المشاريع تقبل التمويل البنكي؟', answer: 'نعم، جميع مشاريعنا معتمدة وتقبل التمويل من كافة البنوك السعودية.', isVisible: true, order: 1 },
+      { question: 'ما هي مدة الضمانات المقدمة؟', answer: 'نقدم ضمان 10 سنوات على الهيكل الإنشائي والعزل، و5 سنوات للسباكة والكهرباء.', isVisible: true, order: 2 },
+      { question: 'هل يمكن تعديل المخططات الداخلية؟', answer: 'نعم، في حال كان المشروع قيد الإنشاء يمكن تخصيص بعض التفاصيل حسب الرغبة.', isVisible: true, order: 3 },
+    ]
+  });
+
+  // 8. Services
+  await prisma.service.deleteMany({});
+  await prisma.service.createMany({
+    data: [
+      { title: 'التطوير العقاري', description: 'إنشاء مجمعات سكنية متكاملة.', icon: 'Building', isVisible: true, order: 1 },
+      { title: 'التسويق والمبيعات', description: 'تسويق احترافي للمشاريع العقارية.', icon: 'Megaphone', isVisible: true, order: 2 },
+      { title: 'إدارة الأملاك', description: 'إدارة متكاملة للأملاك تضمن راحة البال.', icon: 'Key', isVisible: true, order: 3 },
+    ]
+  });
+
+  // 9. Demo Leads
+  const existingLead = await prisma.lead.findFirst({ where: { phone: '0501234567' } });
+  if (!existingLead) {
+    await prisma.lead.create({
+      data: {
+        name: 'محمد عبدالله (تجريبي)',
+        phone: '0501234567',
+        status: 'NEW',
+        formType: 'GENERAL',
+        source: 'WEB_FORM',
+        projectId: project15?.id,
+      }
+    });
+  }
+
+  console.log('Staging UAT Seeding finished successfully.');
 }
 
 main()

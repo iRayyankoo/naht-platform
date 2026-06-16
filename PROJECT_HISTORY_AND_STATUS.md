@@ -159,3 +159,7 @@ npm.cmd run dev
  -   * * 'DE4CD): * *   A4D  (F'!  E3H/)  V e r c e l   'D+'FJ  D9/E  H,H/  'D,/'HD:   S u p a b a s e   S t a g i n g   D B   w a s   e m p t y   a n d   P r i s m a   t a b l e s   w e r e   n o t   p u s h e d   b e f o r e   N e x t . j s   p r e r e n d e r .  
  -   * * 'D-D: * *   *E  *9/JD  #H'E1  'D(F'!:   R u n   p r i s m a   d b   p u s h   b e f o r e   n e x t   b u i l d   i n   s t a g i n g - p r e v i e w   o n l y .  
  
+ # # #   U A T   S e e d   P r e p a r a t i o n  
+ -   * * 'DE4CD): * *   'DEHB9  'D*,1J(J  S t a g i n g   J8G1  A'1:'K  D#F  S u p a b a s e   S t a g i n g   D B   h a s   s c h e m a   b u t   n o   s e e d   d a t a .  
+ -   * * 'D-D: * *   *E  %9/'/  EDA  s e e d . t s   C'ED  H4'ED:   P r e p a r i n g   c o m p l e t e   U A T   s e e d   d a t a   f o r   m a n a g e m e n t   p r e v i e w .  
+ 
