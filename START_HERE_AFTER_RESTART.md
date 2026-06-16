@@ -1,4 +1,33 @@
-﻿# START HERE AFTER RESTART
+﻿# Staging UAT Status - End of Day Snapshot
+## Current Status
+- **Environment**: Vercel Preview / Staging UAT
+- **Branch**: staging-preview
+- **Database**: Supabase PostgreSQL Staging
+- **Seed**: Successfully executed. Database is populated with comprehensive demo data.
+- **Images**: Fixed and visible.
+  - **Issue**: The update block in upsert was empty, causing mainImage to remain NULL.
+  - **Fix**: Populated the update block in seed.ts with all fields including mainImage and heroBackgroundImage.
+  - **Assets**: Replaced SVG placeholders with high-quality JPGs extracted from local DB.
+- **Final State**: Staging Preview is fully ready for the initial management presentation. Batch 15 is NOT fully closed yet. Production/Merge/DNS changes are strictly on hold.
+
+## Important Links
+- **Vercel Preview**: https://naht-staging-git-staging-preview-ri88s-projects.vercel.app
+- **GitHub Repository**: https://github.com/iRayyankoo/naht-platform.git (Branch: staging-preview)
+- **Supabase Project**: Naht Platform Staging
+- **Admin Access**: See local env variable STAGING_ADMIN_EMAIL
+
+## Recovery & Resumption Commands
+`powershell
+cd "c:\Users\Rayyan Naht\Desktop\Naht-ERP\6-naht-platform"
+git checkout staging-preview
+git pull origin staging-preview
+npm run dev
+npx prisma generate
+`
+
+*Note: Running the seed on Supabase requires temporary Environment Variables (DATABASE_URL, DIRECT_URL, STAGING_ADMIN_EMAIL, STAGING_ADMIN_PASSWORD) passed via the terminal, which must never be committed to Git.*
+
+# START HERE AFTER RESTART
 
 
 ## How to continue from another device / طريقة الاستكمال من جهاز آخر
@@ -48,3 +77,4 @@ npm.cmd run dev
    - لا R2.
    - لا DNS.
    إلا بعد موافقة Rayyan.
+
