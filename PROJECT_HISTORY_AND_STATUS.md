@@ -150,3 +150,7 @@ npm.cmd run dev
 ### Current Phase: Staging Preparation
 - **الحالة الحالية:** Preparing isolated staging-preview branch for Vercel + Supabase Staging / UAT
 - **الوصف:** يتم الآن إنشاء فرع معزول استعداداً لربطه بقاعدة بيانات PostgreSQL للرفع على Vercel، دون التأثير على بيئة التطوير الأصلية (SQLite).
+
+### Vercel Preview Build Fix
+- **المشكلة:** فشل بناء مسودة Vercel (PrismaClientInitializationError) بسبب عدم تواجد مجلد .prisma/client داخل الحاوية.
+- **الحل:** تم إضافة prisma generate في سكريبت postinstall و uild داخل package.json ليتم توليد الـ Client أوتوماتيكياً في بيئة Vercel.
