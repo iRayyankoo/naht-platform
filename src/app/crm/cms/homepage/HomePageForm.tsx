@@ -180,6 +180,59 @@ export default function HomePageForm({ content }: { content: any }) {
         </div>
       </div>
 
+      <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-100">
+        <h2 className="text-xl font-bold text-gray-900 mb-4 border-b pb-2">قسم الخريطة التفاعلية (Interactive Map)</h2>
+        <div className="mb-4">
+          <label className="flex items-center space-x-2 space-x-reverse cursor-pointer">
+            <input type="checkbox" name="showMapSection" defaultChecked={content.showMapSection ?? true} className="w-5 h-5 text-primary border-gray-300 rounded" />
+            <span className="font-bold text-gray-800">إظهار قسم الخريطة التفاعلية في الصفحة الرئيسية</span>
+          </label>
+        </div>
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-4">
+          <div>
+            <label className="block text-sm font-bold text-gray-700 mb-1">عنوان القسم</label>
+            <input type="text" name="mapSectionTitle" defaultValue={content.mapSectionTitle || "منتجاتنا العقارية على الخريطة"} className="w-full border-gray-300 rounded-md p-2 border" />
+          </div>
+          <div>
+            <label className="block text-sm font-bold text-gray-700 mb-1">وصف القسم</label>
+            <input type="text" name="mapSectionDesc" defaultValue={content.mapSectionDesc || "تصفح مواقع منتجاتنا العقارية في مختلف مناطق المملكة."} className="w-full border-gray-300 rounded-md p-2 border" />
+          </div>
+        </div>
+        
+        <div className="bg-gray-50 p-4 rounded-lg border border-gray-200 mt-4 space-y-4">
+          <h3 className="font-bold text-gray-800">إعدادات الخريطة</h3>
+          <div>
+            <label className="block text-sm font-bold text-gray-700 mb-1">نوع الخريطة</label>
+            <select name="mapMode" defaultValue={content.mapMode || "geographic"} className="w-full border-gray-300 rounded-md p-2 border">
+              <option value="geographic">خريطة جغرافية حقيقية (Geographic Map)</option>
+              <option value="image">خريطة تصميمية (Image-based Map)</option>
+            </select>
+            <p className="text-xs text-gray-500 mt-1">الخريطة الجغرافية تعتمد على إحداثيات (Latitude, Longitude)، والخريطة التصميمية تعتمد على إحداثيات (X, Y) بصورة ثابتة.</p>
+          </div>
+
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 border-t pt-4 border-gray-200">
+            <div>
+              <label className="block text-sm font-bold text-gray-700 mb-1">مركز الخريطة (Latitude)</label>
+              <input type="number" step="any" name="mapCenterLat" defaultValue={content.mapCenterLat ?? 24.7136} className="w-full border-gray-300 rounded-md p-2 border text-left" dir="ltr" />
+            </div>
+            <div>
+              <label className="block text-sm font-bold text-gray-700 mb-1">مركز الخريطة (Longitude)</label>
+              <input type="number" step="any" name="mapCenterLng" defaultValue={content.mapCenterLng ?? 46.6753} className="w-full border-gray-300 rounded-md p-2 border text-left" dir="ltr" />
+            </div>
+            <div>
+              <label className="block text-sm font-bold text-gray-700 mb-1">مستوى التكبير (Zoom)</label>
+              <input type="number" name="mapZoom" defaultValue={content.mapZoom ?? 5} className="w-full border-gray-300 rounded-md p-2 border text-left" dir="ltr" />
+            </div>
+          </div>
+
+          <div className="border-t pt-4 border-gray-200">
+            <label className="block text-sm font-bold text-gray-700 mb-1">رابط صورة خلفية الخريطة (للخريطة التصميمية فقط)</label>
+            <input type="url" name="mapBackgroundImage" defaultValue={content.mapBackgroundImage || ""} placeholder="https://example.com/map-bg.png" className="w-full border-gray-300 rounded-md p-2 border text-left" dir="ltr" />
+            <p className="text-xs text-gray-500 mt-1">يُستخدم فقط إذا كان "نوع الخريطة" هو "خريطة تصميمية". اتركه فارغاً لاستخدام الخريطة الافتراضية.</p>
+          </div>
+        </div>
+      </div>
+
       <div className="flex justify-end pt-4">
         <button type="submit" disabled={isSaving} className="bg-primary hover:bg-primary-dark text-white px-8 py-3 rounded-md font-bold text-lg disabled:opacity-50">
           {isSaving ? "جاري الحفظ..." : "حفظ محتوى الصفحة الرئيسية"}

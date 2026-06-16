@@ -4,7 +4,7 @@ import HeroSection from "./components/HeroSection";
 import StatsSection from "./components/StatsSection";
 import AboutBrief from "./components/AboutBrief";
 import FeaturedProjects from "./components/FeaturedProjects";
-import ProjectTypes from "./components/ProjectTypes";
+import InteractiveMap from "./components/InteractiveMap";
 import WhyChooseUs from "./components/WhyChooseUs";
 import HomeFaq from "./components/HomeFaq";
 import HomeContact from "./components/HomeContact";
@@ -38,10 +38,23 @@ export default async function HomePage() {
     });
   }
   
-  const projectTypes = await prisma.project.findMany({
-    where: { isVisible: true },
-    select: { type: true },
-    distinct: ['type']
+  const mapProjects = await prisma.project.findMany({
+    where: { isVisible: true, showOnHomeMap: true },
+    select: {
+      id: true,
+      slug: true,
+      name: true,
+      status: true,
+      price: true,
+      area: true,
+      mainImage: true,
+      mapX: true,
+      mapY: true,
+      mapLat: true,
+      mapLng: true,
+      type: true,
+      city: true
+    }
   });
 
   const faqs = await prisma.faq.findMany({ 
@@ -57,7 +70,7 @@ export default async function HomePage() {
       <NahtStandard content={content} />
       <div className="bg-[#F9F9F7]"> {/* Light background for the rest */}
         <AboutBrief content={content} />
-        <ProjectTypes types={projectTypes} />
+        <InteractiveMap content={content} projects={mapProjects} />
         <StatsSection content={content} />
         <WhyChooseUs content={content} />
         <HomeFaq faqs={faqs} />

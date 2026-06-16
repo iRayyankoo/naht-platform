@@ -209,6 +209,48 @@ export default function ProjectFormFields({ initialData }: ProjectFormFieldsProp
             <label className="block text-sm font-medium text-gray-700">وصف الإنجاز (اختياري)</label>
             <input type="text" name="progressLabel" defaultValue={initialData?.progressLabel} placeholder="مثال: نسبة الإنجاز العام للمشروع" className="mt-1 shadow-sm focus:ring-primary focus:border-primary block w-full sm:text-sm border-gray-300 rounded-md py-2 px-3 border" />
           </div>
+
+          <div className="sm:col-span-6 mt-4 pt-4 border-t border-gray-200">
+            <h4 className="text-md font-bold text-gray-900 mb-4">الخريطة التفاعلية (الصفحة الرئيسية)</h4>
+            <div className="flex items-start mb-4">
+              <div className="flex items-center h-5">
+                <input name="showOnHomeMap" type="checkbox" defaultChecked={initialData?.showOnHomeMap} className="focus:ring-primary h-4 w-4 text-primary border-gray-300 rounded" />
+              </div>
+              <div className="ml-3 mr-3 text-sm">
+                <label className="font-medium text-gray-700">إظهار المنتج على خريطة الصفحة الرئيسية</label>
+              </div>
+            </div>
+
+            {/* Geographic Map Settings */}
+            <div className="bg-blue-50/50 p-4 rounded-lg border border-blue-100 mb-4">
+              <h5 className="text-sm font-bold text-blue-900 mb-3">إحداثيات الخريطة الجغرافية الحقيقية (Geographic Map)</h5>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700">Latitude (دائرة العرض)</label>
+                  <input type="number" step="any" name="mapLat" defaultValue={initialData?.mapLat} placeholder="مثال: 24.7136" className="mt-1 shadow-sm focus:ring-primary focus:border-primary block w-full sm:text-sm border-gray-300 rounded-md py-2 px-3 border" dir="ltr" />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700">Longitude (خط الطول)</label>
+                  <input type="number" step="any" name="mapLng" defaultValue={initialData?.mapLng} placeholder="مثال: 46.6753" className="mt-1 shadow-sm focus:ring-primary focus:border-primary block w-full sm:text-sm border-gray-300 rounded-md py-2 px-3 border" dir="ltr" />
+                </div>
+              </div>
+            </div>
+
+            {/* Image Map Settings */}
+            <div className="bg-gray-50 p-4 rounded-lg border border-gray-200">
+              <h5 className="text-sm font-bold text-gray-700 mb-3">إحداثيات الخريطة التصميمية الصورة (Image Map - احتياطي)</h5>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700">موضع X بالنسبة المئوية (%)</label>
+                  <input type="number" step="0.1" name="mapX" defaultValue={initialData?.mapX} placeholder="مثال: 45.5" className="mt-1 shadow-sm focus:ring-primary focus:border-primary block w-full sm:text-sm border-gray-300 rounded-md py-2 px-3 border" dir="ltr" />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700">موضع Y بالنسبة المئوية (%)</label>
+                  <input type="number" step="0.1" name="mapY" defaultValue={initialData?.mapY} placeholder="مثال: 60.2" className="mt-1 shadow-sm focus:ring-primary focus:border-primary block w-full sm:text-sm border-gray-300 rounded-md py-2 px-3 border" dir="ltr" />
+                </div>
+              </div>
+            </div>
+          </div>
         </div>
 
         {/* TAB 4: FEATURES & WARRANTIES */}

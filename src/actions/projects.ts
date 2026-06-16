@@ -48,6 +48,12 @@ export async function createProject(formData: FormData) {
   const locationText = formData.get("locationText") as string || null;
   const pdfUrl = formData.get("pdfUrl") as string || null;
 
+  const showOnHomeMap = formData.get("showOnHomeMap") === "on";
+  const mapLat = formData.get("mapLat") ? parseFloat(formData.get("mapLat") as string) : null;
+  const mapLng = formData.get("mapLng") ? parseFloat(formData.get("mapLng") as string) : null;
+  const mapX = formData.get("mapX") ? parseFloat(formData.get("mapX") as string) : null;
+  const mapY = formData.get("mapY") ? parseFloat(formData.get("mapY") as string) : null;
+
   const features = parseRelatedList(formData.get("features") as string);
   const warranties = parseRelatedList(formData.get("warranties") as string);
   const galleryImages = parseRelatedList(formData.get("galleryImages") as string);
@@ -56,6 +62,7 @@ export async function createProject(formData: FormData) {
     data: {
       name, slug, type, city, neighborhood, status, shortDesc, fullDesc, mainImage, isFeatured, isVisible,
       area, price, rooms, baths, progressPercent, progressLabel, googleMapsUrl, locationText, pdfUrl,
+      showOnHomeMap, mapLat, mapLng, mapX, mapY,
       features: { create: features },
       warranties: { create: warranties },
       galleryImages: { create: galleryImages },
@@ -93,6 +100,12 @@ export async function updateProject(id: string, formData: FormData) {
   const locationText = formData.get("locationText") as string || null;
   const pdfUrl = formData.get("pdfUrl") as string || null;
 
+  const showOnHomeMap = formData.get("showOnHomeMap") === "on";
+  const mapLat = formData.get("mapLat") ? parseFloat(formData.get("mapLat") as string) : null;
+  const mapLng = formData.get("mapLng") ? parseFloat(formData.get("mapLng") as string) : null;
+  const mapX = formData.get("mapX") ? parseFloat(formData.get("mapX") as string) : null;
+  const mapY = formData.get("mapY") ? parseFloat(formData.get("mapY") as string) : null;
+
   const features = parseRelatedList(formData.get("features") as string);
   const warranties = parseRelatedList(formData.get("warranties") as string);
   const galleryImages = parseRelatedList(formData.get("galleryImages") as string);
@@ -102,6 +115,7 @@ export async function updateProject(id: string, formData: FormData) {
     data: {
       name, slug, type, city, neighborhood, status, shortDesc, fullDesc, mainImage, isFeatured, isVisible,
       area, price, rooms, baths, progressPercent, progressLabel, googleMapsUrl, locationText, pdfUrl,
+      showOnHomeMap, mapLat, mapLng, mapX, mapY,
       features: { deleteMany: {}, create: features },
       warranties: { deleteMany: {}, create: warranties },
       galleryImages: { deleteMany: {}, create: galleryImages },
@@ -119,4 +133,22 @@ export async function deleteProject(id: string) {
   await prisma.project.delete({ where: { id } });
   revalidatePath("/crm/projects");
   revalidatePath("/projects");
+}
+
+export async function updateProjectMapData(id: string, data: { showOnHomeMap: boolean; mapLat: number | null; mapLng: number | null; mapX: number | null; mapY: number | null }) {
+  await actionRequireRole(["ADMIN", "MARKETING"]);
+  
+  await prisma.project.update({
+    where: { id },
+    data: {
+      showOnHomeMap: data.showOnHomeMap,
+      mapLat: data.mapLat,
+      mapLng: data.mapLng,
+      mapX: data.mapX,
+      mapY: data.mapY,
+    }
+  });
+
+  revalidatePath("/");
+  revalidatePath("/crm/projects-map");
 }

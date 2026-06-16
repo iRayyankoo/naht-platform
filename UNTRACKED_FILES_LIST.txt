@@ -1,0 +1,15 @@
+BATCH_15_WIP_STATUS.md
+GIT_DIFF.patch
+GIT_DIFF_STAGED.patch
+GIT_STATUS.txt
+PROJECT_HISTORY_AND_STATUS.md
+RESUME_FROM_HERE.md
+START_HERE_AFTER_RESTART.md
+UNTRACKED_FILES_LIST.txt
+public/images/naht-map-background.png
+public/images/saudi-map-default.svg
+public/uploads/forms/general/1781602621100-b4761b5e0023d564.png
+src/app/(public)/components/InteractiveMap.tsx
+src/app/(public)/components/map/GeographicMap.tsx
+src/app/crm/projects-map/MapManagerClient.tsx
+src/app/crm/projects-map/page.tsx

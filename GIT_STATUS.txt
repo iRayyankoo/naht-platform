@@ -1,0 +1,34 @@
+On branch ui-refinements
+Changes not staged for commit:
+  (use "git add <file>..." to update what will be committed)
+  (use "git restore <file>..." to discard changes in working directory)
+	modified:   package-lock.json
+	modified:   package.json
+	modified:   prisma/dev.db
+	modified:   prisma/schema.prisma
+	modified:   src/actions/cms.ts
+	modified:   src/actions/projects.ts
+	modified:   src/app/(public)/components/FeaturedProjects.tsx
+	modified:   src/app/(public)/page.tsx
+	modified:   src/app/crm/cms/homepage/HomePageForm.tsx
+	modified:   src/app/crm/projects/ProjectFormFields.tsx
+	modified:   src/components/crm/CrmSidebar.tsx
+	modified:   src/components/crm/ImageUpload.tsx
+
+Untracked files:
+  (use "git add <file>..." to include in what will be committed)
+	BATCH_15_WIP_STATUS.md
+	GIT_DIFF.patch
+	GIT_DIFF_STAGED.patch
+	GIT_STATUS.txt
+	PROJECT_HISTORY_AND_STATUS.md
+	RESUME_FROM_HERE.md
+	START_HERE_AFTER_RESTART.md
+	UNTRACKED_FILES_LIST.txt
+	public/images/
+	public/uploads/forms/general/1781602621100-b4761b5e0023d564.png
+	src/app/(public)/components/InteractiveMap.tsx
+	src/app/(public)/components/map/
+	src/app/crm/projects-map/
+
+no changes added to commit (use "git add" and/or "git commit -a")

@@ -8,26 +8,26 @@ export default function FeaturedProjects({ projects }: { projects: Project[] }) 
   const curatedProjects = projects.slice(1, 5); // Take up to 4 curated projects
 
   return (
-    <section className="py-24 md:py-32 bg-[#F9F9F7] overflow-hidden">
+    <section className="py-12 md:py-20 bg-[#F9F9F7] overflow-hidden">
       <div className="max-w-[1400px] mx-auto px-6">
         
         {/* Section Header */}
-        <div className="flex flex-col md:flex-row justify-between items-end mb-16 md:mb-24 gap-8">
+        <div className="flex flex-col md:flex-row justify-between items-start md:items-end mb-10 md:mb-16 gap-6">
           <div className="max-w-2xl">
-            <h2 className="text-4xl md:text-5xl lg:text-6xl font-bold text-gray-950 mb-6 tracking-tight font-serif leading-tight">المشاريع<br className="hidden md:block"/> المختارة</h2>
-            <div className="w-16 h-[2px] bg-primary/70 mb-8 rounded-full"></div>
-            <p className="text-lg md:text-xl text-gray-500 font-light leading-relaxed">
+            <h2 className="text-3xl md:text-4xl lg:text-5xl font-bold text-gray-950 mb-4 tracking-tight font-serif leading-tight">المشاريع المختارة</h2>
+            <div className="w-16 h-[2px] bg-primary/70 mb-4 rounded-full"></div>
+            <p className="text-base md:text-lg text-gray-500 font-light leading-relaxed max-w-xl">
               انتقاء حصري لأرقى مشاريعنا، تعكس شغفنا بالتفاصيل وروعة التصميم المعماري الحديث في أفضل المواقع.
             </p>
           </div>
-          <Link href="/projects" className="hidden md:inline-flex items-center gap-4 text-gray-950 hover:text-primary font-bold transition-all group uppercase tracking-widest pb-2 opacity-80 hover:opacity-100">
+          <Link href="/projects" className="hidden md:inline-flex items-center gap-3 text-gray-950 hover:text-primary font-bold transition-all group uppercase tracking-widest opacity-80 hover:opacity-100">
             <span className="border-b border-gray-300/50 group-hover:border-primary pb-1 transition-colors">عرض المجموعة كاملة</span>
-            <svg className="w-5 h-5 rtl:rotate-180 transition-transform group-hover:-translate-x-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M17 8l4 4m0 0l-4 4m4-4H3"></path></svg>
+            <svg className="w-5 h-5 rtl:rotate-180 transition-transform group-hover:-translate-x-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M17 8l4 4m0 0l-4 4m4-4H3"></path></svg>
           </Link>
         </div>
 
         {/* The Signature Project (Editorial Style) */}
-        <div className="mb-20 md:mb-32">
+        <div className="mb-12 md:mb-20">
           <Link href={`/projects/${mainProject.slug}`} className="group block relative w-full h-[60vh] md:h-[80vh] overflow-hidden rounded-3xl shadow-[0_20px_60px_rgba(0,0,0,0.05)]">
             {mainProject.mainImage ? (
               <img 
@@ -106,8 +106,8 @@ export default function FeaturedProjects({ projects }: { projects: Project[] }) 
           </div>
         )}
 
-        <div className="text-center mt-6 md:hidden">
-          <Link href="/projects" className="inline-flex items-center justify-center w-full gap-3 bg-white text-gray-950 shadow-[0_10px_30px_rgba(0,0,0,0.05)] rounded-full px-8 py-5 font-bold tracking-widest uppercase transition-all hover:-translate-y-1">
+        <div className="text-center mt-4 md:hidden">
+          <Link href="/projects" className="inline-flex items-center justify-center w-full gap-3 bg-white text-gray-950 shadow-[0_10px_30px_rgba(0,0,0,0.05)] rounded-full px-8 py-4 font-bold tracking-widest uppercase transition-all hover:-translate-y-1">
             عرض كل المشاريع
           </Link>
         </div>

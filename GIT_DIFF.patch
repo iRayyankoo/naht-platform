@@ -1,0 +1,674 @@
+diff --git a/package-lock.json b/package-lock.json
+index ac5b21a..c8029ea 100644
+--- a/package-lock.json
++++ b/package-lock.json
+@@ -11,15 +11,18 @@
+         "@aws-sdk/client-s3": "^3.1068.0",
+         "@prisma/client": "^6.4.1",
+         "bcryptjs": "^3.0.3",
++        "leaflet": "^1.9.4",
+         "next": "16.2.9",
+         "next-auth": "^4.24.14",
+         "react": "19.2.4",
+         "react-dom": "19.2.4",
+-        "react-hot-toast": "^2.6.0"
++        "react-hot-toast": "^2.6.0",
++        "react-leaflet": "^5.0.0"
+       },
+       "devDependencies": {
+         "@tailwindcss/postcss": "^4",
+         "@types/bcryptjs": "^2.4.6",
++        "@types/leaflet": "^1.9.21",
+         "@types/node": "^20",
+         "@types/react": "^19",
+         "@types/react-dom": "^19",
+@@ -2207,6 +2210,17 @@
+         "@prisma/debug": "6.4.1"
+       }
+     },
++    "node_modules/@react-leaflet/core": {
++      "version": "3.0.0",
++      "resolved": "https://registry.npmjs.org/@react-leaflet/core/-/core-3.0.0.tgz",
++      "integrity": "sha512-3EWmekh4Nz+pGcr+xjf0KNyYfC3U2JjnkWsh0zcqaexYqmmB5ZhH37kz41JXGmKzpaMZCnPofBBm64i+YrEvGQ==",
++      "license": "Hippocratic-2.1",
++      "peerDependencies": {
++        "leaflet": "^1.9.0",
++        "react": "^19.0.0",
++        "react-dom": "^19.0.0"
++      }
++    },
+     "node_modules/@rtsao/scc": {
+       "version": "1.1.0",
+       "resolved": "https://registry.npmjs.org/@rtsao/scc/-/scc-1.1.0.tgz",
+@@ -2639,6 +2653,13 @@
+       "dev": true,
+       "license": "MIT"
+     },
++    "node_modules/@types/geojson": {
++      "version": "7946.0.16",
++      "resolved": "https://registry.npmjs.org/@types/geojson/-/geojson-7946.0.16.tgz",
++      "integrity": "sha512-6C8nqWur3j98U6+lXDfTUWIfgvZU+EumvpHKcYjujKH7woYyLj2sUmff0tRhrqM7BohUw7Pz3ZB1jj2gW9Fvmg==",
++      "dev": true,
++      "license": "MIT"
++    },
+     "node_modules/@types/json-schema": {
+       "version": "7.0.15",
+       "resolved": "https://registry.npmjs.org/@types/json-schema/-/json-schema-7.0.15.tgz",
+@@ -2653,6 +2674,16 @@
+       "dev": true,
+       "license": "MIT"
+     },
++    "node_modules/@types/leaflet": {
++      "version": "1.9.21",
++      "resolved": "https://registry.npmjs.org/@types/leaflet/-/leaflet-1.9.21.tgz",
++      "integrity": "sha512-TbAd9DaPGSnzp6QvtYngntMZgcRk+igFELwR2N99XZn7RXUdKgsXMR+28bUO0rPsWp8MIu/f47luLIQuSLYv/w==",
++      "dev": true,
++      "license": "MIT",
++      "dependencies": {
++        "@types/geojson": "*"
++      }
++    },
+     "node_modules/@types/node": {
+       "version": "20.19.43",
+       "resolved": "https://registry.npmjs.org/@types/node/-/node-20.19.43.tgz",
+@@ -5887,6 +5918,13 @@
+         "node": ">=0.10"
+       }
+     },
++    "node_modules/leaflet": {
++      "version": "1.9.4",
++      "resolved": "https://registry.npmjs.org/leaflet/-/leaflet-1.9.4.tgz",
++      "integrity": "sha512-nxS1ynzJOmOlHp+iL3FyWqK89GtNL8U8rvlMOsQdTTssxZwCXh8N2NB3GDQOL+YR3XnWyZAxwQixURb+FA74PA==",
++      "license": "BSD-2-Clause",
++      "peer": true
++    },
+     "node_modules/levn": {
+       "version": "0.4.1",
+       "resolved": "https://registry.npmjs.org/levn/-/levn-0.4.1.tgz",
+@@ -6986,6 +7024,20 @@
+       "dev": true,
+       "license": "MIT"
+     },
++    "node_modules/react-leaflet": {
++      "version": "5.0.0",
++      "resolved": "https://registry.npmjs.org/react-leaflet/-/react-leaflet-5.0.0.tgz",
++      "integrity": "sha512-CWbTpr5vcHw5bt9i4zSlPEVQdTVcML390TjeDG0cK59z1ylexpqC6M1PJFjV8jD7CF+ACBFsLIDs6DRMoLEofw==",
++      "license": "Hippocratic-2.1",
++      "dependencies": {
++        "@react-leaflet/core": "^3.0.0"
++      },
++      "peerDependencies": {
++        "leaflet": "^1.9.0",
++        "react": "^19.0.0",
++        "react-dom": "^19.0.0"
++      }
++    },
+     "node_modules/reflect.getprototypeof": {
+       "version": "1.0.10",
+       "resolved": "https://registry.npmjs.org/reflect.getprototypeof/-/reflect.getprototypeof-1.0.10.tgz",
+diff --git a/package.json b/package.json
+index 05d4ece..98e824f 100644
+--- a/package.json
++++ b/package.json
+@@ -12,11 +12,13 @@
+     "@aws-sdk/client-s3": "^3.1068.0",
+     "@prisma/client": "^6.4.1",
+     "bcryptjs": "^3.0.3",
++    "leaflet": "^1.9.4",
+     "next": "16.2.9",
+     "next-auth": "^4.24.14",
+     "react": "19.2.4",
+     "react-dom": "19.2.4",
+-    "react-hot-toast": "^2.6.0"
++    "react-hot-toast": "^2.6.0",
++    "react-leaflet": "^5.0.0"
+   },
+   "prisma": {
+     "seed": "npx tsx prisma/seed.ts"
+@@ -24,6 +26,7 @@
+   "devDependencies": {
+     "@tailwindcss/postcss": "^4",
+     "@types/bcryptjs": "^2.4.6",
++    "@types/leaflet": "^1.9.21",
+     "@types/node": "^20",
+     "@types/react": "^19",
+     "@types/react-dom": "^19",
+diff --git a/prisma/dev.db b/prisma/dev.db
+index f31487ed7a3bde57e0a3b92b52a8643380aec0b8..44f9dc6ddd95e18ac36e7cb2d33fb14c76b71437 100644
+GIT binary patch
+delta 5020
+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
+X1s?eS#x%Q){jY3HONiBr?nnLuXJ;bD
+
+delta 2556
+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
+
+diff --git a/prisma/schema.prisma b/prisma/schema.prisma
+index eeb3018..d60c8d2 100644
+--- a/prisma/schema.prisma
++++ b/prisma/schema.prisma
+@@ -95,6 +95,13 @@ model Project {
+   locationText    String?
+   pdfUrl          String?
+ 
++  // Interactive Map Fields (Batch 15 Revision)
++  showOnHomeMap Boolean   @default(false)
++  mapLat        Float?
++  mapLng        Float?
++  mapX          Float?    // Deprecated but kept for image map mode
++  mapY          Float?    // Deprecated but kept for image map mode
++  
+   createdAt    DateTime @default(now())
+   updatedAt    DateTime @updatedAt
+ 
+@@ -412,6 +419,33 @@ model HomePageContent {
+   nahtFeature4Title       String? @default("ضمانات ممتدة")
+   nahtFeature4Desc        String? @default("نقدم ضمانات حقيقية تمتد لسنوات لحماية استثمارك وراحتك.")
+ 
++  // Phase 15 Map Section
++  showMapSection      Boolean @default(true)
++  mapSectionTitle     String?
++  mapSectionDesc      String?
++  mapMode             String? @default("geographic") // geographic | image
++  mapCenterLat        Float?  @default(24.7136)
++  mapCenterLng        Float?  @default(46.6753)
++  mapZoom             Int?    @default(5)
++  mapBackgroundImage  String?
++
++  // Pin Settings (Batch 15)
++  pinColorAvailable         String? @default("#B5B693")
++  pinColorSold              String? @default("#4E4949")
++  pinColorComingSoon        String? @default("#C5B59C")
++  pinColorUnderConstruction String? @default("#A6937C")
++  pinColorDefault           String? @default("#A6937C")
++  pinLogoUrl                String?
++  pinLogoSize               Int?    @default(32)
++
++  // Map Style Settings (Batch 15)
++  mapTileStyle              String? @default("light") // light, warm, muted, grayscale, dark
++  mapTileBrightness         Int?    @default(100)
++  mapTileContrast           Int?    @default(100)
++  mapTileSaturation         Int?    @default(100)
++  mapTileHue                Int?    @default(0)
++  mapTileGrayscale          Int?    @default(0)
++
+   updatedAt DateTime @updatedAt
+ }
+ 
+diff --git a/src/actions/cms.ts b/src/actions/cms.ts
+index 4a74f5b..e0166d2 100644
+--- a/src/actions/cms.ts
++++ b/src/actions/cms.ts
+@@ -27,10 +27,34 @@ export async function updateSiteSettings(data: any) {
+ // === Home Page Content ===
+ export async function updateHomePageContent(data: any) {
+   await actionRequireRole(["ADMIN", "MARKETING"]);
++
++  const sanitizedData = {
++    ...data,
++    showMapSection: data.showMapSection === "on" || data.showMapSection === true,
++  };
++
++  const parseNumber = (val: any) => {
++    if (!val) return null;
++    const num = Number(val);
++    return isNaN(num) ? null : num;
++  };
++
++  sanitizedData.mapCenterLat = parseNumber(sanitizedData.mapCenterLat) ?? 24.7136;
++  sanitizedData.mapCenterLng = parseNumber(sanitizedData.mapCenterLng) ?? 46.6753;
++  sanitizedData.mapZoom = parseNumber(sanitizedData.mapZoom) ?? 5;
++  sanitizedData.mapMode = sanitizedData.mapMode || "geographic";
++  sanitizedData.pinLogoSize = parseNumber(sanitizedData.pinLogoSize) ?? 32;
++
++  sanitizedData.mapTileBrightness = parseNumber(sanitizedData.mapTileBrightness) ?? 100;
++  sanitizedData.mapTileContrast = parseNumber(sanitizedData.mapTileContrast) ?? 100;
++  sanitizedData.mapTileSaturation = parseNumber(sanitizedData.mapTileSaturation) ?? 100;
++  sanitizedData.mapTileHue = parseNumber(sanitizedData.mapTileHue) ?? 0;
++  sanitizedData.mapTileGrayscale = parseNumber(sanitizedData.mapTileGrayscale) ?? 0;
++
+   await prisma.homePageContent.upsert({
+     where: { id: "global" },
+-    update: data,
+-    create: { id: "global", ...data },
++    update: sanitizedData,
++    create: { id: "global", ...sanitizedData },
+   });
+   revalidatePath("/");
+   revalidatePath("/crm/cms/homepage");
+diff --git a/src/actions/projects.ts b/src/actions/projects.ts
+index cca0b80..34a35a6 100644
+--- a/src/actions/projects.ts
++++ b/src/actions/projects.ts
+@@ -48,6 +48,12 @@ export async function createProject(formData: FormData) {
+   const locationText = formData.get("locationText") as string || null;
+   const pdfUrl = formData.get("pdfUrl") as string || null;
+ 
++  const showOnHomeMap = formData.get("showOnHomeMap") === "on";
++  const mapLat = formData.get("mapLat") ? parseFloat(formData.get("mapLat") as string) : null;
++  const mapLng = formData.get("mapLng") ? parseFloat(formData.get("mapLng") as string) : null;
++  const mapX = formData.get("mapX") ? parseFloat(formData.get("mapX") as string) : null;
++  const mapY = formData.get("mapY") ? parseFloat(formData.get("mapY") as string) : null;
++
+   const features = parseRelatedList(formData.get("features") as string);
+   const warranties = parseRelatedList(formData.get("warranties") as string);
+   const galleryImages = parseRelatedList(formData.get("galleryImages") as string);
+@@ -56,6 +62,7 @@ export async function createProject(formData: FormData) {
+     data: {
+       name, slug, type, city, neighborhood, status, shortDesc, fullDesc, mainImage, isFeatured, isVisible,
+       area, price, rooms, baths, progressPercent, progressLabel, googleMapsUrl, locationText, pdfUrl,
++      showOnHomeMap, mapLat, mapLng, mapX, mapY,
+       features: { create: features },
+       warranties: { create: warranties },
+       galleryImages: { create: galleryImages },
+@@ -93,6 +100,12 @@ export async function updateProject(id: string, formData: FormData) {
+   const locationText = formData.get("locationText") as string || null;
+   const pdfUrl = formData.get("pdfUrl") as string || null;
+ 
++  const showOnHomeMap = formData.get("showOnHomeMap") === "on";
++  const mapLat = formData.get("mapLat") ? parseFloat(formData.get("mapLat") as string) : null;
++  const mapLng = formData.get("mapLng") ? parseFloat(formData.get("mapLng") as string) : null;
++  const mapX = formData.get("mapX") ? parseFloat(formData.get("mapX") as string) : null;
++  const mapY = formData.get("mapY") ? parseFloat(formData.get("mapY") as string) : null;
++
+   const features = parseRelatedList(formData.get("features") as string);
+   const warranties = parseRelatedList(formData.get("warranties") as string);
+   const galleryImages = parseRelatedList(formData.get("galleryImages") as string);
+@@ -102,6 +115,7 @@ export async function updateProject(id: string, formData: FormData) {
+     data: {
+       name, slug, type, city, neighborhood, status, shortDesc, fullDesc, mainImage, isFeatured, isVisible,
+       area, price, rooms, baths, progressPercent, progressLabel, googleMapsUrl, locationText, pdfUrl,
++      showOnHomeMap, mapLat, mapLng, mapX, mapY,
+       features: { deleteMany: {}, create: features },
+       warranties: { deleteMany: {}, create: warranties },
+       galleryImages: { deleteMany: {}, create: galleryImages },
+@@ -120,3 +134,21 @@ export async function deleteProject(id: string) {
+   revalidatePath("/crm/projects");
+   revalidatePath("/projects");
+ }
++
++export async function updateProjectMapData(id: string, data: { showOnHomeMap: boolean; mapLat: number | null; mapLng: number | null; mapX: number | null; mapY: number | null }) {
++  await actionRequireRole(["ADMIN", "MARKETING"]);
++  
++  await prisma.project.update({
++    where: { id },
++    data: {
++      showOnHomeMap: data.showOnHomeMap,
++      mapLat: data.mapLat,
++      mapLng: data.mapLng,
++      mapX: data.mapX,
++      mapY: data.mapY,
++    }
++  });
++
++  revalidatePath("/");
++  revalidatePath("/crm/projects-map");
++}
+diff --git a/src/app/(public)/components/FeaturedProjects.tsx b/src/app/(public)/components/FeaturedProjects.tsx
+index 7ba9c11..877189b 100644
+--- a/src/app/(public)/components/FeaturedProjects.tsx
++++ b/src/app/(public)/components/FeaturedProjects.tsx
+@@ -8,26 +8,26 @@ export default function FeaturedProjects({ projects }: { projects: Project[] })
+   const curatedProjects = projects.slice(1, 5); // Take up to 4 curated projects
+ 
+   return (
+-    <section className="py-24 md:py-32 bg-[#F9F9F7] overflow-hidden">
++    <section className="py-12 md:py-20 bg-[#F9F9F7] overflow-hidden">
+       <div className="max-w-[1400px] mx-auto px-6">
+         
+         {/* Section Header */}
+-        <div className="flex flex-col md:flex-row justify-between items-end mb-16 md:mb-24 gap-8">
++        <div className="flex flex-col md:flex-row justify-between items-start md:items-end mb-10 md:mb-16 gap-6">
+           <div className="max-w-2xl">
+-            <h2 className="text-4xl md:text-5xl lg:text-6xl font-bold text-gray-950 mb-6 tracking-tight font-serif leading-tight">المشاريع<br className="hidden md:block"/> المختارة</h2>
+-            <div className="w-16 h-[2px] bg-primary/70 mb-8 rounded-full"></div>
+-            <p className="text-lg md:text-xl text-gray-500 font-light leading-relaxed">
++            <h2 className="text-3xl md:text-4xl lg:text-5xl font-bold text-gray-950 mb-4 tracking-tight font-serif leading-tight">المشاريع المختارة</h2>
++            <div className="w-16 h-[2px] bg-primary/70 mb-4 rounded-full"></div>
++            <p className="text-base md:text-lg text-gray-500 font-light leading-relaxed max-w-xl">
+               انتقاء حصري لأرقى مشاريعنا، تعكس شغفنا بالتفاصيل وروعة التصميم المعماري الحديث في أفضل المواقع.
+             </p>
+           </div>
+-          <Link href="/projects" className="hidden md:inline-flex items-center gap-4 text-gray-950 hover:text-primary font-bold transition-all group uppercase tracking-widest pb-2 opacity-80 hover:opacity-100">
++          <Link href="/projects" className="hidden md:inline-flex items-center gap-3 text-gray-950 hover:text-primary font-bold transition-all group uppercase tracking-widest opacity-80 hover:opacity-100">
+             <span className="border-b border-gray-300/50 group-hover:border-primary pb-1 transition-colors">عرض المجموعة كاملة</span>
+-            <svg className="w-5 h-5 rtl:rotate-180 transition-transform group-hover:-translate-x-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M17 8l4 4m0 0l-4 4m4-4H3"></path></svg>
++            <svg className="w-5 h-5 rtl:rotate-180 transition-transform group-hover:-translate-x-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M17 8l4 4m0 0l-4 4m4-4H3"></path></svg>
+           </Link>
+         </div>
+ 
+         {/* The Signature Project (Editorial Style) */}
+-        <div className="mb-20 md:mb-32">
++        <div className="mb-12 md:mb-20">
+           <Link href={`/projects/${mainProject.slug}`} className="group block relative w-full h-[60vh] md:h-[80vh] overflow-hidden rounded-3xl shadow-[0_20px_60px_rgba(0,0,0,0.05)]">
+             {mainProject.mainImage ? (
+               <img 
+@@ -106,8 +106,8 @@ export default function FeaturedProjects({ projects }: { projects: Project[] })
+           </div>
+         )}
+ 
+-        <div className="text-center mt-6 md:hidden">
+-          <Link href="/projects" className="inline-flex items-center justify-center w-full gap-3 bg-white text-gray-950 shadow-[0_10px_30px_rgba(0,0,0,0.05)] rounded-full px-8 py-5 font-bold tracking-widest uppercase transition-all hover:-translate-y-1">
++        <div className="text-center mt-4 md:hidden">
++          <Link href="/projects" className="inline-flex items-center justify-center w-full gap-3 bg-white text-gray-950 shadow-[0_10px_30px_rgba(0,0,0,0.05)] rounded-full px-8 py-4 font-bold tracking-widest uppercase transition-all hover:-translate-y-1">
+             عرض كل المشاريع
+           </Link>
+         </div>
+diff --git a/src/app/(public)/page.tsx b/src/app/(public)/page.tsx
+index 33fc03d..8094669 100644
+--- a/src/app/(public)/page.tsx
++++ b/src/app/(public)/page.tsx
+@@ -4,7 +4,7 @@ import HeroSection from "./components/HeroSection";
+ import StatsSection from "./components/StatsSection";
+ import AboutBrief from "./components/AboutBrief";
+ import FeaturedProjects from "./components/FeaturedProjects";
+-import ProjectTypes from "./components/ProjectTypes";
++import InteractiveMap from "./components/InteractiveMap";
+ import WhyChooseUs from "./components/WhyChooseUs";
+ import HomeFaq from "./components/HomeFaq";
+ import HomeContact from "./components/HomeContact";
+@@ -38,10 +38,23 @@ export default async function HomePage() {
+     });
+   }
+   
+-  const projectTypes = await prisma.project.findMany({
+-    where: { isVisible: true },
+-    select: { type: true },
+-    distinct: ['type']
++  const mapProjects = await prisma.project.findMany({
++    where: { isVisible: true, showOnHomeMap: true },
++    select: {
++      id: true,
++      slug: true,
++      name: true,
++      status: true,
++      price: true,
++      area: true,
++      mainImage: true,
++      mapX: true,
++      mapY: true,
++      mapLat: true,
++      mapLng: true,
++      type: true,
++      city: true
++    }
+   });
+ 
+   const faqs = await prisma.faq.findMany({ 
+@@ -57,7 +70,7 @@ export default async function HomePage() {
+       <NahtStandard content={content} />
+       <div className="bg-[#F9F9F7]"> {/* Light background for the rest */}
+         <AboutBrief content={content} />
+-        <ProjectTypes types={projectTypes} />
++        <InteractiveMap content={content} projects={mapProjects} />
+         <StatsSection content={content} />
+         <WhyChooseUs content={content} />
+         <HomeFaq faqs={faqs} />
+diff --git a/src/app/crm/cms/homepage/HomePageForm.tsx b/src/app/crm/cms/homepage/HomePageForm.tsx
+index 62df69f..89ab008 100644
+--- a/src/app/crm/cms/homepage/HomePageForm.tsx
++++ b/src/app/crm/cms/homepage/HomePageForm.tsx
+@@ -180,6 +180,59 @@ export default function HomePageForm({ content }: { content: any }) {
+         </div>
+       </div>
+ 
++      <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-100">
++        <h2 className="text-xl font-bold text-gray-900 mb-4 border-b pb-2">قسم الخريطة التفاعلية (Interactive Map)</h2>
++        <div className="mb-4">
++          <label className="flex items-center space-x-2 space-x-reverse cursor-pointer">
++            <input type="checkbox" name="showMapSection" defaultChecked={content.showMapSection ?? true} className="w-5 h-5 text-primary border-gray-300 rounded" />
++            <span className="font-bold text-gray-800">إظهار قسم الخريطة التفاعلية في الصفحة الرئيسية</span>
++          </label>
++        </div>
++        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-4">
++          <div>
++            <label className="block text-sm font-bold text-gray-700 mb-1">عنوان القسم</label>
++            <input type="text" name="mapSectionTitle" defaultValue={content.mapSectionTitle || "منتجاتنا العقارية على الخريطة"} className="w-full border-gray-300 rounded-md p-2 border" />
++          </div>
++          <div>
++            <label className="block text-sm font-bold text-gray-700 mb-1">وصف القسم</label>
++            <input type="text" name="mapSectionDesc" defaultValue={content.mapSectionDesc || "تصفح مواقع منتجاتنا العقارية في مختلف مناطق المملكة."} className="w-full border-gray-300 rounded-md p-2 border" />
++          </div>
++        </div>
++        
++        <div className="bg-gray-50 p-4 rounded-lg border border-gray-200 mt-4 space-y-4">
++          <h3 className="font-bold text-gray-800">إعدادات الخريطة</h3>
++          <div>
++            <label className="block text-sm font-bold text-gray-700 mb-1">نوع الخريطة</label>
++            <select name="mapMode" defaultValue={content.mapMode || "geographic"} className="w-full border-gray-300 rounded-md p-2 border">
++              <option value="geographic">خريطة جغرافية حقيقية (Geographic Map)</option>
++              <option value="image">خريطة تصميمية (Image-based Map)</option>
++            </select>
++            <p className="text-xs text-gray-500 mt-1">الخريطة الجغرافية تعتمد على إحداثيات (Latitude, Longitude)، والخريطة التصميمية تعتمد على إحداثيات (X, Y) بصورة ثابتة.</p>
++          </div>
++
++          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 border-t pt-4 border-gray-200">
++            <div>
++              <label className="block text-sm font-bold text-gray-700 mb-1">مركز الخريطة (Latitude)</label>
++              <input type="number" step="any" name="mapCenterLat" defaultValue={content.mapCenterLat ?? 24.7136} className="w-full border-gray-300 rounded-md p-2 border text-left" dir="ltr" />
++            </div>
++            <div>
++              <label className="block text-sm font-bold text-gray-700 mb-1">مركز الخريطة (Longitude)</label>
++              <input type="number" step="any" name="mapCenterLng" defaultValue={content.mapCenterLng ?? 46.6753} className="w-full border-gray-300 rounded-md p-2 border text-left" dir="ltr" />
++            </div>
++            <div>
++              <label className="block text-sm font-bold text-gray-700 mb-1">مستوى التكبير (Zoom)</label>
++              <input type="number" name="mapZoom" defaultValue={content.mapZoom ?? 5} className="w-full border-gray-300 rounded-md p-2 border text-left" dir="ltr" />
++            </div>
++          </div>
++
++          <div className="border-t pt-4 border-gray-200">
++            <label className="block text-sm font-bold text-gray-700 mb-1">رابط صورة خلفية الخريطة (للخريطة التصميمية فقط)</label>
++            <input type="url" name="mapBackgroundImage" defaultValue={content.mapBackgroundImage || ""} placeholder="https://example.com/map-bg.png" className="w-full border-gray-300 rounded-md p-2 border text-left" dir="ltr" />
++            <p className="text-xs text-gray-500 mt-1">يُستخدم فقط إذا كان "نوع الخريطة" هو "خريطة تصميمية". اتركه فارغاً لاستخدام الخريطة الافتراضية.</p>
++          </div>
++        </div>
++      </div>
++
+       <div className="flex justify-end pt-4">
+         <button type="submit" disabled={isSaving} className="bg-primary hover:bg-primary-dark text-white px-8 py-3 rounded-md font-bold text-lg disabled:opacity-50">
+           {isSaving ? "جاري الحفظ..." : "حفظ محتوى الصفحة الرئيسية"}
+diff --git a/src/app/crm/projects/ProjectFormFields.tsx b/src/app/crm/projects/ProjectFormFields.tsx
+index ddf6aae..d315f88 100644
+--- a/src/app/crm/projects/ProjectFormFields.tsx
++++ b/src/app/crm/projects/ProjectFormFields.tsx
+@@ -209,6 +209,48 @@ export default function ProjectFormFields({ initialData }: ProjectFormFieldsProp
+             <label className="block text-sm font-medium text-gray-700">وصف الإنجاز (اختياري)</label>
+             <input type="text" name="progressLabel" defaultValue={initialData?.progressLabel} placeholder="مثال: نسبة الإنجاز العام للمشروع" className="mt-1 shadow-sm focus:ring-primary focus:border-primary block w-full sm:text-sm border-gray-300 rounded-md py-2 px-3 border" />
+           </div>
++
++          <div className="sm:col-span-6 mt-4 pt-4 border-t border-gray-200">
++            <h4 className="text-md font-bold text-gray-900 mb-4">الخريطة التفاعلية (الصفحة الرئيسية)</h4>
++            <div className="flex items-start mb-4">
++              <div className="flex items-center h-5">
++                <input name="showOnHomeMap" type="checkbox" defaultChecked={initialData?.showOnHomeMap} className="focus:ring-primary h-4 w-4 text-primary border-gray-300 rounded" />
++              </div>
++              <div className="ml-3 mr-3 text-sm">
++                <label className="font-medium text-gray-700">إظهار المنتج على خريطة الصفحة الرئيسية</label>
++              </div>
++            </div>
++
++            {/* Geographic Map Settings */}
++            <div className="bg-blue-50/50 p-4 rounded-lg border border-blue-100 mb-4">
++              <h5 className="text-sm font-bold text-blue-900 mb-3">إحداثيات الخريطة الجغرافية الحقيقية (Geographic Map)</h5>
++              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
++                <div>
++                  <label className="block text-sm font-medium text-gray-700">Latitude (دائرة العرض)</label>
++                  <input type="number" step="any" name="mapLat" defaultValue={initialData?.mapLat} placeholder="مثال: 24.7136" className="mt-1 shadow-sm focus:ring-primary focus:border-primary block w-full sm:text-sm border-gray-300 rounded-md py-2 px-3 border" dir="ltr" />
++                </div>
++                <div>
++                  <label className="block text-sm font-medium text-gray-700">Longitude (خط الطول)</label>
++                  <input type="number" step="any" name="mapLng" defaultValue={initialData?.mapLng} placeholder="مثال: 46.6753" className="mt-1 shadow-sm focus:ring-primary focus:border-primary block w-full sm:text-sm border-gray-300 rounded-md py-2 px-3 border" dir="ltr" />
++                </div>
++              </div>
++            </div>
++
++            {/* Image Map Settings */}
++            <div className="bg-gray-50 p-4 rounded-lg border border-gray-200">
++              <h5 className="text-sm font-bold text-gray-700 mb-3">إحداثيات الخريطة التصميمية الصورة (Image Map - احتياطي)</h5>
++              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
++                <div>
++                  <label className="block text-sm font-medium text-gray-700">موضع X بالنسبة المئوية (%)</label>
++                  <input type="number" step="0.1" name="mapX" defaultValue={initialData?.mapX} placeholder="مثال: 45.5" className="mt-1 shadow-sm focus:ring-primary focus:border-primary block w-full sm:text-sm border-gray-300 rounded-md py-2 px-3 border" dir="ltr" />
++                </div>
++                <div>
++                  <label className="block text-sm font-medium text-gray-700">موضع Y بالنسبة المئوية (%)</label>
++                  <input type="number" step="0.1" name="mapY" defaultValue={initialData?.mapY} placeholder="مثال: 60.2" className="mt-1 shadow-sm focus:ring-primary focus:border-primary block w-full sm:text-sm border-gray-300 rounded-md py-2 px-3 border" dir="ltr" />
++                </div>
++              </div>
++            </div>
++          </div>
+         </div>
+ 
+         {/* TAB 4: FEATURES & WARRANTIES */}
+diff --git a/src/components/crm/CrmSidebar.tsx b/src/components/crm/CrmSidebar.tsx
+index 61248f1..a464724 100644
+--- a/src/components/crm/CrmSidebar.tsx
++++ b/src/components/crm/CrmSidebar.tsx
+@@ -53,6 +53,7 @@ const allNavGroups: NavGroup[] = [
+     ),
+     links: [
+       { name: "المنتجات العقارية", href: "/crm/projects" },
++      { name: "خريطة المنتجات العقارية", href: "/crm/projects-map" },
+     ],
+   },
+   {
+@@ -126,8 +127,17 @@ export default function CrmSidebar({ userName, userRole }: CrmSidebarProps) {
+   const [openGroups, setOpenGroups] = useState<Record<string, boolean>>({});
+   const [mounted, setMounted] = useState(false);
+ 
+-  // Filter groups based on user role
+-  const navGroups = allNavGroups.filter(group => {
++  // Filter groups and links based on user role
++  const navGroups = allNavGroups.map(group => {
++    // Hide map from SALES
++    if (userRole === "SALES" && group.id === "projects") {
++      return {
++        ...group,
++        links: group.links.filter(link => link.href !== "/crm/projects-map")
++      };
++    }
++    return group;
++  }).filter(group => {
+     if (userRole === "ADMIN") return true;
+     if (userRole === "MARKETING") {
+       return group.id !== "users";
+diff --git a/src/components/crm/ImageUpload.tsx b/src/components/crm/ImageUpload.tsx
+index a1769c8..e607d0d 100644
+--- a/src/components/crm/ImageUpload.tsx
++++ b/src/components/crm/ImageUpload.tsx
+@@ -7,9 +7,10 @@ interface ImageUploadProps {
+   name: string;
+   defaultValue?: string;
+   label?: string;
++  onChange?: (url: string) => void;
+ }
+ 
+-export default function ImageUpload({ name, defaultValue = "", label = "الصورة" }: ImageUploadProps) {
++export default function ImageUpload({ name, defaultValue = "", label = "الصورة", onChange }: ImageUploadProps) {
+   const [imageUrl, setImageUrl] = useState(defaultValue);
+   const [isUploading, setIsUploading] = useState(false);
+ 
+@@ -30,6 +31,7 @@ export default function ImageUpload({ name, defaultValue = "", label = "الصو
+       if (res.ok) {
+         const data = await res.json();
+         setImageUrl(data.url);
++        if (onChange) onChange(data.url);
+       } else {
+         alert("فشل رفع الصورة");
+       }
+@@ -54,7 +56,10 @@ export default function ImageUpload({ name, defaultValue = "", label = "الصو
+             <img src={imageUrl} alt="Preview" className="object-cover w-full h-full" />
+             <button
+               type="button"
+-              onClick={() => setImageUrl("")}
++              onClick={() => {
++                setImageUrl("");
++                if (onChange) onChange("");
++              }}
+               className="absolute top-1 right-1 bg-red-500 text-white rounded-full p-1 w-6 h-6 flex items-center justify-center text-xs hover:bg-red-600 transition"
+             >
+               &times;

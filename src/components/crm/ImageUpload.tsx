@@ -7,9 +7,10 @@ interface ImageUploadProps {
   name: string;
   defaultValue?: string;
   label?: string;
+  onChange?: (url: string) => void;
 }
 
-export default function ImageUpload({ name, defaultValue = "", label = "الصورة" }: ImageUploadProps) {
+export default function ImageUpload({ name, defaultValue = "", label = "الصورة", onChange }: ImageUploadProps) {
   const [imageUrl, setImageUrl] = useState(defaultValue);
   const [isUploading, setIsUploading] = useState(false);
 
@@ -30,6 +31,7 @@ export default function ImageUpload({ name, defaultValue = "", label = "الصو
       if (res.ok) {
         const data = await res.json();
         setImageUrl(data.url);
+        if (onChange) onChange(data.url);
       } else {
         alert("فشل رفع الصورة");
       }
@@ -54,7 +56,10 @@ export default function ImageUpload({ name, defaultValue = "", label = "الصو
             <img src={imageUrl} alt="Preview" className="object-cover w-full h-full" />
             <button
               type="button"
-              onClick={() => setImageUrl("")}
+              onClick={() => {
+                setImageUrl("");
+                if (onChange) onChange("");
+              }}
               className="absolute top-1 right-1 bg-red-500 text-white rounded-full p-1 w-6 h-6 flex items-center justify-center text-xs hover:bg-red-600 transition"
             >
               &times;

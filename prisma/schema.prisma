@@ -95,6 +95,13 @@ model Project {
   locationText    String?
   pdfUrl          String?
 
+  // Interactive Map Fields (Batch 15 Revision)
+  showOnHomeMap Boolean   @default(false)
+  mapLat        Float?
+  mapLng        Float?
+  mapX          Float?    // Deprecated but kept for image map mode
+  mapY          Float?    // Deprecated but kept for image map mode
+  
   createdAt    DateTime @default(now())
   updatedAt    DateTime @updatedAt
 
@@ -411,6 +418,33 @@ model HomePageContent {
   nahtFeature3Desc        String? @default("واجهات عصرية وتقسيمات داخلية ذكية تلبي تطلعات العائلة العصرية.")
   nahtFeature4Title       String? @default("ضمانات ممتدة")
   nahtFeature4Desc        String? @default("نقدم ضمانات حقيقية تمتد لسنوات لحماية استثمارك وراحتك.")
+
+  // Phase 15 Map Section
+  showMapSection      Boolean @default(true)
+  mapSectionTitle     String?
+  mapSectionDesc      String?
+  mapMode             String? @default("geographic") // geographic | image
+  mapCenterLat        Float?  @default(24.7136)
+  mapCenterLng        Float?  @default(46.6753)
+  mapZoom             Int?    @default(5)
+  mapBackgroundImage  String?
+
+  // Pin Settings (Batch 15)
+  pinColorAvailable         String? @default("#B5B693")
+  pinColorSold              String? @default("#4E4949")
+  pinColorComingSoon        String? @default("#C5B59C")
+  pinColorUnderConstruction String? @default("#A6937C")
+  pinColorDefault           String? @default("#A6937C")
+  pinLogoUrl                String?
+  pinLogoSize               Int?    @default(32)
+
+  // Map Style Settings (Batch 15)
+  mapTileStyle              String? @default("light") // light, warm, muted, grayscale, dark
+  mapTileBrightness         Int?    @default(100)
+  mapTileContrast           Int?    @default(100)
+  mapTileSaturation         Int?    @default(100)
+  mapTileHue                Int?    @default(0)
+  mapTileGrayscale          Int?    @default(0)
 
   updatedAt DateTime @updatedAt
 }

@@ -53,6 +53,7 @@ const allNavGroups: NavGroup[] = [
     ),
     links: [
       { name: "المنتجات العقارية", href: "/crm/projects" },
+      { name: "خريطة المنتجات العقارية", href: "/crm/projects-map" },
     ],
   },
   {
@@ -126,8 +127,17 @@ export default function CrmSidebar({ userName, userRole }: CrmSidebarProps) {
   const [openGroups, setOpenGroups] = useState<Record<string, boolean>>({});
   const [mounted, setMounted] = useState(false);
 
-  // Filter groups based on user role
-  const navGroups = allNavGroups.filter(group => {
+  // Filter groups and links based on user role
+  const navGroups = allNavGroups.map(group => {
+    // Hide map from SALES
+    if (userRole === "SALES" && group.id === "projects") {
+      return {
+        ...group,
+        links: group.links.filter(link => link.href !== "/crm/projects-map")
+      };
+    }
+    return group;
+  }).filter(group => {
     if (userRole === "ADMIN") return true;
     if (userRole === "MARKETING") {
       return group.id !== "users";

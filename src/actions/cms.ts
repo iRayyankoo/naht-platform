@@ -27,10 +27,34 @@ export async function updateSiteSettings(data: any) {
 // === Home Page Content ===
 export async function updateHomePageContent(data: any) {
   await actionRequireRole(["ADMIN", "MARKETING"]);
+
+  const sanitizedData = {
+    ...data,
+    showMapSection: data.showMapSection === "on" || data.showMapSection === true,
+  };
+
+  const parseNumber = (val: any) => {
+    if (!val) return null;
+    const num = Number(val);
+    return isNaN(num) ? null : num;
+  };
+
+  sanitizedData.mapCenterLat = parseNumber(sanitizedData.mapCenterLat) ?? 24.7136;
+  sanitizedData.mapCenterLng = parseNumber(sanitizedData.mapCenterLng) ?? 46.6753;
+  sanitizedData.mapZoom = parseNumber(sanitizedData.mapZoom) ?? 5;
+  sanitizedData.mapMode = sanitizedData.mapMode || "geographic";
+  sanitizedData.pinLogoSize = parseNumber(sanitizedData.pinLogoSize) ?? 32;
+
+  sanitizedData.mapTileBrightness = parseNumber(sanitizedData.mapTileBrightness) ?? 100;
+  sanitizedData.mapTileContrast = parseNumber(sanitizedData.mapTileContrast) ?? 100;
+  sanitizedData.mapTileSaturation = parseNumber(sanitizedData.mapTileSaturation) ?? 100;
+  sanitizedData.mapTileHue = parseNumber(sanitizedData.mapTileHue) ?? 0;
+  sanitizedData.mapTileGrayscale = parseNumber(sanitizedData.mapTileGrayscale) ?? 0;
+
   await prisma.homePageContent.upsert({
     where: { id: "global" },
-    update: data,
-    create: { id: "global", ...data },
+    update: sanitizedData,
+    create: { id: "global", ...sanitizedData },
   });
   revalidatePath("/");
   revalidatePath("/crm/cms/homepage");
