@@ -79,7 +79,7 @@ async function main() {
       mapCenterLng: 46.6753,
       mapZoom: 5,
       mapTileStyle: 'warm',
-      heroBackgroundImage: '/images/hero/naht-hero.svg',
+      heroBackgroundImage: '/images/hero/hero-1.jpg',
       mapBackgroundImage: '/images/saudi-map-default.svg',
       pinLogoSize: 32,
     }
@@ -106,7 +106,7 @@ async function main() {
   const projectsData = [
     {
       slug: 'naht-demo',
-      mainImage: '/images/projects/luxury-villa.svg',
+      mainImage: '/images/projects/project-1.jpg',
       name: 'فيلا ديمو العرض (كاملة)',
       type: 'فيلا',
       city: 'الرياض',
@@ -131,7 +131,7 @@ async function main() {
     },
     {
       slug: 'naht-15',
-      mainImage: '/images/projects/riyadh-villas.svg',
+      mainImage: '/images/projects/project-2.jpg',
       name: 'مشروع نحت 15',
       type: 'فيلا',
       city: 'الرياض',
@@ -156,7 +156,7 @@ async function main() {
     },
     {
       slug: 'naht-tower',
-      mainImage: '/images/projects/jeddah-tower.svg',
+      mainImage: '/images/projects/project-3.jpg',
       name: 'برج نحت (جدة)',
       type: 'شقة',
       city: 'جدة',
@@ -181,7 +181,7 @@ async function main() {
     },
     {
       slug: 'naht-east',
-      mainImage: '/images/projects/eastern-apartments.svg',
+      mainImage: '/images/projects/project-4.jpg',
       name: 'نحت الشرق (الدمام)',
       type: 'شقة',
       city: 'الدمام',
@@ -206,7 +206,7 @@ async function main() {
     },
     {
       slug: 'naht-plots',
-      mainImage: '/images/projects/residential-land.svg',
+      mainImage: '/images/projects/project-5.jpg',
       name: 'مخطط نحت السكني',
       type: 'أرض',
       city: 'الرياض',
@@ -343,4 +343,5 @@ main()
   .finally(async () => {
     await prisma.$disconnect();
   });
+
 
