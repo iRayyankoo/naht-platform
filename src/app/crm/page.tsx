@@ -2,6 +2,10 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import Link from "next/link";
+import MetricCard from "@/components/platform/layout/MetricCard";
+import ContentCard from "@/components/platform/layout/ContentCard";
+import MiniListCard from "@/components/platform/layout/MiniListCard";
+import ChartPlaceholderCard from "@/components/platform/layout/ChartPlaceholderCard";
 
 // Status translation map for styling
 const statusColors: Record<string, string> = {
@@ -38,8 +42,9 @@ const statusLabels: Record<string, string> = {
 
 export default async function AdminDashboard() {
   const session = await getServerSession(authOptions);
+  const userRole = (session?.user as any)?.role || "ADMIN";
 
-  // Fetch Stats in parallel
+  // Fetch Stats in parallel (Same as original)
   const [
     totalLeads,
     newLeads,
@@ -90,164 +95,182 @@ export default async function AdminDashboard() {
     ...recentContact.map(r => ({ id: r.id, type: "تواصل معنا", name: r.name, date: r.createdAt, link: `/crm/leads/${r.id}` })),
   ].sort((a, b) => b.date.getTime() - a.date.getTime()).slice(0, 5);
 
-  return (
-    <div className="space-y-8">
-      {/* Header */}
-      <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-bold text-gray-900">لوحة القيادة</h1>
-        <div className="text-sm text-gray-500">
-          مرحباً بك يا <span className="font-bold text-gray-900">{session?.user?.name}</span>
-        </div>
-      </div>
+  const pendingTasksItems = combinedRequests.map(req => ({
+    id: `${req.type}-${req.id}`,
+    title: req.name,
+    subtitle: req.type,
+    badge: new Date(req.date).toLocaleDateString("ar-SA"),
+    badgeColor: "bg-gray-100 text-gray-800"
+  }));
 
-      {/* Stats Grid */}
-      <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-7 gap-4">
-        <StatCard title="إجمالي العملاء" value={totalLeads} icon="👥" />
-        <StatCard title="العملاء الجدد" value={newLeads} icon="✨" color="text-green-600" />
-        <StatCard title="عدد المشاريع" value={totalProjects} icon="🏢" />
-        <StatCard title="عدد الطلبات" value={realTotalRequests} icon="📋" />
-        <StatCard title="نقرات واتساب" value={whatsappClicks} icon="💬" color="text-green-500" />
-        <StatCard title="نقرات الاتصال" value={callClicks} icon="📞" color="text-blue-500" />
-        <StatCard title="عدد الحملات" value={totalCampaigns} icon="🚀" />
-      </div>
-
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-        
-        {/* Left Column: Recent Leads & Links */}
-        <div className="lg:col-span-2 space-y-8">
-          
-          {/* Recent Leads */}
-          <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
-            <div className="p-5 border-b border-gray-100 flex justify-between items-center bg-gray-50/50">
-              <h2 className="text-lg font-bold text-gray-900">آخر العملاء المضافين</h2>
-              <Link href="/crm/leads" className="text-sm text-primary hover:underline font-medium">عرض الكل</Link>
-            </div>
-            <div className="overflow-x-auto">
-              <table className="w-full text-sm text-right text-gray-500">
-                <thead className="text-xs text-gray-700 bg-gray-50">
-                  <tr>
-                    <th className="px-6 py-4">العميل</th>
-                    <th className="px-6 py-4">المشروع</th>
-                    <th className="px-6 py-4">الحالة</th>
-                    <th className="px-6 py-4">التاريخ</th>
-                    <th className="px-6 py-4"></th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {recentLeads.length === 0 ? (
-                    <tr><td colSpan={5} className="px-6 py-8 text-center text-gray-500">لا يوجد عملاء حتى الآن</td></tr>
-                  ) : (
-                    recentLeads.map(lead => (
-                      <tr key={lead.id} className="border-b border-gray-50 hover:bg-gray-50/50">
-                        <td className="px-6 py-4">
-                          <div className="font-bold text-gray-900">{lead.name}</div>
-                          <div className="text-xs text-gray-500 dir-ltr text-right">{lead.phone}</div>
-                        </td>
-                        <td className="px-6 py-4">{lead.project?.name || <span className="text-gray-400">عام</span>}</td>
-                        <td className="px-6 py-4">
-                          <span className={`px-2.5 py-1 text-xs font-medium rounded-full ${statusColors[lead.status] || "bg-gray-100 text-gray-800"}`}>
-                            {statusLabels[lead.status] || lead.status}
-                          </span>
-                        </td>
-                        <td className="px-6 py-4 text-xs">{new Date(lead.createdAt).toLocaleDateString("ar-SA")}</td>
-                        <td className="px-6 py-4 text-left">
-                          <Link href={`/crm/leads/${lead.id}`} className="text-primary hover:text-primary-dark font-medium text-xs bg-primary/10 px-3 py-1.5 rounded-md transition-colors">
-                            التفاصيل
-                          </Link>
-                        </td>
-                      </tr>
-                    ))
-                  )}
-                </tbody>
-              </table>
-            </div>
-          </div>
-
-          {/* Quick Links */}
-          <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-5">
-            <h2 className="text-lg font-bold text-gray-900 mb-4">روابط سريعة</h2>
-            <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
-              <QuickLink href="/crm/projects/new" icon="+" title="إضافة مشروع" />
-              <QuickLink href="/crm/leads" icon="👥" title="عرض العملاء" />
-              <QuickLink href="/crm/campaigns/new" icon="🚀" title="إنشاء حملة" />
-              <QuickLink href="/crm/cms/settings" icon="⚙️" title="إعدادات الموقع" />
-              <QuickLink href="/crm/cms/homepage" icon="🏠" title="الصفحة الرئيسية" />
-              <QuickLink href="/crm/cms/tracking" icon="📊" title="إعدادات التتبع" />
-            </div>
-          </div>
-
-        </div>
-
-        {/* Right Column: Status & Requests */}
-        <div className="space-y-8">
-          
-          {/* Status Summary */}
-          <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-5">
-            <h2 className="text-lg font-bold text-gray-900 mb-4 border-b border-gray-50 pb-3">ملخص حالات العملاء</h2>
-            <div className="space-y-3">
-              {leadStatusCounts.length === 0 ? (
-                <p className="text-sm text-gray-500 text-center py-4">لا توجد إحصائيات</p>
-              ) : (
-                leadStatusCounts.sort((a, b) => b._count - a._count).map(status => (
-                  <div key={status.status} className="flex items-center justify-between">
-                    <div className="flex items-center gap-2">
-                      <span className={`w-3 h-3 rounded-full ${statusColors[status.status]?.split(' ')[0] || "bg-gray-300"}`}></span>
-                      <span className="text-sm text-gray-700">{statusLabels[status.status] || status.status}</span>
-                    </div>
-                    <span className="text-sm font-bold bg-gray-100 px-2 py-0.5 rounded-md">{status._count}</span>
-                  </div>
-                ))
-              )}
-            </div>
-          </div>
-
-          {/* Recent Requests */}
-          <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-5">
-            <div className="flex justify-between items-center mb-4 border-b border-gray-50 pb-3">
-              <h2 className="text-lg font-bold text-gray-900">آخر الطلبات</h2>
-            </div>
-            <div className="space-y-4">
-              {combinedRequests.length === 0 ? (
-                <p className="text-sm text-gray-500 text-center py-4">لا توجد طلبات</p>
-              ) : (
-                combinedRequests.map(req => (
-                  <Link key={req.id} href={req.link} className="block group">
-                    <div className="flex items-start justify-between p-3 rounded-lg border border-gray-50 group-hover:border-primary/20 group-hover:bg-primary/5 transition-all">
-                      <div>
-                        <div className="text-xs font-medium text-primary mb-1">{req.type}</div>
-                        <div className="text-sm font-bold text-gray-900">{req.name}</div>
-                      </div>
-                      <div className="text-xs text-gray-400 mt-1">
-                        {new Date(req.date).toLocaleDateString("ar-SA")}
-                      </div>
-                    </div>
+  const leadsTableContent = (
+    <div className="overflow-x-auto h-full">
+      <table className="w-full text-sm text-right text-gray-600 min-w-[500px]">
+        <thead className="text-xs text-gray-500 bg-gray-50 border-b border-gray-100">
+          <tr>
+            <th className="px-4 py-3 font-medium">العميل</th>
+            <th className="px-4 py-3 font-medium">المشروع</th>
+            <th className="px-4 py-3 font-medium">التاريخ</th>
+            <th className="px-4 py-3 font-medium">الحالة</th>
+          </tr>
+        </thead>
+        <tbody className="divide-y divide-gray-100">
+          {recentLeads.length === 0 ? (
+            <tr><td colSpan={4} className="px-4 py-8 text-center text-gray-500">لا يوجد عملاء حتى الآن</td></tr>
+          ) : (
+            recentLeads.map(lead => (
+              <tr key={lead.id} className="hover:bg-gray-50 transition-colors">
+                <td className="px-4 py-3">
+                  <Link href={`/crm/leads/${lead.id}`} className="font-bold text-gray-900 hover:text-primary hover:underline block">
+                    {lead.name}
                   </Link>
-                ))
-              )}
+                  <div className="font-mono text-xs text-gray-500">{lead.phone}</div>
+                </td>
+                <td className="px-4 py-3 whitespace-nowrap text-gray-700">{lead.project?.name || <span className="text-gray-400">عام</span>}</td>
+                <td className="px-4 py-3 whitespace-nowrap text-xs text-gray-500">
+                  {new Date(lead.createdAt).toLocaleDateString("ar-SA")}
+                </td>
+                <td className="px-4 py-3 whitespace-nowrap">
+                  <span className={`px-2 py-1 text-[10px] font-bold rounded-full ${statusColors[lead.status] || 'bg-gray-100 text-gray-800'}`}>
+                    {statusLabels[lead.status] || lead.status}
+                  </span>
+                </td>
+              </tr>
+            ))
+          )}
+        </tbody>
+      </table>
+    </div>
+  );
+
+  const statusSummaryContent = (
+    <div className="p-4 space-y-3">
+      {leadStatusCounts.length === 0 ? (
+        <p className="text-sm text-gray-500 text-center py-4">لا توجد إحصائيات</p>
+      ) : (
+        leadStatusCounts.sort((a, b) => b._count - a._count).map(status => (
+          <div key={status.status} className="flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <span className={`w-3 h-3 rounded-full ${statusColors[status.status]?.split(' ')[0] || "bg-gray-300"}`}></span>
+              <span className="text-xs font-bold text-gray-700">{statusLabels[status.status] || status.status}</span>
+            </div>
+            <span className="text-xs font-bold bg-gray-100 px-2 py-0.5 rounded-md text-gray-700">{status._count}</span>
+          </div>
+        ))
+      )}
+    </div>
+  );
+
+  // ==========================================
+  // Layouts
+  // ==========================================
+
+  return (
+    <div className="w-full space-y-4 xl:space-y-5 pb-6">
+      
+      {/* --- ADMIN DASHBOARD --- */}
+      {userRole === 'ADMIN' && (
+        <>
+          <div className="grid grid-cols-2 xl:grid-cols-4 gap-3 lg:gap-4">
+            <MetricCard label="إجمالي العملاء" value={totalLeads} icon="👥" />
+            <MetricCard label="عدد المشاريع" value={totalProjects} icon="🏢" />
+            <MetricCard label="الحملات النشطة" value={totalCampaigns} icon="🚀" />
+            <MetricCard label="الطلبات الجديدة" value={realTotalRequests} icon="📋" />
+          </div>
+
+          <div className="grid grid-cols-1 xl:grid-cols-3 gap-3 lg:gap-4 flex-1 min-h-[250px]">
+            <div className="xl:col-span-2 flex flex-col h-full">
+              <ChartPlaceholderCard title="أداء النظام وإحصائيات عامة" type="bar" />
+            </div>
+            <div className="flex flex-col h-full">
+              <MiniListCard title="أحدث الطلبات (تواصل، توظيف، إلخ)" items={pendingTasksItems} emptyMessage="لا توجد طلبات واردة مؤخراً" />
             </div>
           </div>
 
+          <div className="grid grid-cols-1 xl:grid-cols-3 gap-3 lg:gap-4 flex-1 min-h-[300px]">
+            <div className="xl:col-span-2 flex flex-col h-full">
+              <ContentCard title="آخر العملاء المضافين" action={<Link href="/crm/leads" className="text-sm text-primary font-medium hover:underline">عرض الكل</Link>} className="h-full">
+                {leadsTableContent}
+              </ContentCard>
+            </div>
+            <div className="flex flex-col h-full">
+              <ContentCard title="ملخص حالات العملاء" className="h-full">
+                {statusSummaryContent}
+              </ContentCard>
+            </div>
+          </div>
+        </>
+      )}
+
+      {/* --- MARKETING DASHBOARD --- */}
+      {userRole === 'MARKETING' && (
+        <>
+          <div className="grid grid-cols-2 xl:grid-cols-4 gap-3 lg:gap-4">
+            <MetricCard label="الحملات النشطة" value={totalCampaigns} icon="🚀" />
+            <MetricCard label="إجمالي العملاء" value={totalLeads} icon="👥" />
+            <MetricCard label="نقرات واتساب" value={whatsappClicks} icon="💬" />
+            <MetricCard label="نقرات الاتصال" value={callClicks} icon="📞" />
+          </div>
+
+          <div className="grid grid-cols-1 xl:grid-cols-3 gap-3 lg:gap-4 flex-1 min-h-[300px]">
+            <div className="xl:col-span-2 flex flex-col h-full">
+              <ChartPlaceholderCard title="أداء التتبع (Clicks)" type="bar" />
+            </div>
+            <div className="flex flex-col h-full">
+              <ContentCard title="ملخص حالات العملاء" className="h-full">
+                {statusSummaryContent}
+              </ContentCard>
+            </div>
+          </div>
+
+          <div className="grid grid-cols-1 gap-3 lg:gap-4 flex-1 min-h-[250px]">
+            <ContentCard title="آخر العملاء المستقطبين" action={<Link href="/crm/leads" className="text-sm text-primary font-medium hover:underline">عرض الكل</Link>} className="h-full">
+              {leadsTableContent}
+            </ContentCard>
+          </div>
+        </>
+      )}
+
+      {/* --- SALES DASHBOARD --- */}
+      {userRole === 'SALES' && (
+        <>
+          {/* Note: In a real scenario, this data should be filtered by Sales Rep ID. 
+              Currently showing generic data due to DB schema constraints. */}
+          <div className="grid grid-cols-2 xl:grid-cols-4 gap-3 lg:gap-4">
+            <MetricCard label="إجمالي العملاء" value={totalLeads} icon="👥" />
+            <MetricCard label="عملاء جدد" value={newLeads} icon="✨" />
+            <MetricCard label="إجمالي المشاريع" value={totalProjects} icon="🏢" />
+            <MetricCard label="نقرات واتساب" value={whatsappClicks} icon="💬" />
+          </div>
+
+          <div className="grid grid-cols-1 xl:grid-cols-3 gap-3 lg:gap-4 flex-1 min-h-[250px]">
+            <div className="xl:col-span-1 flex flex-col h-full">
+              <MiniListCard title="تنبيهات الطلبات" items={pendingTasksItems} emptyMessage="لا توجد تنبيهات حالياً" />
+            </div>
+            <div className="xl:col-span-2 flex flex-col h-full">
+              <ContentCard title="مراحل البيع (Pipeline - إجمالي النظام)" className="h-full">
+                {statusSummaryContent}
+              </ContentCard>
+            </div>
+          </div>
+
+          <div className="grid grid-cols-1 gap-3 lg:gap-4 flex-1 min-h-[300px]">
+            <ContentCard title="آخر العملاء المضافين للنظام" action={<Link href="/crm/leads" className="text-sm text-primary font-medium hover:underline">عرض الكل</Link>} className="h-full">
+              {leadsTableContent}
+            </ContentCard>
+          </div>
+        </>
+      )}
+
+      {/* --- FALLBACK FOR NO ROLE MATCH --- */}
+      {!['ADMIN', 'MARKETING', 'SALES'].includes(userRole) && (
+        <div className="flex flex-col items-center justify-center p-12 bg-white rounded-2xl shadow-sm border border-gray-100">
+          <div className="text-4xl mb-4">🔒</div>
+          <h2 className="text-xl font-bold text-gray-800 mb-2">مرحباً بك في النظام</h2>
+          <p className="text-gray-500">ليس لديك الصلاحيات الكافية لعرض إحصائيات لوحة التحكم. يرجى التواصل مع الإدارة.</p>
         </div>
-      </div>
-    </div>
-  );
-}
+      )}
 
-function StatCard({ title, value, icon, color = "text-primary" }: { title: string, value: number, icon: string, color?: string }) {
-  return (
-    <div className="bg-white p-4 rounded-xl shadow-sm border border-gray-100 flex flex-col justify-center items-center text-center hover:shadow-md transition-shadow">
-      <div className={`text-2xl mb-2 ${color}`}>{icon}</div>
-      <div className="text-2xl font-bold text-gray-900 mb-1">{value}</div>
-      <div className="text-xs font-medium text-gray-500">{title}</div>
     </div>
-  );
-}
-
-function QuickLink({ href, icon, title }: { href: string, icon: string, title: string }) {
-  return (
-    <Link href={href} className="flex items-center gap-2 p-3 rounded-lg border border-gray-100 hover:border-primary hover:bg-primary/5 hover:text-primary transition-colors text-gray-700">
-      <span className="text-lg">{icon}</span>
-      <span className="text-sm font-bold">{title}</span>
-    </Link>
   );
 }
