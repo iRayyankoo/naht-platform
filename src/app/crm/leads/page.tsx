@@ -4,6 +4,40 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { redirect } from "next/navigation";
 import FilterBar from "@/components/crm/FilterBar";
+import ContentCard from "@/components/platform/layout/ContentCard";
+
+// Improved Status translation map for styling (matching Dashboard)
+const statusColors: Record<string, string> = {
+  "NEW": "bg-blue-100 text-blue-800",
+  "CONTACTED": "bg-yellow-100 text-yellow-800",
+  "NO_ANSWER": "bg-gray-100 text-gray-800",
+  "INTERESTED": "bg-indigo-100 text-indigo-800",
+  "DETAILS_SENT": "bg-purple-100 text-purple-800",
+  "VISIT_SCHEDULED": "bg-orange-100 text-orange-800",
+  "VISIT_DONE": "bg-teal-100 text-teal-800",
+  "NEGOTIATION": "bg-pink-100 text-pink-800",
+  "SOLD": "bg-green-100 text-green-800",
+  "LOST": "bg-red-100 text-red-800",
+  "UNQUALIFIED": "bg-gray-200 text-gray-600",
+  "DUPLICATE": "bg-gray-200 text-gray-600",
+  "POSTPONED": "bg-yellow-50 text-yellow-600",
+};
+
+const statusLabels: Record<string, string> = {
+  "NEW": "جديد",
+  "CONTACTED": "تم التواصل",
+  "NO_ANSWER": "لم يتم الرد",
+  "INTERESTED": "مهتم",
+  "DETAILS_SENT": "تم إرسال التفاصيل",
+  "VISIT_SCHEDULED": "تم جدولة زيارة",
+  "VISIT_DONE": "تمت الزيارة",
+  "NEGOTIATION": "تفاوض",
+  "SOLD": "تم البيع",
+  "LOST": "خاسر",
+  "UNQUALIFIED": "غير مؤهل",
+  "DUPLICATE": "مكرر",
+  "POSTPONED": "مؤجل",
+};
 
 export default async function LeadsPage({ searchParams }: { searchParams: { type?: string, status?: string, project?: string } }) {
   const session = await getServerSession(authOptions);
@@ -18,6 +52,7 @@ export default async function LeadsPage({ searchParams }: { searchParams: { type
   const statusFilter = searchParams.status || undefined;
   const projectFilter = searchParams.project || undefined;
 
+  // STRICT PERMISSIONS LOGIC PRESERVED
   let roleWhereClause = {};
   if (userRole === "SALES") {
     roleWhereClause = {
@@ -49,6 +84,7 @@ export default async function LeadsPage({ searchParams }: { searchParams: { type
     orderBy: { name: "asc" }
   });
 
+  // FILTER BAR CONFIGURATION PRESERVED
   const filterFields = [
     {
       key: "type",
@@ -86,103 +122,129 @@ export default async function LeadsPage({ searchParams }: { searchParams: { type
     }
   ];
 
-  const getStatusColor = (status: string) => {
-    switch (status) {
-      case "NEW": return "bg-blue-100 text-blue-800";
-      case "CONTACTED": return "bg-yellow-100 text-yellow-800";
-      case "INTERESTED": return "bg-green-100 text-green-800";
-      case "VISIT_SCHEDULED": return "bg-purple-100 text-purple-800";
-      case "VISIT_DONE": return "bg-indigo-100 text-indigo-800";
-      case "SOLD": return "bg-gray-800 text-white";
-      case "LOST": return "bg-red-100 text-red-800";
-      default: return "bg-gray-100 text-gray-800";
-    }
-  };
-
-  const getStatusLabel = (status: string) => {
-    const map: Record<string, string> = {
-      "NEW": "جديد",
-      "CONTACTED": "تم التواصل",
-      "NO_ANSWER": "لم يتم الرد",
-      "INTERESTED": "مهتم",
-      "DETAILS_SENT": "تم إرسال التفاصيل",
-      "VISIT_SCHEDULED": "تم جدولة زيارة",
-      "VISIT_DONE": "تمت الزيارة",
-      "NEGOTIATION": "تفاوض",
-      "SOLD": "تم البيع",
-      "LOST": "خاسر",
-      "UNQUALIFIED": "غير مؤهل",
-      "DUPLICATE": "مكرر",
-      "POSTPONED": "مؤجل",
-    };
-    return map[status] || status;
-  };
-
   return (
-    <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-bold text-gray-900">العملاء المحتملين (Leads)</h1>
-      </div>
-
-      <FilterBar searchPlaceholder="ابحث بالاسم، الجوال، البريد..." fields={filterFields} />
-
-      <div className="bg-white shadow overflow-hidden sm:rounded-lg">
-        <div className="overflow-x-auto">
-          <table className="min-w-full divide-y divide-gray-200">
-            <thead className="bg-gray-50">
-              <tr>
-                <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">تاريخ التسجيل</th>
-                <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">اسم العميل</th>
-                <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">الجوال</th>
-                <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">المشروع</th>
-                <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">المصدر</th>
-                <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">الحالة</th>
-                <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">المسؤول</th>
-                <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">إجراءات</th>
-              </tr>
-            </thead>
-            <tbody className="bg-white divide-y divide-gray-200">
-              {leads.map((lead) => (
-                <tr key={lead.id} className="hover:bg-gray-50">
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500" dir="ltr" style={{textAlign: "right"}}>
-                    {new Date(lead.createdAt).toLocaleDateString('ar-SA')}
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
-                    <Link href={`/crm/leads/${lead.id}`} className="hover:text-primary hover:underline cursor-pointer">
-                      {lead.name}
-                    </Link>
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500" dir="ltr" style={{textAlign: "right"}}>{lead.phone}</td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                    {lead.project?.name || "غير محدد"}
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                    {lead.utmSource || "عضوي (Direct)"}
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm">
-                    <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${getStatusColor(lead.status)}`}>
-                      {getStatusLabel(lead.status)}
-                    </span>
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                    {lead.assignedTo?.name || "غير معين"}
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                    <Link href={`/crm/leads/${lead.id}`} className="text-primary hover:text-primary-dark font-medium">
-                      التفاصيل
-                    </Link>
-                  </td>
-                </tr>
-              ))}
-              {leads.length === 0 && (
-                <tr>
-                  <td colSpan={8} className="px-6 py-10 text-center text-gray-500">لا يوجد عملاء حالياً.</td>
-                </tr>
-              )}
-            </tbody>
-          </table>
+    <div className="space-y-4 xl:space-y-6 max-w-[1400px] mx-auto w-full pb-6">
+      
+      {/* Header Area */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+        <div>
+          <h1 className="text-2xl font-bold text-gray-900 tracking-tight">العملاء المحتملين</h1>
+          <p className="text-sm text-gray-500 mt-1">إدارة ومتابعة جميع طلبات العملاء والاستفسارات</p>
         </div>
       </div>
+
+      {/* Filter Bar Component */}
+      <FilterBar searchPlaceholder="ابحث بالاسم، الجوال، البريد..." fields={filterFields} />
+
+      {/* Data Presentation Area */}
+      <ContentCard title="سجل العملاء">
+        
+        {leads.length === 0 ? (
+          /* --- EMPTY STATE --- */
+          <div className="flex flex-col items-center justify-center py-16 px-4 text-center">
+             <div className="text-gray-300 text-6xl mb-4">📭</div>
+             <h3 className="text-lg font-bold text-gray-900 mb-2">لا يوجد عملاء مطابقون للفلاتر الحالية</h3>
+             <p className="text-gray-500 text-sm max-w-md">جرّب تغيير الفلاتر المحددة أعلاه، أو قم بإزالة بعض الخيارات للبحث بشكل أوسع.</p>
+          </div>
+        ) : (
+          <>
+            {/* --- DESKTOP TABLE VIEW --- */}
+            <div className="hidden lg:block overflow-x-auto">
+              <table className="w-full text-sm text-right text-gray-600 min-w-[900px]">
+                <thead className="text-xs text-gray-500 bg-gray-50 border-b border-gray-100 uppercase tracking-wider">
+                  <tr>
+                    <th className="px-6 py-4 font-medium">العميل</th>
+                    <th className="px-6 py-4 font-medium text-center">المشروع</th>
+                    <th className="px-6 py-4 font-medium text-center">المصدر</th>
+                    <th className="px-6 py-4 font-medium text-center">تاريخ التسجيل</th>
+                    <th className="px-6 py-4 font-medium text-center">الحالة</th>
+                    <th className="px-6 py-4 font-medium text-center">المسؤول</th>
+                    <th className="px-6 py-4 font-medium text-left">إجراءات</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-gray-50 bg-white">
+                  {leads.map((lead) => (
+                    <tr key={lead.id} className="hover:bg-gray-50/80 transition-colors">
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        <Link href={`/crm/leads/${lead.id}`} className="block font-bold text-gray-900 hover:text-primary hover:underline">
+                          {lead.name}
+                        </Link>
+                        <div className="text-xs text-gray-500 mt-1 font-mono" dir="ltr">{lead.phone}</div>
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-center text-gray-700">
+                        {lead.project?.name || <span className="text-gray-400 text-xs">عام</span>}
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-center text-xs font-medium text-gray-500 bg-gray-50/50 rounded">
+                        {lead.utmSource || "عضوي (Direct)"}
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-center text-xs text-gray-500">
+                        {new Date(lead.createdAt).toLocaleDateString('ar-SA')}
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-center">
+                        <span className={`px-3 py-1.5 inline-flex text-[10px] leading-none font-bold rounded-full ${statusColors[lead.status] || 'bg-gray-100 text-gray-800'}`}>
+                          {statusLabels[lead.status] || lead.status}
+                        </span>
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-center text-xs text-gray-600">
+                        {lead.assignedTo?.name || <span className="text-gray-400">غير معين</span>}
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-left text-sm font-medium">
+                        <Link href={`/crm/leads/${lead.id}`} className="text-primary hover:text-primary-dark font-medium text-xs bg-primary/10 hover:bg-primary/20 px-4 py-2 rounded-lg transition-colors">
+                          التفاصيل
+                        </Link>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+
+            {/* --- MOBILE/TABLET CARDS VIEW --- */}
+            <div className="lg:hidden grid grid-cols-1 md:grid-cols-2 gap-4 p-4 bg-gray-50/30">
+              {leads.map((lead) => (
+                <div key={lead.id} className="bg-white rounded-xl border border-gray-100 p-4 shadow-sm flex flex-col gap-3 relative hover:border-primary/30 transition-colors">
+                  <div className="flex justify-between items-start">
+                    <div>
+                      <Link href={`/crm/leads/${lead.id}`} className="font-bold text-gray-900 text-sm hover:text-primary">
+                        {lead.name}
+                      </Link>
+                      <div className="text-xs text-gray-500 mt-1 font-mono" dir="ltr">{lead.phone}</div>
+                    </div>
+                    <span className={`px-2 py-1 text-[9px] font-bold rounded-full whitespace-nowrap ${statusColors[lead.status] || 'bg-gray-100 text-gray-800'}`}>
+                      {statusLabels[lead.status] || lead.status}
+                    </span>
+                  </div>
+                  
+                  <div className="grid grid-cols-2 gap-2 text-xs text-gray-600 bg-gray-50 p-2.5 rounded-lg">
+                    <div>
+                      <span className="text-gray-400 block text-[10px] mb-0.5">المشروع</span>
+                      <span className="font-medium truncate">{lead.project?.name || "عام"}</span>
+                    </div>
+                    <div>
+                      <span className="text-gray-400 block text-[10px] mb-0.5">المسؤول</span>
+                      <span className="font-medium truncate">{lead.assignedTo?.name || "غير معين"}</span>
+                    </div>
+                    <div>
+                      <span className="text-gray-400 block text-[10px] mb-0.5">المصدر</span>
+                      <span className="font-medium truncate">{lead.utmSource || "عضوي"}</span>
+                    </div>
+                    <div>
+                      <span className="text-gray-400 block text-[10px] mb-0.5">تاريخ التسجيل</span>
+                      <span className="font-medium truncate">{new Date(lead.createdAt).toLocaleDateString('ar-SA')}</span>
+                    </div>
+                  </div>
+
+                  <div className="mt-1">
+                    <Link href={`/crm/leads/${lead.id}`} className="flex items-center justify-center w-full text-primary font-bold text-xs bg-primary/5 hover:bg-primary/10 py-2.5 rounded-lg transition-colors">
+                      عرض التفاصيل الكاملة
+                    </Link>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </>
+        )}
+      </ContentCard>
     </div>
   );
 }
