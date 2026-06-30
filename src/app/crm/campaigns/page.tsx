@@ -11,7 +11,7 @@ export default async function CampaignsPage({ searchParams }: { searchParams: { 
   const session = await getServerSession(authOptions);
   const userRole = (session?.user as any)?.role;
 
-  if (!session || userRole === "VIEWER") {
+  if (!session || !["ADMIN", "MARKETING"].includes(userRole)) {
     redirect("/crm");
   }
 
