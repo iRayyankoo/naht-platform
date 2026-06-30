@@ -4,13 +4,26 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import FilterBar from "@/components/crm/FilterBar";
 
+// Map type to Arabic label
+const getProjectTypeLabel = (type: string) => {
+  const map: Record<string, string> = {
+    "RESIDENTIAL": "سكني",
+    "COMMERCIAL": "تجاري",
+    "MIXED_USE": "متعدد الاستخدامات",
+    "LAND": "أراضي"
+  };
+  return map[type] || type;
+};
+
 export default async function ProjectsPage({ searchParams }: { searchParams: { status?: string, type?: string, city?: string } }) {
   const session = await getServerSession(authOptions);
   
-  const statusFilter = searchParams.status || undefined;
-  const typeFilter = searchParams.type || undefined;
-  const cityFilter = searchParams.city || undefined;
+  const params = await Promise.resolve(searchParams);
+  const statusFilter = typeof params.status === 'string' ? params.status : (Array.isArray(params.status) ? params.status[0] : undefined);
+  const typeFilter = typeof params.type === 'string' ? params.type : (Array.isArray(params.type) ? params.type[0] : undefined);
+  const cityFilter = typeof params.city === 'string' ? params.city : (Array.isArray(params.city) ? params.city[0] : undefined);
 
+  // STRICT DATA FETCHING LOGIC PRESERVED
   const projects = await prisma.project.findMany({
     where: {
       ...(statusFilter && { status: statusFilter }),
@@ -56,96 +69,124 @@ export default async function ProjectsPage({ searchParams }: { searchParams: { s
   ];
 
   return (
-    <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-bold text-gray-900">المشاريع</h1>
+    <div className="space-y-4 xl:space-y-6 max-w-[1400px] mx-auto w-full pb-6">
+      
+      {/* Header Area */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+        <div>
+          <h1 className="text-2xl font-bold text-gray-900 tracking-tight">المشاريع العقارية</h1>
+          <p className="text-sm text-gray-500 mt-1">إدارة محفظة المشاريع والوحدات العقارية بفعالية</p>
+        </div>
         <Link
           href="/crm/projects/new"
-          className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-primary hover:bg-primary-dark focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary"
+          className="inline-flex items-center px-5 py-2.5 text-sm font-bold rounded-xl text-white bg-primary hover:bg-primary-dark transition-colors shadow-sm"
         >
           إضافة مشروع جديد
         </Link>
       </div>
 
+      {/* Filter Bar */}
       <FilterBar fields={filterFields} />
 
-      <div className="bg-white shadow overflow-hidden sm:rounded-md">
-        <ul className="divide-y divide-gray-200">
-          {projects.length === 0 ? (
-            <li className="px-6 py-12 text-center text-gray-500">
-              لا توجد مشاريع مضافة أو تطابق الفلتر حتى الآن.
-            </li>
-          ) : (
-            projects.map((project) => (
-              <li key={project.id}>
-                <div className="block hover:bg-gray-50 px-6 py-4">
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center">
-                      <div className="flex-shrink-0 h-12 w-12 bg-gray-200 rounded-md flex items-center justify-center text-gray-500 font-bold text-xl overflow-hidden relative">
-                        {project.mainImage ? (
-                          // eslint-disable-next-line @next/next/no-img-element
-                          <img src={project.mainImage} alt={project.name} className="object-cover h-full w-full" />
-                        ) : (
-                          project.name.charAt(0)
-                        )}
+      {/* Projects Grid Area */}
+      {projects.length === 0 ? (
+        /* --- EMPTY STATE --- */
+        <div className="flex flex-col items-center justify-center py-20 px-4 text-center bg-white rounded-2xl shadow-sm border border-gray-100">
+           <div className="text-gray-300 text-6xl mb-4">🏢</div>
+           <h3 className="text-lg font-bold text-gray-900 mb-2">لا توجد مشاريع مطابقة للفلاتر الحالية</h3>
+           <p className="text-gray-500 text-sm max-w-md">جرّب تغيير الفلاتر المحددة أعلاه، أو قم بإضافة مشروع جديد إلى النظام.</p>
+        </div>
+      ) : (
+        /* --- GRID CARDS VIEW --- */
+        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
+          {projects.map((project) => (
+             <div key={project.id} className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden hover:shadow-md transition-all flex flex-col group hover:-translate-y-1">
+                
+                {/* Image Section */}
+                <div className="relative h-56 w-full bg-gray-100 overflow-hidden">
+                   {project.mainImage ? (
+                      // eslint-disable-next-line @next/next/no-img-element
+                      <img src={project.mainImage} alt={project.name} className="absolute inset-0 w-full h-full object-cover transition-transform duration-500 group-hover:scale-105" />
+                   ) : (
+                      <div className="absolute inset-0 flex items-center justify-center text-5xl text-gray-300 font-bold bg-gray-50">
+                        {project.name.charAt(0)}
                       </div>
-                      <div className="ml-4 mr-4">
-                        <p className="text-sm font-medium text-primary truncate">
-                          {project.name}
-                          {project.isFeatured && (
-                            <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-yellow-100 text-yellow-800 mr-2">
-                              مميز
-                            </span>
-                          )}
-                        </p>
-                        <div className="mt-2 flex items-center text-sm text-gray-500 space-x-4 space-x-reverse">
-                          <span>{project.city} - {project.neighborhood}</span>
-                          <span>&bull;</span>
-                          <span>النوع: {project.type}</span>
-                          <span>&bull;</span>
-                          <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${
-                            project.status === "AVAILABLE" ? "bg-green-100 text-green-800" :
-                            project.status === "SOLD" ? "bg-red-100 text-red-800" :
-                            "bg-blue-100 text-blue-800"
-                          }`}>
-                            {project.status === "AVAILABLE" ? "متاح" : project.status === "SOLD" ? "مباع" : "قريباً"}
-                          </span>
-                        </div>
-                      </div>
-                    </div>
-                    <div className="flex flex-col items-end space-y-2">
-                      <div className="text-sm text-gray-500">
-                        {project._count.units} وحدات
-                      </div>
-                      <div className="flex space-x-2 space-x-reverse">
-                        <Link href={`/crm/projects/${project.id}/units`} className="text-secondary hover:text-primary text-sm font-medium">
-                          إدارة الوحدات
-                        </Link>
-                        <span className="text-gray-300">|</span>
-                        <Link href={`/crm/projects/${project.id}/edit`} className="text-secondary hover:text-primary text-sm font-medium">
-                          تعديل
-                        </Link>
-                        {session?.user && (session.user as any).role === "ADMIN" && (
-                          <>
-                            <span className="text-gray-300">|</span>
-                            <form action={async () => {
-                              "use server";
-                              const { deleteProject } = await import("@/actions/projects");
-                              await deleteProject(project.id);
-                            }}>
-                              <button type="submit" className="text-red-600 hover:text-red-900 text-sm font-medium">حذف</button>
-                            </form>
-                          </>
-                        )}
-                      </div>
-                    </div>
-                  </div>
+                   )}
+                   
+                   {/* Image Overlay Gradient for better badge visibility */}
+                   <div className="absolute inset-0 bg-gradient-to-t from-transparent via-transparent to-black/30"></div>
+
+                   {/* Top Badges */}
+                   <div className="absolute top-4 right-4 flex flex-col gap-2">
+                     <span className={`px-3 py-1.5 text-[11px] font-bold rounded-full shadow-md backdrop-blur-md text-white ${
+                        project.status === "AVAILABLE" ? "bg-green-600/90" :
+                        project.status === "SOLD" ? "bg-red-600/90" :
+                        "bg-blue-600/90"
+                     }`}>
+                       {project.status === "AVAILABLE" ? "متاح" : project.status === "SOLD" ? "مباع" : "قريباً"}
+                     </span>
+                     {project.isFeatured && (
+                       <span className="px-3 py-1.5 text-[11px] font-bold rounded-full shadow-md backdrop-blur-md bg-yellow-400/90 text-yellow-900">
+                         مميز
+                       </span>
+                     )}
+                   </div>
                 </div>
-              </li>
-            ))
-          )}
-        </ul>
-      </div>
+
+                {/* Content Section */}
+                <div className="p-5 flex-1 flex flex-col">
+                   <div className="mb-2">
+                      <Link href={`/crm/projects/${project.id}/units`} className="text-lg font-bold text-gray-900 hover:text-primary transition-colors line-clamp-1">
+                        {project.name}
+                      </Link>
+                   </div>
+                   
+                   <div className="text-sm text-gray-500 flex items-center gap-1.5 mb-5 font-medium line-clamp-1">
+                      <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className="shrink-0"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path><circle cx="12" cy="10" r="3"></circle></svg>
+                      {project.city} - {project.neighborhood}
+                   </div>
+                   
+                   {/* Metrics Grid */}
+                   <div className="grid grid-cols-2 gap-3 mb-6 mt-auto">
+                      <div className="bg-gray-50 rounded-xl p-3 text-center border border-gray-100">
+                         <span className="block text-[10px] text-gray-400 font-bold mb-1 uppercase tracking-wider">النوع</span>
+                         <span className="block text-sm font-bold text-gray-700 truncate">{getProjectTypeLabel(project.type)}</span>
+                      </div>
+                      <div className="bg-gray-50 rounded-xl p-3 text-center border border-gray-100">
+                         <span className="block text-[10px] text-gray-400 font-bold mb-1 uppercase tracking-wider">إجمالي الوحدات</span>
+                         <span className="block text-sm font-bold text-gray-700">{project._count.units}</span>
+                      </div>
+                   </div>
+
+                   {/* Footer Actions */}
+                   <div className="pt-4 border-t border-gray-100 flex items-center justify-between gap-3">
+                      <div className="flex gap-2 w-full">
+                         <Link href={`/crm/projects/${project.id}/units`} className="flex-1 bg-primary/10 hover:bg-primary/20 text-primary text-center font-bold text-xs py-2.5 rounded-lg transition-colors">
+                            الوحدات
+                         </Link>
+                         <Link href={`/crm/projects/${project.id}/edit`} className="flex-1 bg-gray-100 hover:bg-gray-200 text-gray-700 text-center font-bold text-xs py-2.5 rounded-lg transition-colors">
+                            تعديل
+                         </Link>
+                      </div>
+                      
+                      {/* ADMIN ONLY DELETE FORM */}
+                      {session?.user && (session.user as any).role === "ADMIN" && (
+                        <form action={async () => {
+                          "use server";
+                          const { deleteProject } = await import("@/actions/projects");
+                          await deleteProject(project.id);
+                        }}>
+                          <button type="submit" title="حذف المشروع" className="bg-red-50 hover:bg-red-100 text-red-600 p-2.5 rounded-lg transition-colors flex items-center justify-center shrink-0">
+                             <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M3 6h18"></path><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"></path><path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"></path></svg>
+                          </button>
+                        </form>
+                      )}
+                   </div>
+                </div>
+             </div>
+          ))}
+        </div>
+      )}
     </div>
   );
 }
