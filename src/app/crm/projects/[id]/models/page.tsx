@@ -3,10 +3,17 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { requireRole } from "@/lib/auth-helpers";
 import Image from "next/image";
+import ModelForm from "./ModelForm";
+import DeleteModelButton from "./DeleteModelButton";
+import { getServerSession } from "next-auth";
+import { authOptions } from "@/lib/auth";
 
-export default async function ProjectModelsReadOnlyPage({ params }: { params: Promise<{ id: string }> }) {
+export default async function ProjectModelsPage({ params }: { params: Promise<{ id: string }> }) {
   await requireRole(["ADMIN", "MARKETING"]);
   const id = (await params).id;
+  
+  const session = await getServerSession(authOptions);
+  const isAdmin = session?.user?.role === "ADMIN";
   
   const project = await prisma.project.findUnique({
     where: { id: id },
@@ -39,7 +46,6 @@ export default async function ProjectModelsReadOnlyPage({ params }: { params: Pr
         <div>
           <div className="flex flex-wrap items-center gap-3 mb-1">
             <h1 className="text-xl font-bold text-gray-900">إدارة مخططات ونماذج المشروع</h1>
-            <span className="px-2 py-0.5 bg-gray-100 text-gray-600 rounded text-xs font-bold border border-gray-200">قراءة فقط حالياً</span>
           </div>
           <p className="text-sm text-gray-500">المشروع: <span className="font-bold text-gray-900">{project.name}</span></p>
         </div>
@@ -90,8 +96,13 @@ export default async function ProjectModelsReadOnlyPage({ params }: { params: Pr
         )}
       </section>
 
+      {/* New Model Form */}
+      <section>
+        <ModelForm projectId={project.id} />
+      </section>
+
       {/* Models Section */}
-      <section className="space-y-4">
+      <section className="space-y-4 pt-4">
         <h2 className="text-lg font-bold text-gray-900 flex items-center gap-2">
           <svg className="w-5 h-5 text-[#D4AF37]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"></path></svg>
           نماذج المشروع
@@ -102,8 +113,8 @@ export default async function ProjectModelsReadOnlyPage({ params }: { params: Pr
             {project.models.map((model) => (
               <div key={model.id} className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
                 {/* Model Header */}
-                <div className="p-4 md:p-5 border-b border-gray-100 bg-gray-50 flex flex-col md:flex-row md:items-center justify-between gap-4">
-                  <div className="flex flex-col sm:flex-row sm:items-start gap-4">
+                <div className="p-4 md:p-5 border-b border-gray-100 bg-gray-50 flex flex-col md:flex-row justify-between gap-4">
+                  <div className="flex flex-col sm:flex-row sm:items-start gap-4 flex-1">
                     {model.planImage ? (
                       <div className="w-16 h-16 rounded-lg bg-white border border-gray-200 overflow-hidden relative shrink-0">
                         <Image src={model.planImage} alt={model.name} fill className="object-cover" />
@@ -117,8 +128,9 @@ export default async function ProjectModelsReadOnlyPage({ params }: { params: Pr
                       <div className="flex flex-wrap items-center gap-2 mb-1">
                         <h3 className="font-bold text-gray-900 text-lg">{model.name}</h3>
                         {model.code && <span className="px-2 py-0.5 bg-gray-200 text-gray-700 rounded text-[10px] font-bold">{model.code}</span>}
+                        {!model.isVisible && <span className="px-2 py-0.5 bg-red-100 text-red-700 rounded text-[10px] font-bold">مخفي</span>}
                       </div>
-                      <p className="text-xs text-gray-500 line-clamp-1 max-w-lg">{model.description || "لا يوجد وصف"}</p>
+                      <p className="text-xs text-gray-500 line-clamp-2 max-w-lg">{model.description || "لا يوجد وصف"}</p>
                       
                       <div className="flex flex-wrap gap-3 mt-2 text-xs text-gray-600 font-medium">
                         {model.area && <span className="flex items-center gap-1"><svg className="w-3.5 h-3.5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 8V4m0 0h4M4 4l5 5m11-1V4m0 0h-4m4 0l-5 5M4 16v4m0 0h4m-4 0l5-5m11 5l-5-5m5 5v-4m0 4h-4"></path></svg>{model.area} م²</span>}
@@ -127,14 +139,28 @@ export default async function ProjectModelsReadOnlyPage({ params }: { params: Pr
                       </div>
                     </div>
                   </div>
-                  <div className="shrink-0 flex flex-row md:flex-col items-center md:items-end justify-between md:justify-start gap-2 w-full md:w-auto mt-3 md:mt-0 pt-3 md:pt-0 border-t md:border-0 border-gray-200">
-                    <span className="px-2 py-1 bg-blue-50 text-blue-700 text-[10px] sm:text-xs font-bold rounded-lg border border-blue-100">قريباً: تعديل النموذج</span>
-                    <span className="text-xs font-bold text-gray-500 bg-white px-2 py-1 rounded border border-gray-200">الوحدات: {model.units.length}</span>
+                  <div className="shrink-0 flex flex-col gap-1 w-full md:w-48 mt-3 md:mt-0 pt-3 md:pt-0 border-t md:border-0 border-gray-200">
+                    <span className="text-xs font-bold text-gray-500 bg-white px-2 py-1.5 rounded border border-gray-200 text-center mb-1">
+                      الوحدات: {model.units.length}
+                    </span>
+                    {isAdmin && (
+                      <DeleteModelButton 
+                        id={model.id} 
+                        unitsCount={model.units.length} 
+                        disabled={model.units.length > 0} 
+                      />
+                    )}
                   </div>
                 </div>
 
+                {/* Edit Form (Collapsible) */}
+                <div className="px-4 md:px-5">
+                  <ModelForm projectId={project.id} initialData={model} />
+                </div>
+
                 {/* Model Units */}
-                <div className="p-4 md:p-5 bg-white">
+                <div className="p-4 md:p-5 bg-white border-t border-gray-100">
+                  <h4 className="text-sm font-bold text-gray-700 mb-3">الوحدات المرتبطة بهذا النموذج:</h4>
                   {model.units.length > 0 ? (
                     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3">
                       {model.units.map(unit => (
@@ -159,7 +185,7 @@ export default async function ProjectModelsReadOnlyPage({ params }: { params: Pr
                       ))}
                     </div>
                   ) : (
-                    <p className="text-sm text-gray-400 italic text-center py-4">لا توجد وحدات مرتبطة بهذا النموذج.</p>
+                    <p className="text-sm text-gray-400 italic text-center py-4 bg-gray-50 rounded-lg">لا توجد وحدات مرتبطة بهذا النموذج.</p>
                   )}
                 </div>
               </div>
@@ -169,7 +195,7 @@ export default async function ProjectModelsReadOnlyPage({ params }: { params: Pr
           <div className="text-center py-10 bg-white rounded-xl border border-gray-200 shadow-sm">
             <svg className="w-12 h-12 text-gray-300 mx-auto mb-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"></path></svg>
             <h3 className="text-lg font-bold text-gray-900 mb-1">لا توجد نماذج مضافة</h3>
-            <p className="text-gray-500 text-sm">سيتم تفعيل إضافة النماذج في المرحلة القادمة.</p>
+            <p className="text-gray-500 text-sm">يمكنك إضافة النماذج من خلال النموذج بالأعلى.</p>
           </div>
         )}
       </section>
@@ -183,7 +209,7 @@ export default async function ProjectModelsReadOnlyPage({ params }: { params: Pr
               وحدات غير مصنفة
             </h2>
             <span className="px-3 py-1.5 bg-yellow-50 text-yellow-700 text-xs font-bold rounded-lg border border-yellow-200 text-center">
-              سيتم تفعيل ربط الوحدات بالنماذج لاحقاً
+              سيتم ربط الوحدات بالنماذج في المرحلة القادمة
             </span>
           </div>
           
