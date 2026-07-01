@@ -30,9 +30,15 @@ export default async function EditProjectPage({ params }: { params: Promise<{ id
     <div className="space-y-6 max-w-4xl mx-auto">
       <div className="flex items-center justify-between">
         <h1 className="text-2xl font-bold text-gray-900">تعديل المنتج العقاري: {project.name}</h1>
-        <Link href="/crm/projects" className="text-sm text-gray-500 hover:text-gray-900">
-          العودة للمنتجات
-        </Link>
+        <div className="flex gap-4">
+          <Link href={`/crm/projects/${project.id}/models`} className="text-sm font-medium text-[#D4AF37] hover:text-[#b5952f] flex items-center gap-1">
+            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"></path></svg>
+            إدارة النماذج والمخططات
+          </Link>
+          <Link href="/crm/projects" className="text-sm text-gray-500 hover:text-gray-900">
+            العودة للمنتجات
+          </Link>
+        </div>
       </div>
 
       <div className="bg-white shadow sm:rounded-lg">
