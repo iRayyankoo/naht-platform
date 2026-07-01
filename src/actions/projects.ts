@@ -47,6 +47,7 @@ export async function createProject(formData: FormData) {
   const googleMapsUrl = formData.get("googleMapsUrl") as string || null;
   const locationText = formData.get("locationText") as string || null;
   const pdfUrl = formData.get("pdfUrl") as string || null;
+  const planImage = formData.get("planImage") as string || null;
 
   const showOnHomeMap = formData.get("showOnHomeMap") === "on";
   const mapLat = formData.get("mapLat") ? parseFloat(formData.get("mapLat") as string) : null;
@@ -60,7 +61,7 @@ export async function createProject(formData: FormData) {
 
   await prisma.project.create({
     data: {
-      name, slug, type, city, neighborhood, status, shortDesc, fullDesc, mainImage, isFeatured, isVisible,
+      name, slug, type, city, neighborhood, status, shortDesc, fullDesc, mainImage, planImage, isFeatured, isVisible,
       area, price, rooms, baths, progressPercent, progressLabel, googleMapsUrl, locationText, pdfUrl,
       showOnHomeMap, mapLat, mapLng, mapX, mapY,
       features: { create: features },
@@ -99,6 +100,7 @@ export async function updateProject(id: string, formData: FormData) {
   const googleMapsUrl = formData.get("googleMapsUrl") as string || null;
   const locationText = formData.get("locationText") as string || null;
   const pdfUrl = formData.get("pdfUrl") as string || null;
+  const planImage = formData.get("planImage") as string || null;
 
   const showOnHomeMap = formData.get("showOnHomeMap") === "on";
   const mapLat = formData.get("mapLat") ? parseFloat(formData.get("mapLat") as string) : null;
@@ -113,7 +115,7 @@ export async function updateProject(id: string, formData: FormData) {
   await prisma.project.update({
     where: { id },
     data: {
-      name, slug, type, city, neighborhood, status, shortDesc, fullDesc, mainImage, isFeatured, isVisible,
+      name, slug, type, city, neighborhood, status, shortDesc, fullDesc, mainImage, planImage, isFeatured, isVisible,
       area, price, rooms, baths, progressPercent, progressLabel, googleMapsUrl, locationText, pdfUrl,
       showOnHomeMap, mapLat, mapLng, mapX, mapY,
       features: { deleteMany: {}, create: features },

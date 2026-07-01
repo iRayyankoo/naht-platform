@@ -313,6 +313,14 @@ export default function ProjectFormFields({ initialData }: ProjectFormFieldsProp
           <hr className="border-gray-200" />
 
           <div>
+            <h3 className="text-lg font-bold text-gray-900 mb-4">مخطط المشروع العام</h3>
+            <p className="text-sm text-gray-500 mb-4">ارفع صورة المخطط العام للمشروع أو توزيع الوحدات الرئيسية.</p>
+            <ImageUpload name="planImage" label="المخطط العام" defaultValue={initialData?.planImage || ""} />
+          </div>
+          
+          <hr className="border-gray-200" />
+
+          <div>
             <div className="flex items-center justify-between mb-4">
               <h3 className="text-lg font-bold text-gray-900">معرض الصور (Gallery)</h3>
               <button type="button" onClick={addGalleryImage} className="text-sm bg-gray-100 hover:bg-gray-200 text-gray-800 py-1.5 px-3 rounded-md font-medium transition">
