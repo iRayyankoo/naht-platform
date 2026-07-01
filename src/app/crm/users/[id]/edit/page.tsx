@@ -4,6 +4,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import ClientForm from "@/components/crm/ClientForm";
 import { updateUser, resetUserPassword } from "@/actions/users";
+import ContentCard from "@/components/platform/layout/ContentCard";
 
 export default async function EditUserPage({ params }: { params: Promise<{ id: string }> }) {
   await requireRole(["ADMIN"]);
@@ -21,35 +22,67 @@ export default async function EditUserPage({ params }: { params: Promise<{ id: s
   const resetAction = resetUserPassword.bind(null, user.id);
 
   return (
-    <div className="space-y-6 max-w-2xl mx-auto">
-      <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-bold text-gray-900">تعديل المستخدم: {user.name}</h1>
-        <Link href="/crm/users" className="text-sm text-gray-500 hover:text-gray-900">
+    <div className="space-y-4 xl:space-y-6 max-w-4xl mx-auto w-full pb-6">
+      
+      {/* Header Area */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+        <div>
+          <h1 className="text-2xl font-bold text-gray-900 tracking-tight">تعديل مستخدم</h1>
+          <p className="text-sm text-gray-500 mt-1">تحديث بيانات وصلاحيات المستخدم: {user.name}</p>
+        </div>
+        <Link 
+          href="/crm/users" 
+          className="inline-flex items-center justify-center gap-2 bg-white hover:bg-gray-50 text-gray-700 border border-gray-200 px-5 py-2.5 rounded-xl text-sm font-semibold transition-all shadow-sm"
+        >
+          <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" strokeWidth="2" stroke="currentColor">
+            <path strokeLinecap="round" strokeLinejoin="round" d="M9 15L3 9m0 0l6-6M3 9h12a6 6 0 010 12h-3" />
+          </svg>
           العودة للمستخدمين
         </Link>
       </div>
 
-      <div className="bg-white shadow sm:rounded-lg">
-        <ClientForm action={updateAction} successMessage="تم تحديث بيانات المستخدم بنجاح" className="space-y-6 p-6">
-          <div className="grid grid-cols-1 gap-y-6 gap-x-4 sm:grid-cols-2">
+      <ContentCard title="البيانات الأساسية">
+        <ClientForm action={updateAction} successMessage="تم تحديث بيانات المستخدم بنجاح" className="p-2 sm:p-4">
+          <div className="grid grid-cols-1 gap-y-6 gap-x-6 sm:grid-cols-2">
+            
             <div className="sm:col-span-2">
-              <label htmlFor="name" className="block text-sm font-medium text-gray-700">الاسم</label>
-              <div className="mt-1">
-                <input type="text" name="name" id="name" defaultValue={user.name || ""} required className="shadow-sm focus:ring-primary focus:border-primary block w-full sm:text-sm border-gray-300 rounded-md py-2 px-3 border" />
+              <label htmlFor="name" className="block text-sm font-semibold text-gray-700">الاسم الكامل</label>
+              <div className="mt-2">
+                <input 
+                  type="text" 
+                  name="name" 
+                  id="name" 
+                  defaultValue={user.name || ""} 
+                  required 
+                  className="shadow-sm focus:ring-primary focus:border-primary block w-full sm:text-sm border-gray-300 rounded-lg py-2.5 px-4 border transition-colors" 
+                />
               </div>
             </div>
 
-            <div className="sm:col-span-2">
-              <label htmlFor="email" className="block text-sm font-medium text-gray-700">البريد الإلكتروني</label>
-              <div className="mt-1">
-                <input type="email" name="email" id="email" defaultValue={user.email || ""} required dir="ltr" className="shadow-sm focus:ring-primary focus:border-primary block w-full sm:text-sm border-gray-300 rounded-md py-2 px-3 border text-left" />
+            <div className="sm:col-span-2 lg:col-span-1">
+              <label htmlFor="email" className="block text-sm font-semibold text-gray-700">البريد الإلكتروني</label>
+              <div className="mt-2">
+                <input 
+                  type="email" 
+                  name="email" 
+                  id="email" 
+                  defaultValue={user.email || ""} 
+                  required 
+                  dir="ltr" 
+                  className="shadow-sm focus:ring-primary focus:border-primary block w-full sm:text-sm border-gray-300 rounded-lg py-2.5 px-4 border text-left transition-colors" 
+                />
               </div>
             </div>
 
-            <div className="sm:col-span-1">
-              <label htmlFor="role" className="block text-sm font-medium text-gray-700">الدور والصلاحية</label>
-              <div className="mt-1">
-                <select id="role" name="role" defaultValue={user.role} className="shadow-sm focus:ring-primary focus:border-primary block w-full sm:text-sm border-gray-300 rounded-md py-2 px-3 border">
+            <div className="sm:col-span-2 lg:col-span-1">
+              <label htmlFor="role" className="block text-sm font-semibold text-gray-700">الدور والصلاحية</label>
+              <div className="mt-2">
+                <select 
+                  id="role" 
+                  name="role" 
+                  defaultValue={user.role} 
+                  className="shadow-sm focus:ring-primary focus:border-primary block w-full sm:text-sm border-gray-300 rounded-lg py-2.5 px-4 border bg-white transition-colors cursor-pointer"
+                >
                   <option value="ADMIN">مدير نظام (ADMIN)</option>
                   <option value="MARKETING">تسويق (MARKETING)</option>
                   <option value="SALES">مبيعات (SALES)</option>
@@ -57,43 +90,78 @@ export default async function EditUserPage({ params }: { params: Promise<{ id: s
               </div>
             </div>
 
-            <div className="sm:col-span-1">
-              <label className="block text-sm font-medium text-gray-700 mb-1">حالة الحساب</label>
-              <div className="mt-2">
+            <div className="sm:col-span-2 lg:col-span-1">
+              <label className="block text-sm font-semibold text-gray-700 mb-2">حالة الحساب</label>
+              <div className="mt-3 bg-gray-50/50 p-3 rounded-lg border border-gray-100 flex items-center justify-between">
+                <span className="text-sm font-medium text-gray-900">تفعيل حساب المستخدم</span>
                 <label className="inline-flex items-center cursor-pointer">
                   <input type="checkbox" name="isActive" defaultChecked={user.isActive} className="sr-only peer" />
                   <div className="relative w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-primary/20 rounded-full peer peer-checked:after:translate-x-full rtl:peer-checked:after:-translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-primary"></div>
-                  <span className="ms-3 text-sm font-medium text-gray-900">حساب فعال</span>
                 </label>
               </div>
             </div>
           </div>
 
-          <div className="pt-5 border-t border-gray-200 flex justify-end">
-            <button type="submit" className="bg-primary hover:bg-primary-dark text-white px-8 py-2 rounded-md font-bold text-sm">
+          <div className="pt-8 mt-6 border-t border-gray-100 flex justify-end">
+            <button 
+              type="submit" 
+              className="inline-flex items-center justify-center gap-2 bg-primary hover:bg-primary-dark text-white px-8 py-2.5 rounded-xl font-bold text-sm transition-all shadow-sm shadow-primary/20 hover:shadow-md hover:shadow-primary/30 w-full sm:w-auto"
+            >
+              <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" strokeWidth="2" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" d="M4.5 12.75l6 6 9-13.5" />
+              </svg>
               حفظ التعديلات
             </button>
           </div>
         </ClientForm>
-      </div>
+      </ContentCard>
 
-      <div className="bg-white shadow sm:rounded-lg mt-8 border border-red-100">
-        <div className="px-6 py-4 border-b border-gray-200">
-          <h3 className="text-lg font-bold text-red-600">إعادة تعيين كلمة المرور</h3>
+      <ContentCard title="تغيير كلمة المرور">
+        <div className="p-2 sm:p-4">
+          <div className="mb-6">
+            <p className="text-sm text-gray-500 leading-relaxed">
+              بصفتك مدير للنظام، يمكنك تعيين كلمة مرور جديدة لهذا المستخدم مباشرة دون الحاجة لمعرفة كلمة المرور القديمة.
+            </p>
+          </div>
+          <ClientForm action={resetAction} successMessage="تم تغيير كلمة المرور بنجاح">
+            <div className="grid grid-cols-1 gap-y-6 sm:grid-cols-2 gap-x-6">
+              <div className="sm:col-span-2 lg:col-span-1">
+                <label htmlFor="new_password" className="block text-sm font-semibold text-gray-700">كلمة المرور الجديدة</label>
+                <div className="mt-2">
+                  <input 
+                    type="password" 
+                    name="password" 
+                    id="new_password" 
+                    required 
+                    minLength={6} 
+                    dir="ltr" 
+                    placeholder="••••••••"
+                    className="shadow-sm focus:ring-primary focus:border-primary block w-full sm:text-sm border-gray-300 rounded-lg py-2.5 px-4 border text-left transition-colors" 
+                  />
+                  <p className="text-xs text-gray-500 mt-2 flex items-center gap-1">
+                    <svg className="w-4 h-4 text-gray-400" fill="none" viewBox="0 0 24 24" strokeWidth="2" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                    </svg>
+                    يجب أن تتكون من 6 أحرف على الأقل.
+                  </p>
+                </div>
+              </div>
+            </div>
+            <div className="pt-8 mt-6 border-t border-gray-100 flex justify-end">
+              <button 
+                type="submit" 
+                className="inline-flex items-center justify-center gap-2 bg-gray-800 hover:bg-gray-900 text-white px-6 py-2.5 rounded-xl font-bold text-sm transition-all shadow-sm w-full sm:w-auto"
+              >
+                <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" strokeWidth="2" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M16.5 10.5V6.75a4.5 4.5 0 10-9 0v3.75m-.75 11.25h10.5a2.25 2.25 0 002.25-2.25v-6.75a2.25 2.25 0 00-2.25-2.25H6.75a2.25 2.25 0 00-2.25 2.25v6.75a2.25 2.25 0 002.25 2.25z" />
+                </svg>
+                تعيين كلمة المرور
+              </button>
+            </div>
+          </ClientForm>
         </div>
-        <ClientForm action={resetAction} successMessage="تم تغيير كلمة المرور بنجاح" className="p-6 space-y-4">
-          <div>
-            <label htmlFor="new_password" className="block text-sm font-medium text-gray-700">كلمة المرور الجديدة</label>
-            <input type="password" name="password" id="new_password" required minLength={6} dir="ltr" className="mt-1 shadow-sm focus:ring-red-500 focus:border-red-500 block w-full sm:text-sm border-gray-300 rounded-md py-2 px-3 border text-left" />
-            <p className="text-xs text-gray-500 mt-1">يجب أن تتكون من 6 أحرف على الأقل.</p>
-          </div>
-          <div className="flex justify-end">
-            <button type="submit" className="bg-red-600 hover:bg-red-700 text-white px-6 py-2 rounded-md font-bold text-sm">
-              تغيير كلمة المرور
-            </button>
-          </div>
-        </ClientForm>
-      </div>
+      </ContentCard>
+
     </div>
   );
 }
