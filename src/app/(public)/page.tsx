@@ -65,7 +65,7 @@ export default async function HomePage() {
 
   return (
     <div className="bg-[#050505]"> {/* Main luxury background */}
-      <PublicHeroRenderer content={content} />
+      <PublicHeroRenderer content={content} projects={featuredProjects} settings={settings} />
       <FeaturedProjects projects={featuredProjects} />
       <NahtStandard content={content} />
       <div className="bg-[#F9F9F7]"> {/* Light background for the rest */}

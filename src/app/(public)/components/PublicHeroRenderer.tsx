@@ -1,15 +1,20 @@
 "use client";
 
-import { HomePageContent } from "@prisma/client";
+import { HomePageContent, Project, SiteSettings } from "@prisma/client";
 import HeroSection from "./HeroSection";
+import TimedProductCardsHero from "./TimedProductCardsHero";
 
-export default function PublicHeroRenderer({ content }: { content: HomePageContent | null }) {
+interface PublicHeroRendererProps {
+  content: HomePageContent | null;
+  projects: Project[];
+  settings: SiteSettings | null;
+}
+
+export default function PublicHeroRenderer({ content, projects, settings }: PublicHeroRendererProps) {
   const displayMode = content?.heroDisplayMode || "classic";
 
-  if (displayMode === "timed_product_cards") {
-    // TODO: In Phase 6B-2 or 6B-3, we will render <TimedProductCardsHero content={content} /> here.
-    // For now, we fallback to the classic hero to ensure the site doesn't break.
-    return <HeroSection content={content} />;
+  if (displayMode === "timed_product_cards" && projects && projects.length > 0) {
+    return <TimedProductCardsHero content={content} projects={projects} settings={settings} />;
   }
 
   // Fallback to classic hero
