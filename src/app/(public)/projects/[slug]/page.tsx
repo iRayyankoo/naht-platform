@@ -188,6 +188,38 @@ export default async function PublicProjectDetailsPage({ params }: { params: Pro
               </div>
             </section>
 
+            {/* Master Plan */}
+            {project.planImage && (
+              <section>
+                <h2 className="text-xl md:text-2xl font-bold text-gray-900 mb-4 flex items-center gap-2">
+                  <span className="w-1.5 h-6 bg-[#D4AF37] rounded-full"></span>
+                  مخطط المشروع العام
+                </h2>
+                <div className="bg-white p-6 rounded-3xl shadow-sm border border-gray-100 flex flex-col items-center">
+                  <p className="text-sm md:text-base text-gray-500 mb-6 text-center">
+                    يوضح توزيع المشروع أو الوحدات الرئيسية
+                  </p>
+                  <div className="relative w-full aspect-[4/3] rounded-2xl overflow-hidden bg-gray-50 border border-gray-100 mb-6">
+                    <Image 
+                      src={project.planImage} 
+                      alt="مخطط المشروع العام" 
+                      fill 
+                      className="object-contain p-2"
+                    />
+                  </div>
+                  <a 
+                    href={project.planImage} 
+                    target="_blank" 
+                    rel="noopener noreferrer" 
+                    className="inline-flex items-center gap-2 bg-gray-900 hover:bg-[#D4AF37] text-white font-bold py-2.5 px-6 rounded-xl transition-colors shadow-sm text-sm"
+                  >
+                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"></path></svg>
+                    فتح المخطط
+                  </a>
+                </div>
+              </section>
+            )}
+
             {/* Gallery (Fixed Premium Grid) */}
             {project.galleryImages.length > 0 && (
               <section>
