@@ -103,10 +103,14 @@ model Project {
   mapX          Float?    // Deprecated but kept for image map mode
   mapY          Float?    // Deprecated but kept for image map mode
   
+  // Phase 6E additions
+  planImage     String?
+  
   createdAt    DateTime @default(now())
   updatedAt    DateTime @updatedAt
 
   units         Unit[]
+  models        ProjectModel[]
   leads         Lead[]
   campaignLinks CampaignLink[]
   clickEvents   ClickEvent[]
@@ -147,6 +151,26 @@ model ProjectGalleryImage {
   project   Project @relation(fields: [projectId], references: [id], onDelete: Cascade)
 }
 
+model ProjectModel {
+  id          String   @id @default(cuid())
+  projectId   String
+  name        String
+  code        String?
+  description String?
+  planImage   String?
+  area        String?
+  rooms       Int?
+  baths       Int?
+  status      String?
+  sortOrder   Int      @default(0)
+  isVisible   Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  project     Project  @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  units       Unit[]
+}
+
 model Unit {
   id        String   @id @default(cuid())
   projectId String
@@ -158,10 +182,19 @@ model Unit {
   price     Float    @default(0)
   status    String   @default("AVAILABLE") // AVAILABLE, SOLD, RESERVED
   isVisible Boolean  @default(true)
+  
+  // Phase 6E additions
+  modelId       String?
+  floor         String?
+  facade        String?
+  unitPlanImage String?
+  sortOrder     Int     @default(0)
+
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
   project Project @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  model   ProjectModel? @relation(fields: [modelId], references: [id], onDelete: SetNull)
 }
 
 model Lead {
