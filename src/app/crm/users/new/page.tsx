@@ -3,6 +3,7 @@ import Link from "next/link";
 import ClientForm from "@/components/crm/ClientForm";
 import { createUser } from "@/actions/users";
 import ContentCard from "@/components/platform/layout/ContentCard";
+import PasswordInput from "@/components/crm/PasswordInput";
 
 export default async function NewUserPage() {
   await requireRole(["ADMIN"]);
@@ -63,15 +64,12 @@ export default async function NewUserPage() {
             <div className="sm:col-span-2 lg:col-span-1">
               <label htmlFor="password" className="block text-sm font-semibold text-gray-700">كلمة المرور</label>
               <div className="mt-2">
-                <input 
-                  type="password" 
+                <PasswordInput 
                   name="password" 
                   id="password" 
                   required 
                   minLength={6} 
-                  dir="ltr" 
                   placeholder="••••••••"
-                  className="shadow-sm focus:ring-primary focus:border-primary block w-full sm:text-sm border-gray-300 rounded-lg py-2.5 px-4 border text-left transition-colors" 
                 />
               </div>
             </div>

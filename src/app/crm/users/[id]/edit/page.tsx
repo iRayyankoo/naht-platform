@@ -5,6 +5,7 @@ import { notFound } from "next/navigation";
 import ClientForm from "@/components/crm/ClientForm";
 import { updateUser, resetUserPassword } from "@/actions/users";
 import ContentCard from "@/components/platform/layout/ContentCard";
+import PasswordInput from "@/components/crm/PasswordInput";
 
 export default async function EditUserPage({ params }: { params: Promise<{ id: string }> }) {
   await requireRole(["ADMIN"]);
@@ -128,15 +129,12 @@ export default async function EditUserPage({ params }: { params: Promise<{ id: s
               <div className="sm:col-span-2 lg:col-span-1">
                 <label htmlFor="new_password" className="block text-sm font-semibold text-gray-700">كلمة المرور الجديدة</label>
                 <div className="mt-2">
-                  <input 
-                    type="password" 
+                  <PasswordInput 
                     name="password" 
                     id="new_password" 
                     required 
                     minLength={6} 
-                    dir="ltr" 
                     placeholder="••••••••"
-                    className="shadow-sm focus:ring-primary focus:border-primary block w-full sm:text-sm border-gray-300 rounded-lg py-2.5 px-4 border text-left transition-colors" 
                   />
                   <p className="text-xs text-gray-500 mt-2 flex items-center gap-1">
                     <svg className="w-4 h-4 text-gray-400" fill="none" viewBox="0 0 24 24" strokeWidth="2" stroke="currentColor">
