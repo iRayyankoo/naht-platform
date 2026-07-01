@@ -17,7 +17,7 @@ export default async function AdminLayout({
   }
 
   return (
-    <div className="flex h-screen bg-gray-50 text-gray-900">
+    <div className="flex min-h-screen bg-gray-50 text-gray-900">
       {/* Sidebar */}
       <CrmSidebar 
         userName={session.user?.name || "المستخدم"} 
