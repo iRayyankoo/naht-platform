@@ -385,6 +385,7 @@ model SocialLink {
 model HomePageContent {
   id String @id @default("global")
 
+  heroDisplayMode     String  @default("classic")
   heroTitle           String  @default("نحت الأصول العقارية")
   heroSubtitle        String  @default("نبني مستقبل الإسكان بأعلى معايير الجودة")
   heroBackgroundImage String?

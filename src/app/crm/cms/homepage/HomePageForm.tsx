@@ -33,9 +33,26 @@ export default function HomePageForm({ content }: { content: any }) {
 
   return (
     <form onSubmit={handleSubmit} className="space-y-8">
-      {/* Hero Section */}
+      {/* Hero Display Mode Section */}
       <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-100 space-y-4">
-        <h2 className="text-lg font-bold text-gray-900 border-b pb-2">قسم البداية (Hero Section)</h2>
+        <h2 className="text-lg font-bold text-gray-900 border-b pb-2">طريقة عرض الهيرو</h2>
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <label className={`border-2 rounded-xl p-4 cursor-pointer transition-all ${content.heroDisplayMode === 'classic' || !content.heroDisplayMode ? 'border-primary bg-primary/5' : 'border-gray-200 hover:border-primary/50'}`}>
+            <input type="radio" name="heroDisplayMode" value="classic" defaultChecked={content.heroDisplayMode === 'classic' || !content.heroDisplayMode} className="sr-only" />
+            <div className="font-bold text-gray-900 mb-1">الهيرو الحالي (Classic)</div>
+            <div className="text-sm text-gray-500">الشكل الحالي المستخدم في الصفحة الرئيسية (صورة مع نصوص).</div>
+          </label>
+          <label className={`border-2 rounded-xl p-4 cursor-pointer transition-all ${content.heroDisplayMode === 'timed_product_cards' ? 'border-primary bg-primary/5' : 'border-gray-200 hover:border-primary/50'}`}>
+            <input type="radio" name="heroDisplayMode" value="timed_product_cards" defaultChecked={content.heroDisplayMode === 'timed_product_cards'} className="sr-only" />
+            <div className="font-bold text-gray-900 mb-1">هيرو المنتجات المتحركة</div>
+            <div className="text-sm text-gray-500">صورة رئيسية مع كروت منتجات تتبدل تلقائياً. <span className="text-amber-600 block mt-1 text-xs font-semibold">ملاحظة: سيتم تفعيله بعد بناء المكون في المرحلة القادمة (حالياً سيعرض الهيرو الكلاسيكي).</span></div>
+          </label>
+        </div>
+      </div>
+
+      {/* Hero Section Content */}
+      <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-100 space-y-4">
+        <h2 className="text-lg font-bold text-gray-900 border-b pb-2">محتوى قسم البداية (Hero Content)</h2>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">العنوان الرئيسي</label>

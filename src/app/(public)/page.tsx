@@ -1,6 +1,6 @@
 import { prisma } from "@/lib/prisma";
 import { getBaseMetadata } from "@/lib/seo";
-import HeroSection from "./components/HeroSection";
+import PublicHeroRenderer from "./components/PublicHeroRenderer";
 import StatsSection from "./components/StatsSection";
 import AboutBrief from "./components/AboutBrief";
 import FeaturedProjects from "./components/FeaturedProjects";
@@ -65,7 +65,7 @@ export default async function HomePage() {
 
   return (
     <div className="bg-[#050505]"> {/* Main luxury background */}
-      <HeroSection content={content} />
+      <PublicHeroRenderer content={content} />
       <FeaturedProjects projects={featuredProjects} />
       <NahtStandard content={content} />
       <div className="bg-[#F9F9F7]"> {/* Light background for the rest */}

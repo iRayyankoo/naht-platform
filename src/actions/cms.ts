@@ -31,6 +31,7 @@ export async function updateHomePageContent(data: any) {
   const sanitizedData = {
     ...data,
     showMapSection: data.showMapSection === "on" || data.showMapSection === true,
+    heroDisplayMode: ["classic", "timed_product_cards"].includes(data.heroDisplayMode) ? data.heroDisplayMode : "classic",
   };
 
   const parseNumber = (val: any) => {
