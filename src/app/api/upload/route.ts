@@ -1,11 +1,12 @@
-import { NextRequest, NextResponse } from "next/server";
+﻿import { NextRequest, NextResponse } from "next/server";
 import { writeFile, mkdir } from "fs/promises";
 import { join } from "path";
 import crypto from "crypto";
 import { S3Client, PutObjectCommand } from "@aws-sdk/client-s3";
+import { createClient } from "@supabase/supabase-js";
 
 const MAX_FILE_SIZE = 5 * 1024 * 1024; // 5MB
-const ALLOWED_EXTENSIONS = ["pdf", "jpg", "jpeg", "png", "doc", "docx"];
+const ALLOWED_EXTENSIONS = ["pdf", "jpg", "jpeg", "png", "webp", "gif", "doc", "docx"];
 
 // S3/R2 Client Configuration
 const s3Client = new S3Client({
@@ -33,7 +34,7 @@ export async function POST(req: NextRequest) {
 
     const extension = file.name.split(".").pop()?.toLowerCase();
     if (!extension || !ALLOWED_EXTENSIONS.includes(extension)) {
-      return NextResponse.json({ error: "Invalid file type. Allowed: PDF, JPG, PNG, DOC, DOCX" }, { status: 400 });
+      return NextResponse.json({ error: "Invalid file type. Allowed: PDF, JPG, PNG, WEBP, GIF, DOC, DOCX" }, { status: 400 });
     }
 
     const bytes = await file.arrayBuffer();
@@ -43,10 +44,44 @@ export async function POST(req: NextRequest) {
     const uniqueId = crypto.randomBytes(8).toString("hex");
     const safeName = `${Date.now()}-${uniqueId}.${extension}`;
 
+    // 1. Supabase Storage (Priority)
+    const isSupabaseEnabled = !!(
+      process.env.NEXT_PUBLIC_SUPABASE_URL && 
+      process.env.SUPABASE_SERVICE_ROLE_KEY && 
+      process.env.SUPABASE_STORAGE_BUCKET
+    );
+
+    if (isSupabaseEnabled) {
+      const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
+      const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY!;
+      const bucket = process.env.SUPABASE_STORAGE_BUCKET!;
+      
+      const supabase = createClient(supabaseUrl, supabaseKey);
+      const filePath = `forms/${folder}/${safeName}`;
+
+      const { data, error } = await supabase.storage
+        .from(bucket)
+        .upload(filePath, buffer, {
+          contentType: file.type || "application/octet-stream",
+          upsert: true
+        });
+
+      if (error) {
+        console.error("Supabase Storage Error:", error);
+        return NextResponse.json({ error: "Failed to upload to Supabase Storage" }, { status: 500 });
+      }
+
+      const { data: { publicUrl } } = supabase.storage
+        .from(bucket)
+        .getPublicUrl(filePath);
+
+      return NextResponse.json({ url: publicUrl }, { status: 200 });
+    }
+
+    // 2. Cloudflare R2 / S3 (Secondary)
     const isR2Enabled = !!(process.env.R2_ACCESS_KEY_ID && process.env.R2_ENDPOINT && process.env.R2_BUCKET_NAME);
 
     if (isR2Enabled) {
-      // Upload to Cloudflare R2
       const objectKey = `uploads/forms/${folder}/${safeName}`;
       
       const command = new PutObjectCommand({
@@ -63,21 +98,23 @@ export async function POST(req: NextRequest) {
         : `https://${process.env.R2_BUCKET_NAME}.${process.env.R2_ENDPOINT?.replace('https://', '')}/${objectKey}`;
 
       return NextResponse.json({ url: publicUrl }, { status: 200 });
-    } else {
-      // Fallback: Local Upload (For Development)
-      const uploadDir = join(process.cwd(), "public", "uploads", "forms", folder);
-      try {
-        await mkdir(uploadDir, { recursive: true });
-      } catch (e) {
-        // Directory already exists or cannot be created
-      }
-
-      const filePath = join(uploadDir, safeName);
-      await writeFile(filePath, buffer);
-
-      const fileUrl = `/uploads/forms/${folder}/${safeName}`;
-      return NextResponse.json({ url: fileUrl }, { status: 200 });
     }
+
+    // 3. Fallback: Local Upload
+    // Local fallback only. Not intended for staging/production.
+    const uploadDir = join(process.cwd(), "public", "uploads", "forms", folder);
+    try {
+      await mkdir(uploadDir, { recursive: true });
+    } catch (e) {
+      // Directory already exists or cannot be created
+    }
+
+    const localFilePath = join(uploadDir, safeName);
+    await writeFile(localFilePath, buffer);
+
+    const fileUrl = `/uploads/forms/${folder}/${safeName}`;
+    return NextResponse.json({ url: fileUrl }, { status: 200 });
+    
   } catch (error: any) {
     console.error("Upload error:", error);
     return NextResponse.json({ error: "Failed to upload file" }, { status: 500 });
