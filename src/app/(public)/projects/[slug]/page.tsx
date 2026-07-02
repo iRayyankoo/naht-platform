@@ -318,29 +318,58 @@ export default async function PublicProjectDetailsPage({ params }: { params: Pro
                   <span className="w-1.5 h-6 bg-[#D4AF37] rounded-full"></span>
                   الوحدات المتاحة
                 </h2>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   {project.units.map(unit => (
-                    <div key={unit.id} className="bg-white border border-gray-100 rounded-2xl p-4 shadow-sm hover:border-[#D4AF37] hover:shadow transition-all">
-                      <div className="flex justify-between items-start mb-3">
+                    <div key={unit.id} className="bg-white border border-gray-100 rounded-3xl p-5 shadow-sm hover:shadow-md hover:-translate-y-1 hover:border-[#D4AF37]/30 transition-all duration-300 flex flex-col">
+                      {/* Header */}
+                      <div className="flex justify-between items-start mb-4 gap-3">
                         <div>
-                          <h4 className="font-bold text-base md:text-lg text-gray-900">وحدة {unit.unitNum}</h4>
-                          {unit.type && <p className="text-xs text-gray-500 mt-0.5">{unit.type}</p>}
+                          <h4 className="font-bold text-lg md:text-xl text-gray-900">وحدة {unit.unitNum}</h4>
+                          {unit.type && <p className="text-sm text-gray-500 mt-0.5">{unit.type}</p>}
                         </div>
-                        <span className={`px-3 py-1 rounded-full text-[10px] font-bold ${
+                        <span className={`px-3 py-1.5 rounded-full text-xs font-bold shrink-0 shadow-sm ${
                           unit.status === 'AVAILABLE' ? 'bg-[#25D366]/10 text-[#1ebd5b]' :
                           unit.status === 'SOLD' ? 'bg-red-50 text-red-600' : 'bg-gray-100 text-gray-600'
                         }`}>
                           {unit.status === 'AVAILABLE' ? 'متاح' : unit.status === 'SOLD' ? 'مباع' : 'محجوز'}
                         </span>
                       </div>
-                      <div className="grid grid-cols-3 gap-2 text-xs text-gray-600 mb-3">
-                        {unit.area && <div className="flex flex-col"><span className="text-[9px] uppercase text-gray-400">المساحة</span><span className="font-bold text-gray-900">{unit.area} م²</span></div>}
-                        {unit.rooms && <div className="flex flex-col"><span className="text-[9px] uppercase text-gray-400">الغرف</span><span className="font-bold text-gray-900">{unit.rooms}</span></div>}
-                        {unit.baths && <div className="flex flex-col"><span className="text-[9px] uppercase text-gray-400">الحمامات</span><span className="font-bold text-gray-900">{unit.baths}</span></div>}
+                      
+                      {/* Info Grid */}
+                      <div className="grid grid-cols-2 gap-3 mb-5 flex-1">
+                        {!!unit.area && (
+                          <div className="flex items-center gap-2 text-gray-700 bg-gray-50 p-3 rounded-xl border border-gray-100">
+                            <svg className="w-4 h-4 text-[#D4AF37] shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 8V4m0 0h4M4 4l5 5m11-1V4m0 0h-4m4 0l-5 5M4 16v4m0 0h4m-4 0l5-5m11 5l-5-5m5 5v-4m0 4h-4"></path></svg>
+                            <span className="text-xs md:text-sm font-bold">{unit.area} م²</span>
+                          </div>
+                        )}
+                        {!!unit.rooms && (
+                          <div className="flex items-center gap-2 text-gray-700 bg-gray-50 p-3 rounded-xl border border-gray-100">
+                            <svg className="w-4 h-4 text-[#D4AF37] shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"></path></svg>
+                            <span className="text-xs md:text-sm font-bold">{unit.rooms} غرف</span>
+                          </div>
+                        )}
+                        {!!unit.baths && (
+                          <div className="flex items-center gap-2 text-gray-700 bg-gray-50 p-3 rounded-xl border border-gray-100">
+                            <svg className="w-4 h-4 text-[#D4AF37] shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M8 14v3m4-3v3m4-3v3M3 21h18M3 10h18M3 7l9-4 9 4M4 10h16v11H4V10z"></path></svg>
+                            <span className="text-xs md:text-sm font-bold">{unit.baths} حمامات</span>
+                          </div>
+                        )}
+                        {!!unit.floor && (
+                          <div className="flex items-center gap-2 text-gray-700 bg-gray-50 p-3 rounded-xl border border-gray-100">
+                            <svg className="w-4 h-4 text-[#D4AF37] shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"></path></svg>
+                            <span className="text-xs md:text-sm font-bold">الدور {unit.floor}</span>
+                          </div>
+                        )}
                       </div>
-                      {unit.price && (
-                        <div className="pt-3 border-t border-gray-50 font-bold text-base md:text-lg text-[#D4AF37]">
-                          {unit.price.toLocaleString()} ر.س
+                      
+                      {/* Price / Bottom Section */}
+                      {!!unit.price && (
+                        <div className="pt-4 border-t border-gray-100 flex items-center justify-between">
+                          <span className="text-xs md:text-sm text-gray-500 font-bold">السعر</span>
+                          <span className="font-black text-lg md:text-xl text-[#D4AF37]">
+                            {unit.price.toLocaleString()} ر.س
+                          </span>
                         </div>
                       )}
                     </div>

@@ -3,6 +3,8 @@ import Link from "next/link";
 import { createUnit, deleteUnit, updateUnitStatus, toggleUnitVisibility } from "@/actions/units";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
+import UnitClassificationForm from "./UnitClassificationForm";
+import { Fragment } from "react";
 
 export default async function ProjectUnitsPage({ params }: { params: Promise<{ id: string }> }) {
   const id = (await params).id;
@@ -12,7 +14,10 @@ export default async function ProjectUnitsPage({ params }: { params: Promise<{ i
 
   const project = await prisma.project.findUnique({
     where: { id: id },
-    include: { units: { orderBy: { createdAt: "desc" } } },
+    include: { 
+      units: { orderBy: { createdAt: "desc" } },
+      models: { orderBy: { sortOrder: "asc" } }
+    },
   });
 
   if (!project) return <div>المشروع غير موجود</div>;
@@ -36,7 +41,7 @@ export default async function ProjectUnitsPage({ params }: { params: Promise<{ i
       {canEdit && (
         <div className="bg-white shadow sm:rounded-lg p-6">
           <h2 className="text-lg font-medium text-gray-900 mb-4">إضافة وحدة جديدة</h2>
-          <form action={handleCreate} className="grid grid-cols-1 gap-y-4 gap-x-4 sm:grid-cols-7 items-end">
+          <form action={handleCreate} className="grid grid-cols-1 gap-y-4 gap-x-4 sm:grid-cols-9 items-end">
             <div className="sm:col-span-1">
               <label className="block text-sm font-medium text-gray-700">رقم الوحدة</label>
               <input type="text" name="unitNum" required className="mt-1 block w-full shadow-sm sm:text-sm border-gray-300 rounded-md border p-2" />
@@ -59,6 +64,15 @@ export default async function ProjectUnitsPage({ params }: { params: Promise<{ i
                 <option value="AVAILABLE">متاحة</option>
                 <option value="SOLD">مباعة</option>
                 <option value="RESERVED">محجوزة</option>
+              </select>
+            </div>
+            <div className="sm:col-span-1">
+              <label className="block text-sm font-medium text-gray-700">النموذج</label>
+              <select name="modelId" className="mt-1 block w-full shadow-sm sm:text-sm border-gray-300 rounded-md border p-2">
+                <option value="">غير مصنفة</option>
+                {project.models.map(m => (
+                  <option key={m.id} value={m.id}>{m.name} {m.code ? `(${m.code})` : ''}</option>
+                ))}
               </select>
             </div>
             <div className="sm:col-span-1 flex items-center h-full pb-2">
@@ -89,62 +103,82 @@ export default async function ProjectUnitsPage({ params }: { params: Promise<{ i
           </thead>
           <tbody className="bg-white divide-y divide-gray-200">
             {project.units.map((unit) => (
-              <tr key={unit.id}>
-                <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">{unit.unitNum}</td>
-                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{unit.type}</td>
-                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{unit.area} م²</td>
-                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{unit.rooms}</td>
-                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                  {canEdit ? (
-                    <form action={async (formData: FormData) => {
-                      "use server";
-                      await updateUnitStatus(unit.id, project.id, formData.get("status") as string);
-                    }} className="flex items-center space-x-2 space-x-reverse">
-                      <select name="status" defaultValue={unit.status} className="text-sm border-gray-300 rounded-md border p-1">
-                        <option value="AVAILABLE">متاحة</option>
-                        <option value="SOLD">مباعة</option>
-                        <option value="RESERVED">محجوزة</option>
-                      </select>
-                      <button type="submit" className="text-xs bg-gray-100 hover:bg-gray-200 px-2 py-1 rounded">حفظ</button>
-                    </form>
-                  ) : (
-                    <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${
-                      unit.status === 'AVAILABLE' ? 'bg-green-100 text-green-800' : 
-                      unit.status === 'SOLD' ? 'bg-red-100 text-red-800' : 'bg-yellow-100 text-yellow-800'
-                    }`}>
-                      {unit.status === 'AVAILABLE' ? 'متاحة' : unit.status === 'SOLD' ? 'مباعة' : 'محجوزة'}
-                    </span>
-                  )}
-                </td>
-                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                  {canEdit ? (
-                    <form action={async () => {
-                      "use server";
-                      await toggleUnitVisibility(unit.id, project.id, !unit.isVisible);
-                    }}>
-                      <button type="submit" className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${unit.isVisible ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-800'}`}>
-                        {unit.isVisible ? 'ظاهرة' : 'مخفية'}
-                      </button>
-                    </form>
-                  ) : (
-                    <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${unit.isVisible ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-800'}`}>
-                      {unit.isVisible ? 'ظاهرة' : 'مخفية'}
-                    </span>
-                  )}
-                </td>
-                {canEdit && (
-                  <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium flex items-center space-x-2 space-x-reverse">
-                    {userRole === "ADMIN" && (
-                      <form action={async () => {
+              <Fragment key={unit.id}>
+                <tr>
+                  <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">{unit.unitNum}</td>
+                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{unit.type}</td>
+                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{unit.area} م²</td>
+                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{unit.rooms}</td>
+                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                    {canEdit ? (
+                      <form action={async (formData: FormData) => {
                         "use server";
-                        await deleteUnit(unit.id, project.id);
-                      }}>
-                        <button type="submit" className="text-red-600 hover:text-red-900">حذف</button>
+                        await updateUnitStatus(unit.id, project.id, formData.get("status") as string);
+                      }} className="flex items-center space-x-2 space-x-reverse">
+                        <select name="status" defaultValue={unit.status} className="text-sm border-gray-300 rounded-md border p-1">
+                          <option value="AVAILABLE">متاحة</option>
+                          <option value="SOLD">مباعة</option>
+                          <option value="RESERVED">محجوزة</option>
+                        </select>
+                        <button type="submit" className="text-xs bg-gray-100 hover:bg-gray-200 px-2 py-1 rounded">حفظ</button>
                       </form>
+                    ) : (
+                      <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${
+                        unit.status === 'AVAILABLE' ? 'bg-green-100 text-green-800' : 
+                        unit.status === 'SOLD' ? 'bg-red-100 text-red-800' : 'bg-yellow-100 text-yellow-800'
+                      }`}>
+                        {unit.status === 'AVAILABLE' ? 'متاحة' : unit.status === 'SOLD' ? 'مباعة' : 'محجوزة'}
+                      </span>
                     )}
                   </td>
+                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                    {canEdit ? (
+                      <form action={async () => {
+                        "use server";
+                        await toggleUnitVisibility(unit.id, project.id, !unit.isVisible);
+                      }}>
+                        <button type="submit" className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${unit.isVisible ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-800'}`}>
+                          {unit.isVisible ? 'ظاهرة' : 'مخفية'}
+                        </button>
+                      </form>
+                    ) : (
+                      <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${unit.isVisible ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-800'}`}>
+                        {unit.isVisible ? 'ظاهرة' : 'مخفية'}
+                      </span>
+                    )}
+                  </td>
+                  {canEdit && (
+                    <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                      <div className="flex flex-col items-end space-y-2">
+                        {userRole === "ADMIN" && (
+                          <form action={async () => {
+                            "use server";
+                            await deleteUnit(unit.id, project.id);
+                          }}>
+                            <button type="submit" className="text-red-600 hover:text-red-900">حذف</button>
+                          </form>
+                        )}
+                      </div>
+                    </td>
+                  )}
+                </tr>
+                {canEdit && (
+                  <tr key={`${unit.id}-class`}>
+                    <td colSpan={7} className="px-6 pb-4 pt-0">
+                      <UnitClassificationForm 
+                        unitId={unit.id}
+                        projectId={project.id}
+                        initialModelId={unit.modelId}
+                        initialFloor={unit.floor}
+                        initialFacade={unit.facade}
+                        initialUnitPlanImage={unit.unitPlanImage}
+                        initialSortOrder={unit.sortOrder}
+                        models={project.models}
+                      />
+                    </td>
+                  </tr>
                 )}
-              </tr>
+              </Fragment>
             ))}
             {project.units.length === 0 && (
               <tr>
