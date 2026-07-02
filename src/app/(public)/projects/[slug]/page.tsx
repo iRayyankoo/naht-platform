@@ -7,6 +7,80 @@ import ProjectViewTracker from "@/components/tracking/ProjectViewTracker";
 import { getBaseMetadata } from "@/lib/seo";
 import Image from "next/image";
 
+function UnitCard({ unit }: { unit: any }) {
+  return (
+    <div className="bg-white border border-gray-100 rounded-3xl p-5 shadow-sm hover:shadow-md hover:-translate-y-1 hover:border-[#D4AF37]/30 transition-all duration-300 flex flex-col h-full">
+      {/* Header */}
+      <div className="flex justify-between items-start mb-4 gap-3">
+        <div>
+          <h4 className="font-bold text-lg md:text-xl text-gray-900">وحدة {unit.unitNum}</h4>
+          {unit.type && <p className="text-sm text-gray-500 mt-0.5">{unit.type}</p>}
+        </div>
+        <span className={`px-3 py-1.5 rounded-full text-xs font-bold shrink-0 shadow-sm ${
+          unit.status === 'AVAILABLE' ? 'bg-[#25D366]/10 text-[#1ebd5b]' :
+          unit.status === 'SOLD' ? 'bg-red-50 text-red-600' : 'bg-gray-100 text-gray-600'
+        }`}>
+          {unit.status === 'AVAILABLE' ? 'متاح' : unit.status === 'SOLD' ? 'مباع' : 'محجوز'}
+        </span>
+      </div>
+      
+      {/* Info Grid */}
+      <div className="grid grid-cols-2 gap-3 mb-5 flex-1">
+        {!!unit.area && (
+          <div className="flex items-center gap-2 text-gray-700 bg-gray-50 p-3 rounded-xl border border-gray-100">
+            <svg className="w-4 h-4 text-[#D4AF37] shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 8V4m0 0h4M4 4l5 5m11-1V4m0 0h-4m4 0l-5 5M4 16v4m0 0h4m-4 0l5-5m11 5l-5-5m5 5v-4m0 4h-4"></path></svg>
+            <span className="text-xs md:text-sm font-bold">{unit.area} م²</span>
+          </div>
+        )}
+        {!!unit.rooms && (
+          <div className="flex items-center gap-2 text-gray-700 bg-gray-50 p-3 rounded-xl border border-gray-100">
+            <svg className="w-4 h-4 text-[#D4AF37] shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"></path></svg>
+            <span className="text-xs md:text-sm font-bold">{unit.rooms} غرف</span>
+          </div>
+        )}
+        {!!unit.baths && (
+          <div className="flex items-center gap-2 text-gray-700 bg-gray-50 p-3 rounded-xl border border-gray-100">
+            <svg className="w-4 h-4 text-[#D4AF37] shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M8 14v3m4-3v3m4-3v3M3 21h18M3 10h18M3 7l9-4 9 4M4 10h16v11H4V10z"></path></svg>
+            <span className="text-xs md:text-sm font-bold">{unit.baths} حمامات</span>
+          </div>
+        )}
+        {!!unit.floor && (
+          <div className="flex items-center gap-2 text-gray-700 bg-gray-50 p-3 rounded-xl border border-gray-100">
+            <svg className="w-4 h-4 text-[#D4AF37] shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"></path></svg>
+            <span className="text-xs md:text-sm font-bold">الدور {unit.floor}</span>
+          </div>
+        )}
+        {!!unit.facade && (
+          <div className="flex items-center gap-2 text-gray-700 bg-gray-50 p-3 rounded-xl border border-gray-100">
+            <svg className="w-4 h-4 text-[#D4AF37] shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M3 21v-4m0 0V5a2 2 0 012-2h6.5l1 1H21l-3 6 3 6h-8.5l-1-1H5a2 2 0 00-2 2zm9-13.5V9"></path></svg>
+            <span className="text-xs md:text-sm font-bold">الواجهة {unit.facade}</span>
+          </div>
+        )}
+      </div>
+      
+      {/* unitPlanImage */}
+      {!!unit.unitPlanImage && (
+        <div className="mb-4">
+          <a href={unit.unitPlanImage} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-2 text-[#D4AF37] hover:text-gray-900 font-bold text-sm transition-colors">
+            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg>
+            عرض مخطط الوحدة
+          </a>
+        </div>
+      )}
+
+      {/* Price / Bottom Section */}
+      {!!unit.price && (
+        <div className="pt-4 border-t border-gray-100 flex items-center justify-between mt-auto">
+          <span className="text-xs md:text-sm text-gray-500 font-bold">السعر</span>
+          <span className="font-black text-lg md:text-xl text-[#D4AF37]">
+            {unit.price.toLocaleString()} ر.س
+          </span>
+        </div>
+      )}
+    </div>
+  );
+}
+
 export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }) {
   const slug = (await params).slug;
   const project = await prisma.project.findUnique({ where: { slug: slug } });
@@ -24,7 +98,16 @@ export default async function PublicProjectDetailsPage({ params }: { params: Pro
   const project = await prisma.project.findUnique({
     where: { slug: slug },
     include: { 
-      units: { where: { isVisible: true } },
+      models: {
+        where: { isVisible: true },
+        orderBy: [{ sortOrder: 'asc' }, { createdAt: 'asc' }],
+        include: {
+          units: {
+            orderBy: [{ sortOrder: 'asc' }, { unitNum: 'asc' }],
+          }
+        }
+      },
+      units: { where: { isVisible: true }, orderBy: [{ sortOrder: 'asc' }, { unitNum: 'asc' }] },
       features: { orderBy: { order: 'asc' } },
       warranties: { orderBy: { order: 'asc' } },
       galleryImages: { orderBy: { order: 'asc' } },
@@ -311,71 +394,107 @@ export default async function PublicProjectDetailsPage({ params }: { params: Pro
               </section>
             )}
 
-            {/* Units */}
-            {project.units.length > 0 && (
-              <section>
-                <h2 className="text-xl md:text-2xl font-bold text-gray-900 mb-4 flex items-center gap-2">
-                  <span className="w-1.5 h-6 bg-[#D4AF37] rounded-full"></span>
-                  الوحدات المتاحة
-                </h2>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  {project.units.map(unit => (
-                    <div key={unit.id} className="bg-white border border-gray-100 rounded-3xl p-5 shadow-sm hover:shadow-md hover:-translate-y-1 hover:border-[#D4AF37]/30 transition-all duration-300 flex flex-col">
-                      {/* Header */}
-                      <div className="flex justify-between items-start mb-4 gap-3">
-                        <div>
-                          <h4 className="font-bold text-lg md:text-xl text-gray-900">وحدة {unit.unitNum}</h4>
-                          {unit.type && <p className="text-sm text-gray-500 mt-0.5">{unit.type}</p>}
+            {/* Models and Units */}
+            {project.models && project.models.length > 0 ? (
+              <>
+                <section className="space-y-8">
+                  <h2 className="text-xl md:text-2xl font-bold text-gray-900 mb-6 flex items-center gap-2">
+                    <span className="w-1.5 h-6 bg-[#D4AF37] rounded-full"></span>
+                    نماذج المشروع والوحدات
+                  </h2>
+                  {project.models.map((model) => (
+                    <div key={model.id} className="bg-white rounded-3xl shadow-sm border border-gray-100 overflow-hidden mb-8">
+                      {/* Model Header */}
+                      <div className="bg-gray-50 border-b border-gray-100 p-6 flex flex-col md:flex-row gap-6 items-start md:items-center">
+                        {model.planImage && (
+                          <div className="w-full md:w-48 aspect-[4/3] md:aspect-square relative rounded-xl overflow-hidden bg-white border border-gray-100 shrink-0">
+                            <Image src={model.planImage} alt={`مخطط نموذج ${model.name}`} fill className="object-contain p-2" />
+                          </div>
+                        )}
+                        <div className="flex-1">
+                          <div className="flex flex-wrap items-center gap-3 mb-2">
+                            <h3 className="text-xl font-bold text-gray-900">{model.name}</h3>
+                            {model.code && <span className="text-xs font-bold text-gray-500 bg-gray-200 px-2 py-1 rounded-md">{model.code}</span>}
+                            {model.status && (
+                              <span className={`px-2 py-1 rounded-md text-xs font-bold ${
+                                model.status === 'AVAILABLE' ? 'bg-[#25D366]/10 text-[#1ebd5b]' :
+                                model.status === 'SOLD' ? 'bg-red-50 text-red-600' : 'bg-gray-100 text-gray-600'
+                              }`}>
+                                {model.status === 'AVAILABLE' ? 'متاح' : model.status === 'SOLD' ? 'مباع' : 'محجوز'}
+                              </span>
+                            )}
+                          </div>
+                          {model.description && <p className="text-sm text-gray-500 mb-4">{model.description}</p>}
+                          
+                          <div className="flex flex-wrap items-center gap-4">
+                            {!!model.area && (
+                              <div className="flex items-center gap-1.5 text-sm font-bold text-gray-700">
+                                <svg className="w-4 h-4 text-[#D4AF37]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 8V4m0 0h4M4 4l5 5m11-1V4m0 0h-4m4 0l-5 5M4 16v4m0 0h4m-4 0l5-5m11 5l-5-5m5 5v-4m0 4h-4"></path></svg>
+                                {model.area} م²
+                              </div>
+                            )}
+                            {!!model.rooms && (
+                              <div className="flex items-center gap-1.5 text-sm font-bold text-gray-700">
+                                <svg className="w-4 h-4 text-[#D4AF37]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"></path></svg>
+                                {model.rooms} غرف
+                              </div>
+                            )}
+                            {!!model.baths && (
+                              <div className="flex items-center gap-1.5 text-sm font-bold text-gray-700">
+                                <svg className="w-4 h-4 text-[#D4AF37]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M8 14v3m4-3v3m4-3v3M3 21h18M3 10h18M3 7l9-4 9 4M4 10h16v11H4V10z"></path></svg>
+                                {model.baths} حمامات
+                              </div>
+                            )}
+                            {model.units.length > 0 && (
+                              <div className="flex items-center gap-1.5 text-sm font-bold text-blue-600 bg-blue-50 px-2 py-1 rounded-md">
+                                {model.units.length} وحدة تابعة
+                              </div>
+                            )}
+                          </div>
                         </div>
-                        <span className={`px-3 py-1.5 rounded-full text-xs font-bold shrink-0 shadow-sm ${
-                          unit.status === 'AVAILABLE' ? 'bg-[#25D366]/10 text-[#1ebd5b]' :
-                          unit.status === 'SOLD' ? 'bg-red-50 text-red-600' : 'bg-gray-100 text-gray-600'
-                        }`}>
-                          {unit.status === 'AVAILABLE' ? 'متاح' : unit.status === 'SOLD' ? 'مباع' : 'محجوز'}
-                        </span>
                       </div>
                       
-                      {/* Info Grid */}
-                      <div className="grid grid-cols-2 gap-3 mb-5 flex-1">
-                        {!!unit.area && (
-                          <div className="flex items-center gap-2 text-gray-700 bg-gray-50 p-3 rounded-xl border border-gray-100">
-                            <svg className="w-4 h-4 text-[#D4AF37] shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 8V4m0 0h4M4 4l5 5m11-1V4m0 0h-4m4 0l-5 5M4 16v4m0 0h4m-4 0l5-5m11 5l-5-5m5 5v-4m0 4h-4"></path></svg>
-                            <span className="text-xs md:text-sm font-bold">{unit.area} م²</span>
+                      {/* Model Units */}
+                      {model.units.length > 0 && (
+                        <div className="p-6 pt-0">
+                          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            {model.units.map((unit: any) => <UnitCard key={unit.id} unit={unit} />)}
                           </div>
-                        )}
-                        {!!unit.rooms && (
-                          <div className="flex items-center gap-2 text-gray-700 bg-gray-50 p-3 rounded-xl border border-gray-100">
-                            <svg className="w-4 h-4 text-[#D4AF37] shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"></path></svg>
-                            <span className="text-xs md:text-sm font-bold">{unit.rooms} غرف</span>
-                          </div>
-                        )}
-                        {!!unit.baths && (
-                          <div className="flex items-center gap-2 text-gray-700 bg-gray-50 p-3 rounded-xl border border-gray-100">
-                            <svg className="w-4 h-4 text-[#D4AF37] shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M8 14v3m4-3v3m4-3v3M3 21h18M3 10h18M3 7l9-4 9 4M4 10h16v11H4V10z"></path></svg>
-                            <span className="text-xs md:text-sm font-bold">{unit.baths} حمامات</span>
-                          </div>
-                        )}
-                        {!!unit.floor && (
-                          <div className="flex items-center gap-2 text-gray-700 bg-gray-50 p-3 rounded-xl border border-gray-100">
-                            <svg className="w-4 h-4 text-[#D4AF37] shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"></path></svg>
-                            <span className="text-xs md:text-sm font-bold">الدور {unit.floor}</span>
-                          </div>
-                        )}
-                      </div>
-                      
-                      {/* Price / Bottom Section */}
-                      {!!unit.price && (
-                        <div className="pt-4 border-t border-gray-100 flex items-center justify-between">
-                          <span className="text-xs md:text-sm text-gray-500 font-bold">السعر</span>
-                          <span className="font-black text-lg md:text-xl text-[#D4AF37]">
-                            {unit.price.toLocaleString()} ر.س
-                          </span>
                         </div>
                       )}
                     </div>
                   ))}
-                </div>
-              </section>
+                </section>
+                
+                {/* Unassigned Units */}
+                {project.units.filter(u => u.modelId === null).length > 0 && (
+                  <section className="mt-8">
+                    <h2 className="text-xl md:text-2xl font-bold text-gray-900 mb-4 flex items-center gap-2">
+                      <span className="w-1.5 h-6 bg-[#D4AF37] rounded-full"></span>
+                      وحدات إضافية
+                    </h2>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      {project.units.filter(u => u.modelId === null).map((unit) => (
+                        <UnitCard key={unit.id} unit={unit} />
+                      ))}
+                    </div>
+                  </section>
+                )}
+              </>
+            ) : (
+              project.units.length > 0 && (
+                <section>
+                  <h2 className="text-xl md:text-2xl font-bold text-gray-900 mb-4 flex items-center gap-2">
+                    <span className="w-1.5 h-6 bg-[#D4AF37] rounded-full"></span>
+                    الوحدات المتاحة
+                  </h2>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    {project.units.map(unit => (
+                      <UnitCard key={unit.id} unit={unit} />
+                    ))}
+                  </div>
+                </section>
+              )
             )}
 
             {/* Location Button Only */}
