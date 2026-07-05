@@ -52,19 +52,25 @@ export default function ProjectFormFields({ initialData }: ProjectFormFieldsProp
   const removeWarranty = (index: number) => setWarranties(warranties.filter((_, i) => i !== index));
 
   const addGalleryImage = () => setGalleryImages([...galleryImages, { url: "", alt: "" }]);
-  const updateGalleryImage = (index: number, key: keyof ProjectGalleryImage, value: string) => {
+  const updateGalleryImageUrl = (index: number, url: string) => {
     const newGallery = [...galleryImages];
-    newGallery[index] = { ...newGallery[index], [key]: value };
+    newGallery[index] = { ...newGallery[index], url };
+    setGalleryImages(newGallery);
+  };
+  const updateGalleryImageAlt = (index: number, alt: string) => {
+    const newGallery = [...galleryImages];
+    newGallery[index] = { ...newGallery[index], alt };
     setGalleryImages(newGallery);
   };
   const removeGalleryImage = (index: number) => setGalleryImages(galleryImages.filter((_, i) => i !== index));
 
   const tabs = [
-    { id: "basic", label: "البيانات الأساسية" },
-    { id: "specs", label: "المواصفات" },
-    { id: "location", label: "الموقع والإنجاز" },
-    { id: "features", label: "المميزات والضمانات" },
-    { id: "media", label: "الوسائط" },
+    { id: "basic",    label: "الأساسيات",          icon: "📋" },
+    { id: "details",  label: "التفاصيل",            icon: "📝" },
+    { id: "media",    label: "الصور والملفات",       icon: "🖼" },
+    { id: "location", label: "الموقع",              icon: "📍" },
+    { id: "features", label: "المميزات والضمانات",   icon: "✨" },
+    { id: "publish",  label: "النشر والمعاينة",      icon: "⚙" },
   ];
 
   return (
@@ -76,18 +82,19 @@ export default function ProjectFormFields({ initialData }: ProjectFormFieldsProp
 
       {/* Tabs Header */}
       <div className="border-b border-gray-200 mb-6">
-        <nav className="-mb-px flex flex-wrap space-x-4 space-x-reverse" aria-label="Tabs">
+        <nav className="-mb-px flex flex-wrap gap-1" aria-label="Tabs">
           {tabs.map((tab) => (
             <button
               key={tab.id}
               type="button"
               onClick={() => setActiveTab(tab.id)}
-              className={`whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm transition-colors ${
+              className={`whitespace-nowrap py-3 px-3 border-b-2 font-medium text-sm transition-colors flex items-center gap-1.5 ${
                 activeTab === tab.id
-                  ? "border-primary text-primary"
+                  ? "border-[#D4AF37] text-[#D4AF37]"
                   : "border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300"
               }`}
             >
+              <span className="text-base">{tab.icon}</span>
               {tab.label}
             </button>
           ))}
@@ -96,262 +103,446 @@ export default function ProjectFormFields({ initialData }: ProjectFormFieldsProp
 
       {/* Tab Content */}
       <div className="min-h-[400px]">
-        {/* TAB 1: BASIC */}
-        <div className={`grid grid-cols-1 gap-y-6 gap-x-4 sm:grid-cols-6 ${activeTab === "basic" ? "block" : "hidden"}`}>
-          <div className="sm:col-span-3">
-            <label className="block text-sm font-medium text-gray-700">اسم المنتج العقاري</label>
-            <input type="text" name="name" required defaultValue={initialData?.name} className="mt-1 shadow-sm focus:ring-primary focus:border-primary block w-full sm:text-sm border-gray-300 rounded-md py-2 px-3 border" />
-          </div>
 
-          <div className="sm:col-span-3">
-            <label className="block text-sm font-medium text-gray-700">الرابط (Slug)</label>
-            <input type="text" name="slug" required defaultValue={initialData?.slug} placeholder="مثال: batil-villa" className="mt-1 shadow-sm focus:ring-primary focus:border-primary block w-full sm:text-sm border-gray-300 rounded-md py-2 px-3 border" dir="ltr" />
-          </div>
+        {/* ─────────────────────────────────────────────
+            TAB 1: الأساسيات
+        ───────────────────────────────────────────── */}
+        <div className={`space-y-6 ${activeTab === "basic" ? "block" : "hidden"}`}>
+          <div className="grid grid-cols-1 gap-y-5 gap-x-4 sm:grid-cols-6">
 
-          <div className="sm:col-span-2">
-            <label className="block text-sm font-medium text-gray-700">النوع</label>
-            <select name="type" defaultValue={initialData?.type || "فيلا"} className="mt-1 shadow-sm focus:ring-primary focus:border-primary block w-full sm:text-sm border-gray-300 rounded-md py-2 px-3 border">
-              <option value="فيلا">فيلا</option>
-              <option value="شقة">شقة</option>
-              <option value="دور">دور</option>
-              <option value="تاون هاوس">تاون هاوس</option>
-              <option value="أرض">أرض</option>
-              <option value="تجاري">تجاري</option>
-            </select>
-          </div>
-
-          <div className="sm:col-span-2">
-            <label className="block text-sm font-medium text-gray-700">المدينة</label>
-            <input type="text" name="city" required defaultValue={initialData?.city || "الرياض"} className="mt-1 shadow-sm focus:ring-primary focus:border-primary block w-full sm:text-sm border-gray-300 rounded-md py-2 px-3 border" />
-          </div>
-
-          <div className="sm:col-span-2">
-            <label className="block text-sm font-medium text-gray-700">الحي</label>
-            <input type="text" name="neighborhood" required defaultValue={initialData?.neighborhood} className="mt-1 shadow-sm focus:ring-primary focus:border-primary block w-full sm:text-sm border-gray-300 rounded-md py-2 px-3 border" />
-          </div>
-
-          <div className="sm:col-span-3">
-            <label className="block text-sm font-medium text-gray-700">الحالة</label>
-            <select name="status" defaultValue={initialData?.status || "AVAILABLE"} className="mt-1 shadow-sm focus:ring-primary focus:border-primary block w-full sm:text-sm border-gray-300 rounded-md py-2 px-3 border">
-              <option value="AVAILABLE">متاح</option>
-              <option value="SOLD">مباع</option>
-              <option value="COMING_SOON">قريباً</option>
-              <option value="UNDER_CONSTRUCTION">تحت الإنشاء</option>
-            </select>
-          </div>
-
-          <div className="sm:col-span-6">
-            <label className="block text-sm font-medium text-gray-700">وصف مختصر (للروت)</label>
-            <textarea name="shortDesc" rows={2} defaultValue={initialData?.shortDesc} className="mt-1 shadow-sm focus:ring-primary focus:border-primary block w-full sm:text-sm border border-gray-300 rounded-md py-2 px-3"></textarea>
-          </div>
-
-          <div className="sm:col-span-6">
-            <label className="block text-sm font-medium text-gray-700">عن المنتج العقاري (تفصيلي للصفحة الداخلية)</label>
-            <textarea name="fullDesc" rows={4} defaultValue={initialData?.fullDesc} className="mt-1 shadow-sm focus:ring-primary focus:border-primary block w-full sm:text-sm border border-gray-300 rounded-md py-2 px-3"></textarea>
-          </div>
-
-          <div className="sm:col-span-6 flex gap-6 mt-2">
-            <div className="flex items-start">
-              <div className="flex items-center h-5">
-                <input name="isFeatured" type="checkbox" defaultChecked={initialData?.isFeatured} className="focus:ring-primary h-4 w-4 text-primary border-gray-300 rounded" />
-              </div>
-              <div className="ml-3 mr-3 text-sm">
-                <label className="font-medium text-gray-700">مميز (يظهر بالرئيسية)</label>
-              </div>
+            {/* اسم المشروع */}
+            <div className="sm:col-span-4">
+              <label className="block text-sm font-medium text-gray-700">اسم المشروع <span className="text-red-500">*</span></label>
+              <input type="text" name="name" required defaultValue={initialData?.name}
+                className="mt-1 block w-full border border-gray-300 rounded-md py-2 px-3 text-sm shadow-sm focus:ring-[#D4AF37] focus:border-[#D4AF37]" />
             </div>
-            <div className="flex items-start">
-              <div className="flex items-center h-5">
-                <input name="isVisible" type="checkbox" defaultChecked={initialData ? initialData.isVisible : true} className="focus:ring-primary h-4 w-4 text-primary border-gray-300 rounded" />
-              </div>
-              <div className="ml-3 mr-3 text-sm">
-                <label className="font-medium text-gray-700">مرئي في الموقع</label>
-              </div>
+
+            {/* Slug */}
+            <div className="sm:col-span-2">
+              <label className="block text-sm font-medium text-gray-700">رابط المشروع (Slug) <span className="text-red-500">*</span></label>
+              <input type="text" name="slug" required defaultValue={initialData?.slug} placeholder="naht-plots"
+                className="mt-1 block w-full border border-gray-300 rounded-md py-2 px-3 text-sm shadow-sm focus:ring-[#D4AF37] focus:border-[#D4AF37]" dir="ltr" />
+              <p className="text-xs text-amber-600 mt-1">⚠ لا يُنصح بتغيير هذا الرابط بعد نشر المشروع.</p>
             </div>
+
+            {/* النوع */}
+            <div className="sm:col-span-2">
+              <label className="block text-sm font-medium text-gray-700">نوع العقار</label>
+              <select name="type" defaultValue={initialData?.type || "فيلا"}
+                className="mt-1 block w-full border border-gray-300 rounded-md py-2 px-3 text-sm shadow-sm focus:ring-[#D4AF37] focus:border-[#D4AF37]">
+                <option value="فيلا">فيلا</option>
+                <option value="شقة">شقة</option>
+                <option value="دور">دور</option>
+                <option value="تاون هاوس">تاون هاوس</option>
+                <option value="أرض">أرض</option>
+                <option value="تجاري">تجاري</option>
+              </select>
+            </div>
+
+            {/* المدينة */}
+            <div className="sm:col-span-2">
+              <label className="block text-sm font-medium text-gray-700">المدينة <span className="text-red-500">*</span></label>
+              <input type="text" name="city" required defaultValue={initialData?.city || "الرياض"}
+                className="mt-1 block w-full border border-gray-300 rounded-md py-2 px-3 text-sm shadow-sm focus:ring-[#D4AF37] focus:border-[#D4AF37]" />
+            </div>
+
+            {/* الحي */}
+            <div className="sm:col-span-2">
+              <label className="block text-sm font-medium text-gray-700">الحي <span className="text-red-500">*</span></label>
+              <input type="text" name="neighborhood" required defaultValue={initialData?.neighborhood}
+                className="mt-1 block w-full border border-gray-300 rounded-md py-2 px-3 text-sm shadow-sm focus:ring-[#D4AF37] focus:border-[#D4AF37]" />
+            </div>
+
+            {/* الحالة */}
+            <div className="sm:col-span-2">
+              <label className="block text-sm font-medium text-gray-700">حالة المشروع</label>
+              <select name="status" defaultValue={initialData?.status || "AVAILABLE"}
+                className="mt-1 block w-full border border-gray-300 rounded-md py-2 px-3 text-sm shadow-sm focus:ring-[#D4AF37] focus:border-[#D4AF37]">
+                <option value="AVAILABLE">🟢 متاح</option>
+                <option value="UNDER_CONSTRUCTION">🟠 تحت الإنشاء</option>
+                <option value="COMING_SOON">🔵 قريباً</option>
+                <option value="SOLD">🔴 مباع</option>
+              </select>
+            </div>
+
           </div>
         </div>
 
-        {/* TAB 2: SPECS */}
-        <div className={`grid grid-cols-1 gap-y-6 gap-x-4 sm:grid-cols-6 ${activeTab === "specs" ? "block" : "hidden"}`}>
-          <div className="sm:col-span-3">
-            <label className="block text-sm font-medium text-gray-700">السعر (اختياري)</label>
-            <input type="number" name="price" defaultValue={initialData?.price} placeholder="مثال: 1500000" className="mt-1 shadow-sm focus:ring-primary focus:border-primary block w-full sm:text-sm border-gray-300 rounded-md py-2 px-3 border" />
+        {/* ─────────────────────────────────────────────
+            TAB 2: التفاصيل
+        ───────────────────────────────────────────── */}
+        <div className={`space-y-6 ${activeTab === "details" ? "block" : "hidden"}`}>
+
+          {/* الأوصاف */}
+          <div className="bg-gray-50 rounded-xl p-5 border border-gray-100 space-y-5">
+            <h3 className="text-sm font-bold text-gray-700 flex items-center gap-2">
+              <span className="w-1 h-4 bg-[#D4AF37] rounded-full"></span>
+              الأوصاف
+            </h3>
+            <div>
+              <label className="block text-sm font-medium text-gray-700">الوصف المختصر</label>
+              <p className="text-xs text-gray-500 mb-1">يظهر في نتائج البحث وبطاقة المشروع</p>
+              <textarea name="shortDesc" rows={2} defaultValue={initialData?.shortDesc}
+                className="block w-full border border-gray-300 rounded-md py-2 px-3 text-sm shadow-sm focus:ring-[#D4AF37] focus:border-[#D4AF37]" />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700">الوصف الكامل</label>
+              <p className="text-xs text-gray-500 mb-1">يظهر في صفحة المشروع الداخلية</p>
+              <textarea name="fullDesc" rows={5} defaultValue={initialData?.fullDesc}
+                className="block w-full border border-gray-300 rounded-md py-2 px-3 text-sm shadow-sm focus:ring-[#D4AF37] focus:border-[#D4AF37]" />
+            </div>
           </div>
-          <div className="sm:col-span-3">
-            <label className="block text-sm font-medium text-gray-700">المساحة م² (اختياري)</label>
-            <input type="number" name="area" defaultValue={initialData?.area} placeholder="مثال: 350" className="mt-1 shadow-sm focus:ring-primary focus:border-primary block w-full sm:text-sm border-gray-300 rounded-md py-2 px-3 border" />
+
+          {/* المواصفات */}
+          <div className="bg-gray-50 rounded-xl p-5 border border-gray-100">
+            <h3 className="text-sm font-bold text-gray-700 flex items-center gap-2 mb-4">
+              <span className="w-1 h-4 bg-[#D4AF37] rounded-full"></span>
+              المواصفات العامة
+            </h3>
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+              <div>
+                <label className="block text-xs font-medium text-gray-600 mb-1">السعر يبدأ من (ر.س)</label>
+                <input type="number" name="price" defaultValue={initialData?.price} placeholder="1500000"
+                  className="block w-full border border-gray-300 rounded-md py-2 px-3 text-sm shadow-sm focus:ring-[#D4AF37] focus:border-[#D4AF37]" />
+              </div>
+              <div>
+                <label className="block text-xs font-medium text-gray-600 mb-1">المساحة (م²)</label>
+                <input type="number" name="area" defaultValue={initialData?.area} placeholder="350"
+                  className="block w-full border border-gray-300 rounded-md py-2 px-3 text-sm shadow-sm focus:ring-[#D4AF37] focus:border-[#D4AF37]" />
+              </div>
+              <div>
+                <label className="block text-xs font-medium text-gray-600 mb-1">عدد الغرف</label>
+                <input type="number" name="rooms" defaultValue={initialData?.rooms} placeholder="5"
+                  className="block w-full border border-gray-300 rounded-md py-2 px-3 text-sm shadow-sm focus:ring-[#D4AF37] focus:border-[#D4AF37]" />
+              </div>
+              <div>
+                <label className="block text-xs font-medium text-gray-600 mb-1">دورات المياه</label>
+                <input type="number" name="baths" defaultValue={initialData?.baths} placeholder="4"
+                  className="block w-full border border-gray-300 rounded-md py-2 px-3 text-sm shadow-sm focus:ring-[#D4AF37] focus:border-[#D4AF37]" />
+              </div>
+            </div>
           </div>
-          <div className="sm:col-span-3">
-            <label className="block text-sm font-medium text-gray-700">عدد الغرف (اختياري)</label>
-            <input type="number" name="rooms" defaultValue={initialData?.rooms} placeholder="مثال: 5" className="mt-1 shadow-sm focus:ring-primary focus:border-primary block w-full sm:text-sm border-gray-300 rounded-md py-2 px-3 border" />
+
+          {/* الإنجاز */}
+          <div className="bg-gray-50 rounded-xl p-5 border border-gray-100">
+            <h3 className="text-sm font-bold text-gray-700 flex items-center gap-2 mb-4">
+              <span className="w-1 h-4 bg-[#D4AF37] rounded-full"></span>
+              نسبة الإنجاز
+            </h3>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div>
+                <label className="block text-xs font-medium text-gray-600 mb-1">النسبة % (0–100)</label>
+                <input type="number" name="progressPercent" min="0" max="100" defaultValue={initialData?.progressPercent} placeholder="85"
+                  className="block w-full border border-gray-300 rounded-md py-2 px-3 text-sm shadow-sm focus:ring-[#D4AF37] focus:border-[#D4AF37]" />
+                <p className="text-xs text-gray-500 mt-1">اتركه فارغاً لإخفاء شريط الإنجاز.</p>
+              </div>
+              <div>
+                <label className="block text-xs font-medium text-gray-600 mb-1">تسمية شريط الإنجاز</label>
+                <input type="text" name="progressLabel" defaultValue={initialData?.progressLabel} placeholder="نسبة الإنجاز العام للمشروع"
+                  className="block w-full border border-gray-300 rounded-md py-2 px-3 text-sm shadow-sm focus:ring-[#D4AF37] focus:border-[#D4AF37]" />
+              </div>
+            </div>
           </div>
-          <div className="sm:col-span-3">
-            <label className="block text-sm font-medium text-gray-700">دورات المياه (اختياري)</label>
-            <input type="number" name="baths" defaultValue={initialData?.baths} placeholder="مثال: 4" className="mt-1 shadow-sm focus:ring-primary focus:border-primary block w-full sm:text-sm border-gray-300 rounded-md py-2 px-3 border" />
-          </div>
+
         </div>
 
-        {/* TAB 3: LOCATION & PROGRESS */}
-        <div className={`grid grid-cols-1 gap-y-6 gap-x-4 sm:grid-cols-6 ${activeTab === "location" ? "block" : "hidden"}`}>
-          <div className="sm:col-span-6">
-            <label className="block text-sm font-medium text-gray-700">رابط خريطة جوجل (اختياري)</label>
-            <input type="url" name="googleMapsUrl" defaultValue={initialData?.googleMapsUrl} placeholder="https://maps.google.com/..." className="mt-1 shadow-sm focus:ring-primary focus:border-primary block w-full sm:text-sm border-gray-300 rounded-md py-2 px-3 border" dir="ltr" />
-          </div>
-          <div className="sm:col-span-6">
-            <label className="block text-sm font-medium text-gray-700">وصف الموقع (اختياري)</label>
-            <input type="text" name="locationText" defaultValue={initialData?.locationText} placeholder="مثال: يقع المشروع على تقاطع طريق الملك فهد" className="mt-1 shadow-sm focus:ring-primary focus:border-primary block w-full sm:text-sm border-gray-300 rounded-md py-2 px-3 border" />
-          </div>
-          <div className="sm:col-span-3 mt-4">
-            <label className="block text-sm font-medium text-gray-700">نسبة الإنجاز % (0 - 100)</label>
-            <input type="number" name="progressPercent" min="0" max="100" defaultValue={initialData?.progressPercent} placeholder="مثال: 85" className="mt-1 shadow-sm focus:ring-primary focus:border-primary block w-full sm:text-sm border-gray-300 rounded-md py-2 px-3 border" />
-            <p className="text-xs text-gray-500 mt-1">اتركه فارغاً لإخفاء قسم الإنجاز.</p>
-          </div>
-          <div className="sm:col-span-3 mt-4">
-            <label className="block text-sm font-medium text-gray-700">وصف الإنجاز (اختياري)</label>
-            <input type="text" name="progressLabel" defaultValue={initialData?.progressLabel} placeholder="مثال: نسبة الإنجاز العام للمشروع" className="mt-1 shadow-sm focus:ring-primary focus:border-primary block w-full sm:text-sm border-gray-300 rounded-md py-2 px-3 border" />
-          </div>
-
-          <div className="sm:col-span-6 mt-4 pt-4 border-t border-gray-200">
-            <h4 className="text-md font-bold text-gray-900 mb-4">الخريطة التفاعلية (الصفحة الرئيسية)</h4>
-            <div className="flex items-start mb-4">
-              <div className="flex items-center h-5">
-                <input name="showOnHomeMap" type="checkbox" defaultChecked={initialData?.showOnHomeMap} className="focus:ring-primary h-4 w-4 text-primary border-gray-300 rounded" />
-              </div>
-              <div className="ml-3 mr-3 text-sm">
-                <label className="font-medium text-gray-700">إظهار المنتج على خريطة الصفحة الرئيسية</label>
-              </div>
-            </div>
-
-            {/* Geographic Map Settings */}
-            <div className="bg-blue-50/50 p-4 rounded-lg border border-blue-100 mb-4">
-              <h5 className="text-sm font-bold text-blue-900 mb-3">إحداثيات الخريطة الجغرافية الحقيقية (Geographic Map)</h5>
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-sm font-medium text-gray-700">Latitude (دائرة العرض)</label>
-                  <input type="number" step="any" name="mapLat" defaultValue={initialData?.mapLat} placeholder="مثال: 24.7136" className="mt-1 shadow-sm focus:ring-primary focus:border-primary block w-full sm:text-sm border-gray-300 rounded-md py-2 px-3 border" dir="ltr" />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700">Longitude (خط الطول)</label>
-                  <input type="number" step="any" name="mapLng" defaultValue={initialData?.mapLng} placeholder="مثال: 46.6753" className="mt-1 shadow-sm focus:ring-primary focus:border-primary block w-full sm:text-sm border-gray-300 rounded-md py-2 px-3 border" dir="ltr" />
-                </div>
-              </div>
-            </div>
-
-            {/* Image Map Settings */}
-            <div className="bg-gray-50 p-4 rounded-lg border border-gray-200">
-              <h5 className="text-sm font-bold text-gray-700 mb-3">إحداثيات الخريطة التصميمية الصورة (Image Map - احتياطي)</h5>
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-sm font-medium text-gray-700">موضع X بالنسبة المئوية (%)</label>
-                  <input type="number" step="0.1" name="mapX" defaultValue={initialData?.mapX} placeholder="مثال: 45.5" className="mt-1 shadow-sm focus:ring-primary focus:border-primary block w-full sm:text-sm border-gray-300 rounded-md py-2 px-3 border" dir="ltr" />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700">موضع Y بالنسبة المئوية (%)</label>
-                  <input type="number" step="0.1" name="mapY" defaultValue={initialData?.mapY} placeholder="مثال: 60.2" className="mt-1 shadow-sm focus:ring-primary focus:border-primary block w-full sm:text-sm border-gray-300 rounded-md py-2 px-3 border" dir="ltr" />
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        {/* TAB 4: FEATURES & WARRANTIES */}
-        <div className={`space-y-8 ${activeTab === "features" ? "block" : "hidden"}`}>
-          {/* Features */}
-          <div>
-            <div className="flex items-center justify-between mb-4">
-              <h3 className="text-lg font-bold text-gray-900">مميزات المنتج العقاري</h3>
-              <button type="button" onClick={addFeature} className="text-sm bg-gray-100 hover:bg-gray-200 text-gray-800 py-1.5 px-3 rounded-md font-medium transition">
-                + إضافة ميزة
-              </button>
-            </div>
-            <div className="space-y-4">
-              {features.map((feature, idx) => (
-                <div key={idx} className="flex gap-4 items-start bg-gray-50 p-4 rounded-lg border border-gray-200">
-                  <div className="flex-1 grid grid-cols-1 sm:grid-cols-3 gap-4">
-                    <input type="text" placeholder="عنوان الميزة (مثال: سمارت هوم)" value={feature.title} onChange={(e) => updateFeature(idx, "title", e.target.value)} className="w-full text-sm border-gray-300 rounded-md py-2 px-3 border" />
-                    <input type="text" placeholder="وصف (اختياري)" value={feature.desc || ""} onChange={(e) => updateFeature(idx, "desc", e.target.value)} className="w-full text-sm border-gray-300 rounded-md py-2 px-3 border sm:col-span-2" />
-                  </div>
-                  <button type="button" onClick={() => removeFeature(idx)} className="text-red-500 hover:text-red-700 text-sm font-bold mt-2">حذف</button>
-                </div>
-              ))}
-              {features.length === 0 && <p className="text-sm text-gray-500 italic">لا توجد ميزات مضافة.</p>}
-            </div>
-          </div>
-
-          <hr className="border-gray-200" />
-
-          {/* Warranties */}
-          <div>
-            <div className="flex items-center justify-between mb-4">
-              <h3 className="text-lg font-bold text-gray-900">ضمانات المشروع</h3>
-              <button type="button" onClick={addWarranty} className="text-sm bg-gray-100 hover:bg-gray-200 text-gray-800 py-1.5 px-3 rounded-md font-medium transition">
-                + إضافة ضمان
-              </button>
-            </div>
-            <div className="space-y-4">
-              {warranties.map((warranty, idx) => (
-                <div key={idx} className="flex gap-4 items-start bg-gray-50 p-4 rounded-lg border border-gray-200">
-                  <div className="flex-1 grid grid-cols-1 sm:grid-cols-3 gap-4">
-                    <input type="text" placeholder="عنوان الضمان (مثال: الهيكل الإنشائي)" value={warranty.title} onChange={(e) => updateWarranty(idx, "title", e.target.value)} className="w-full text-sm border-gray-300 rounded-md py-2 px-3 border" />
-                    <input type="text" placeholder="المدة (مثال: 10 سنوات)" value={warranty.duration || ""} onChange={(e) => updateWarranty(idx, "duration", e.target.value)} className="w-full text-sm border-gray-300 rounded-md py-2 px-3 border" />
-                    <input type="text" placeholder="وصف (اختياري)" value={warranty.desc || ""} onChange={(e) => updateWarranty(idx, "desc", e.target.value)} className="w-full text-sm border-gray-300 rounded-md py-2 px-3 border" />
-                  </div>
-                  <button type="button" onClick={() => removeWarranty(idx)} className="text-red-500 hover:text-red-700 text-sm font-bold mt-2">حذف</button>
-                </div>
-              ))}
-              {warranties.length === 0 && <p className="text-sm text-gray-500 italic">لا توجد ضمانات مضافة.</p>}
-            </div>
-          </div>
-        </div>
-
-        {/* TAB 5: MEDIA */}
+        {/* ─────────────────────────────────────────────
+            TAB 3: الصور والملفات
+        ───────────────────────────────────────────── */}
         <div className={`space-y-8 ${activeTab === "media" ? "block" : "hidden"}`}>
-          <div>
-            <h3 className="text-lg font-bold text-gray-900 mb-4">الصورة الرئيسية (غلاف المنتج)</h3>
+
+          {/* الصورة الرئيسية */}
+          <div className="bg-gray-50 rounded-xl p-5 border border-gray-100">
+            <h3 className="text-sm font-bold text-gray-700 flex items-center gap-2 mb-4">
+              <span className="w-1 h-4 bg-[#D4AF37] rounded-full"></span>
+              الصورة الرئيسية (غلاف المشروع)
+            </h3>
+            <p className="text-xs text-gray-500 mb-3">تظهر في بطاقة المشروع وأعلى صفحته الداخلية.</p>
             <ImageUpload name="mainImage" label="الصورة الرئيسية" defaultValue={initialData?.mainImage} />
           </div>
-          
-          <hr className="border-gray-200" />
 
-          <div>
-            <h3 className="text-lg font-bold text-gray-900 mb-4">مخطط المشروع العام</h3>
-            <p className="text-sm text-gray-500 mb-4">ارفع صورة المخطط العام للمشروع أو توزيع الوحدات الرئيسية.</p>
+          {/* المخطط العام */}
+          <div className="bg-gray-50 rounded-xl p-5 border border-gray-100">
+            <h3 className="text-sm font-bold text-gray-700 flex items-center gap-2 mb-4">
+              <span className="w-1 h-4 bg-[#D4AF37] rounded-full"></span>
+              المخطط العام للمشروع
+            </h3>
+            <p className="text-xs text-gray-500 mb-3">يظهر في قسم "المخطط العام" بصفحة المشروع.</p>
             <ImageUpload name="planImage" label="المخطط العام" defaultValue={initialData?.planImage || ""} />
           </div>
-          
-          <hr className="border-gray-200" />
 
-          <div>
+          {/* معرض الصور */}
+          <div className="bg-gray-50 rounded-xl p-5 border border-gray-100">
             <div className="flex items-center justify-between mb-4">
-              <h3 className="text-lg font-bold text-gray-900">معرض الصور (Gallery)</h3>
-              <button type="button" onClick={addGalleryImage} className="text-sm bg-gray-100 hover:bg-gray-200 text-gray-800 py-1.5 px-3 rounded-md font-medium transition">
+              <div>
+                <h3 className="text-sm font-bold text-gray-700 flex items-center gap-2">
+                  <span className="w-1 h-4 bg-[#D4AF37] rounded-full"></span>
+                  معرض الصور
+                </h3>
+                <p className="text-xs text-gray-500 mt-1">ارفع صور المشروع — تظهر في قسم معرض الصور.</p>
+              </div>
+              <button type="button" onClick={addGalleryImage}
+                className="text-sm bg-[#D4AF37]/10 hover:bg-[#D4AF37]/20 text-[#b5952f] border border-[#D4AF37]/30 py-1.5 px-3 rounded-md font-medium transition flex items-center gap-1">
                 + إضافة صورة
               </button>
             </div>
             <div className="space-y-4">
               {galleryImages.map((img, idx) => (
-                <div key={idx} className="flex gap-4 items-center bg-gray-50 p-4 rounded-lg border border-gray-200">
-                  <div className="w-16 h-16 bg-gray-200 rounded-md flex-shrink-0 overflow-hidden border border-gray-300">
-                    {img.url ? <img src={img.url} alt="" className="w-full h-full object-cover" /> : <div className="w-full h-full flex items-center justify-center text-xs text-gray-400">فارغ</div>}
+                <div key={idx} className="flex gap-3 items-start bg-white p-4 rounded-lg border border-gray-200 shadow-sm">
+                  <div className="flex-1 space-y-3">
+                    <ImageUpload
+                      name={`gallery_upload_${idx}`}
+                      label=""
+                      defaultValue={img.url}
+                      onChange={(url) => updateGalleryImageUrl(idx, url)}
+                    />
+                    {/* hidden input to capture final url in galleryImages JSON */}
+                    <input type="text" placeholder="نص بديل للصورة (اختياري)"
+                      value={img.alt || ""} onChange={(e) => updateGalleryImageAlt(idx, e.target.value)}
+                      className="block w-full border border-gray-200 rounded-md py-1.5 px-3 text-xs text-gray-600 focus:ring-[#D4AF37] focus:border-[#D4AF37]" />
                   </div>
-                  <div className="flex-1 grid grid-cols-1 sm:grid-cols-2 gap-4">
-                    <input type="text" placeholder="رابط الصورة (URL)" value={img.url} onChange={(e) => updateGalleryImage(idx, "url", e.target.value)} className="w-full text-sm border-gray-300 rounded-md py-2 px-3 border" dir="ltr" />
-                    <input type="text" placeholder="نص بديل (اختياري)" value={img.alt || ""} onChange={(e) => updateGalleryImage(idx, "alt", e.target.value)} className="w-full text-sm border-gray-300 rounded-md py-2 px-3 border" />
-                  </div>
-                  <button type="button" onClick={() => removeGalleryImage(idx)} className="text-red-500 hover:text-red-700 text-sm font-bold">حذف</button>
+                  <button type="button" onClick={() => removeGalleryImage(idx)}
+                    className="text-red-400 hover:text-red-600 text-xs font-bold mt-1 shrink-0 px-2 py-1 rounded hover:bg-red-50 transition">
+                    ✕ حذف
+                  </button>
                 </div>
               ))}
-              {galleryImages.length === 0 && <p className="text-sm text-gray-500 italic">لا توجد صور مضافة في المعرض.</p>}
+              {galleryImages.length === 0 && (
+                <div className="text-center py-8 text-gray-400 text-sm border-2 border-dashed border-gray-200 rounded-lg">
+                  لا توجد صور في المعرض. اضغط "+ إضافة صورة" للبدء.
+                </div>
+              )}
             </div>
           </div>
 
-          <hr className="border-gray-200" />
-
-          <div>
-            <h3 className="text-lg font-bold text-gray-900 mb-4">ملف المنتج (PDF)</h3>
-            <label className="block text-sm font-medium text-gray-700 mb-1">رابط الملف (اختياري)</label>
-            <input type="url" name="pdfUrl" defaultValue={initialData?.pdfUrl} placeholder="https://..." className="shadow-sm focus:ring-primary focus:border-primary block w-full sm:text-sm border-gray-300 rounded-md py-2 px-3 border max-w-2xl" dir="ltr" />
+          {/* PDF */}
+          <div className="bg-gray-50 rounded-xl p-5 border border-gray-100">
+            <h3 className="text-sm font-bold text-gray-700 flex items-center gap-2 mb-4">
+              <span className="w-1 h-4 bg-[#D4AF37] rounded-full"></span>
+              ملف PDF — بروفايل المشروع
+            </h3>
+            <input type="url" name="pdfUrl" defaultValue={initialData?.pdfUrl} placeholder="https://..."
+              className="block w-full border border-gray-300 rounded-md py-2 px-3 text-sm shadow-sm focus:ring-[#D4AF37] focus:border-[#D4AF37]" dir="ltr" />
+            <p className="text-xs text-gray-500 mt-1">رابط ملف PDF خارجي (اختياري).</p>
           </div>
+
         </div>
+
+        {/* ─────────────────────────────────────────────
+            TAB 4: الموقع
+        ───────────────────────────────────────────── */}
+        <div className={`space-y-6 ${activeTab === "location" ? "block" : "hidden"}`}>
+
+          <div className="bg-gray-50 rounded-xl p-5 border border-gray-100 space-y-4">
+            <h3 className="text-sm font-bold text-gray-700 flex items-center gap-2">
+              <span className="w-1 h-4 bg-[#D4AF37] rounded-full"></span>
+              معلومات الموقع
+            </h3>
+            <div>
+              <label className="block text-sm font-medium text-gray-700">وصف الموقع النصي</label>
+              <input type="text" name="locationText" defaultValue={initialData?.locationText}
+                placeholder="مثال: يقع على تقاطع طريق الملك فهد مع الدائري الشمالي"
+                className="mt-1 block w-full border border-gray-300 rounded-md py-2 px-3 text-sm shadow-sm focus:ring-[#D4AF37] focus:border-[#D4AF37]" />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700">رابط خرائط جوجل</label>
+              <input type="url" name="googleMapsUrl" defaultValue={initialData?.googleMapsUrl}
+                placeholder="https://maps.google.com/..."
+                className="mt-1 block w-full border border-gray-300 rounded-md py-2 px-3 text-sm shadow-sm focus:ring-[#D4AF37] focus:border-[#D4AF37]" dir="ltr" />
+            </div>
+          </div>
+
+          <div className="bg-blue-50/60 rounded-xl p-5 border border-blue-100 space-y-4">
+            <div className="flex items-start gap-3">
+              <input name="showOnHomeMap" id="showOnHomeMap" type="checkbox" defaultChecked={initialData?.showOnHomeMap}
+                className="mt-0.5 h-4 w-4 text-[#D4AF37] border-gray-300 rounded focus:ring-[#D4AF37]" />
+              <div>
+                <label htmlFor="showOnHomeMap" className="text-sm font-medium text-gray-800 cursor-pointer">
+                  إظهار المشروع على خريطة الصفحة الرئيسية
+                </label>
+                <p className="text-xs text-gray-500 mt-0.5">
+                  إذا كان مفعّلاً يجب إدخال الإحداثيات الجغرافية أدناه.
+                </p>
+              </div>
+            </div>
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-2">
+              <div>
+                <label className="block text-xs font-medium text-gray-700 mb-1">Latitude (دائرة العرض)</label>
+                <input type="number" step="any" name="mapLat" defaultValue={initialData?.mapLat}
+                  placeholder="24.7136"
+                  className="block w-full border border-gray-300 rounded-md py-2 px-3 text-sm shadow-sm focus:ring-[#D4AF37] focus:border-[#D4AF37]" dir="ltr" />
+              </div>
+              <div>
+                <label className="block text-xs font-medium text-gray-700 mb-1">Longitude (خط الطول)</label>
+                <input type="number" step="any" name="mapLng" defaultValue={initialData?.mapLng}
+                  placeholder="46.6753"
+                  className="block w-full border border-gray-300 rounded-md py-2 px-3 text-sm shadow-sm focus:ring-[#D4AF37] focus:border-[#D4AF37]" dir="ltr" />
+              </div>
+            </div>
+          </div>
+
+          {/* Deprecated Map Fields — مخفية في inputs فقط */}
+          <input type="hidden" name="mapX" defaultValue={initialData?.mapX ?? ""} />
+          <input type="hidden" name="mapY" defaultValue={initialData?.mapY ?? ""} />
+
+        </div>
+
+        {/* ─────────────────────────────────────────────
+            TAB 5: المميزات والضمانات
+        ───────────────────────────────────────────── */}
+        <div className={`space-y-8 ${activeTab === "features" ? "block" : "hidden"}`}>
+
+          {/* Features */}
+          <div className="bg-gray-50 rounded-xl p-5 border border-gray-100">
+            <div className="flex items-center justify-between mb-4">
+              <div>
+                <h3 className="text-sm font-bold text-gray-700 flex items-center gap-2">
+                  <span className="w-1 h-4 bg-[#D4AF37] rounded-full"></span>
+                  مميزات ومرافق المشروع
+                </h3>
+                <p className="text-xs text-gray-500 mt-0.5">تظهر في قسم "أبرز المرافق" بصفحة المشروع.</p>
+              </div>
+              <button type="button" onClick={addFeature}
+                className="text-sm bg-[#D4AF37]/10 hover:bg-[#D4AF37]/20 text-[#b5952f] border border-[#D4AF37]/30 py-1.5 px-3 rounded-md font-medium transition">
+                + إضافة ميزة
+              </button>
+            </div>
+            <div className="space-y-3">
+              {features.map((feature, idx) => (
+                <div key={idx} className="flex gap-3 items-start bg-white p-4 rounded-lg border border-gray-200 shadow-sm">
+                  <div className="flex-1 grid grid-cols-1 sm:grid-cols-3 gap-3">
+                    <input type="text" placeholder="عنوان الميزة (مثال: سمارت هوم)"
+                      value={feature.title} onChange={(e) => updateFeature(idx, "title", e.target.value)}
+                      className="w-full text-sm border border-gray-300 rounded-md py-2 px-3 focus:ring-[#D4AF37] focus:border-[#D4AF37]" />
+                    <input type="text" placeholder="وصف إضافي (اختياري)"
+                      value={feature.desc || ""} onChange={(e) => updateFeature(idx, "desc", e.target.value)}
+                      className="w-full text-sm border border-gray-300 rounded-md py-2 px-3 sm:col-span-2 focus:ring-[#D4AF37] focus:border-[#D4AF37]" />
+                  </div>
+                  <button type="button" onClick={() => removeFeature(idx)}
+                    className="text-red-400 hover:text-red-600 text-xs font-bold px-2 py-1 rounded hover:bg-red-50 transition shrink-0">
+                    ✕
+                  </button>
+                </div>
+              ))}
+              {features.length === 0 && (
+                <div className="text-center py-6 text-gray-400 text-sm border-2 border-dashed border-gray-200 rounded-lg">
+                  لا توجد مميزات مضافة.
+                </div>
+              )}
+            </div>
+          </div>
+
+          {/* Warranties */}
+          <div className="bg-gray-50 rounded-xl p-5 border border-gray-100">
+            <div className="flex items-center justify-between mb-4">
+              <div>
+                <h3 className="text-sm font-bold text-gray-700 flex items-center gap-2">
+                  <span className="w-1 h-4 bg-[#D4AF37] rounded-full"></span>
+                  ضمانات المشروع
+                </h3>
+                <p className="text-xs text-gray-500 mt-0.5">تظهر في قسم "الضمانات" بصفحة المشروع.</p>
+              </div>
+              <button type="button" onClick={addWarranty}
+                className="text-sm bg-[#D4AF37]/10 hover:bg-[#D4AF37]/20 text-[#b5952f] border border-[#D4AF37]/30 py-1.5 px-3 rounded-md font-medium transition">
+                + إضافة ضمان
+              </button>
+            </div>
+            <div className="space-y-3">
+              {warranties.map((warranty, idx) => (
+                <div key={idx} className="flex gap-3 items-start bg-white p-4 rounded-lg border border-gray-200 shadow-sm">
+                  <div className="flex-1 grid grid-cols-1 sm:grid-cols-3 gap-3">
+                    <input type="text" placeholder="عنوان الضمان (مثال: الهيكل الإنشائي)"
+                      value={warranty.title} onChange={(e) => updateWarranty(idx, "title", e.target.value)}
+                      className="w-full text-sm border border-gray-300 rounded-md py-2 px-3 focus:ring-[#D4AF37] focus:border-[#D4AF37]" />
+                    <input type="text" placeholder="المدة (مثال: 10 سنوات)"
+                      value={warranty.duration || ""} onChange={(e) => updateWarranty(idx, "duration", e.target.value)}
+                      className="w-full text-sm border border-gray-300 rounded-md py-2 px-3 focus:ring-[#D4AF37] focus:border-[#D4AF37]" />
+                    <input type="text" placeholder="وصف إضافي (اختياري)"
+                      value={warranty.desc || ""} onChange={(e) => updateWarranty(idx, "desc", e.target.value)}
+                      className="w-full text-sm border border-gray-300 rounded-md py-2 px-3 focus:ring-[#D4AF37] focus:border-[#D4AF37]" />
+                  </div>
+                  <button type="button" onClick={() => removeWarranty(idx)}
+                    className="text-red-400 hover:text-red-600 text-xs font-bold px-2 py-1 rounded hover:bg-red-50 transition shrink-0">
+                    ✕
+                  </button>
+                </div>
+              ))}
+              {warranties.length === 0 && (
+                <div className="text-center py-6 text-gray-400 text-sm border-2 border-dashed border-gray-200 rounded-lg">
+                  لا توجد ضمانات مضافة.
+                </div>
+              )}
+            </div>
+          </div>
+
+        </div>
+
+        {/* ─────────────────────────────────────────────
+            TAB 6: النشر والمعاينة
+        ───────────────────────────────────────────── */}
+        <div className={`space-y-6 ${activeTab === "publish" ? "block" : "hidden"}`}>
+
+          <div className="bg-gray-50 rounded-xl p-5 border border-gray-100 space-y-4">
+            <h3 className="text-sm font-bold text-gray-700 flex items-center gap-2">
+              <span className="w-1 h-4 bg-[#D4AF37] rounded-full"></span>
+              إعدادات النشر
+            </h3>
+
+            <label className="flex items-start gap-3 cursor-pointer group">
+              <input name="isVisible" type="checkbox" defaultChecked={initialData ? initialData.isVisible : true}
+                className="mt-0.5 h-4 w-4 text-[#D4AF37] border-gray-300 rounded focus:ring-[#D4AF37]" />
+              <div>
+                <span className="text-sm font-medium text-gray-800 group-hover:text-gray-900">مرئي للزوار في الموقع</span>
+                <p className="text-xs text-gray-500">إذا كان غير مفعّل، لن يظهر المشروع في صفحة المشاريع العامة.</p>
+              </div>
+            </label>
+
+            <label className="flex items-start gap-3 cursor-pointer group">
+              <input name="isFeatured" type="checkbox" defaultChecked={initialData?.isFeatured}
+                className="mt-0.5 h-4 w-4 text-[#D4AF37] border-gray-300 rounded focus:ring-[#D4AF37]" />
+              <div>
+                <span className="text-sm font-medium text-gray-800 group-hover:text-gray-900">مميز (يظهر في الصفحة الرئيسية)</span>
+                <p className="text-xs text-gray-500">يُعرض في قسم المشاريع المميزة بالصفحة الرئيسية.</p>
+              </div>
+            </label>
+          </div>
+
+          {initialData?.slug && (
+            <div className="bg-green-50 rounded-xl p-5 border border-green-100">
+              <h3 className="text-sm font-bold text-gray-700 flex items-center gap-2 mb-3">
+                <span className="w-1 h-4 bg-green-500 rounded-full"></span>
+                معاينة الصفحة العامة
+              </h3>
+              <p className="text-xs text-gray-500 mb-3">
+                يمكنك فتح صفحة المشروع العامة للتحقق من الشكل النهائي.
+              </p>
+              <a
+                href={`/projects/${initialData.slug}`}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex items-center gap-2 bg-white border border-green-200 text-green-700 hover:bg-green-50 text-sm font-medium py-2 px-4 rounded-lg transition"
+              >
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
+                </svg>
+                معاينة الصفحة العامة
+              </a>
+            </div>
+          )}
+
+          <div className="bg-amber-50 rounded-xl p-5 border border-amber-100">
+            <h3 className="text-sm font-bold text-amber-800 flex items-center gap-2 mb-2">
+              📐 النماذج والوحدات
+            </h3>
+            <p className="text-sm text-amber-700">
+              إدارة النماذج (نماذج الشقق/الفيلل) والوحدات الفردية تتم من صفحة مستقلة.
+              اضغط الزر أعلى الصفحة للانتقال.
+            </p>
+          </div>
+
+        </div>
+
       </div>
     </div>
   );
