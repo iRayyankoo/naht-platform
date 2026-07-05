@@ -50,3 +50,12 @@ SECURITY_NOTES_LOCAL.md
 مهم.txt
 *مهم*.txt
 private_local_*
+
+# ============================================================
+# Legacy Import — customer data must NEVER be committed
+# ============================================================
+*.xlsx
+*.xls
+scripts/legacy-import/dry-run-report.json
+scripts/legacy-import/*.json
+scripts/legacy-import/*.csv
