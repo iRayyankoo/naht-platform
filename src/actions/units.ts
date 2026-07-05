@@ -53,6 +53,7 @@ export async function createUnit(projectId: string, formData: FormData) {
 
   revalidatePath(`/crm/projects/${projectId}/units`);
   revalidatePath(`/crm/projects/${projectId}/models`);
+  revalidatePath(`/crm/projects/${projectId}/edit`);
   revalidatePath("/projects");
 }
 
@@ -140,5 +141,6 @@ export async function updateUnitModelDetails(formData: FormData) {
 
   revalidatePath(`/crm/projects/${projectId}/units`);
   revalidatePath(`/crm/projects/${projectId}/models`);
+  revalidatePath(`/crm/projects/${projectId}/edit`);
   revalidatePath("/projects");
 }

@@ -5,12 +5,13 @@ import { notFound } from "next/navigation";
 import ClientForm from "@/components/crm/ClientForm";
 import { requireRole } from "@/lib/auth-helpers";
 import ProjectFormFields from "../../ProjectFormFields";
+import ProjectModelsUnitsManager from "./ProjectModelsUnitsManager";
 
 const STATUS_LABELS: Record<string, { label: string; color: string }> = {
-  AVAILABLE:         { label: "متاح",           color: "bg-green-100 text-green-800 border-green-200" },
-  UNDER_CONSTRUCTION:{ label: "تحت الإنشاء",    color: "bg-orange-100 text-orange-800 border-orange-200" },
-  COMING_SOON:       { label: "قريباً",          color: "bg-blue-100 text-blue-800 border-blue-200" },
-  SOLD:              { label: "مباع",            color: "bg-red-100 text-red-800 border-red-200" },
+  AVAILABLE:          { label: "متاح",           color: "bg-green-100 text-green-800 border-green-200" },
+  UNDER_CONSTRUCTION: { label: "تحت الإنشاء",    color: "bg-orange-100 text-orange-800 border-orange-200" },
+  COMING_SOON:        { label: "قريباً",          color: "bg-blue-100 text-blue-800 border-blue-200" },
+  SOLD:               { label: "مباع",            color: "bg-red-100 text-red-800 border-red-200" },
 };
 
 export default async function EditProjectPage({ params }: { params: Promise<{ id: string }> }) {
@@ -31,7 +32,7 @@ export default async function EditProjectPage({ params }: { params: Promise<{ id
   const status = STATUS_LABELS[project.status] ?? { label: project.status, color: "bg-gray-100 text-gray-700 border-gray-200" };
 
   return (
-    <div className="space-y-5 max-w-4xl mx-auto">
+    <div className="space-y-5 max-w-4xl mx-auto" dir="rtl">
 
       {/* ── Header ── */}
       <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-4">
@@ -62,16 +63,16 @@ export default async function EditProjectPage({ params }: { params: Promise<{ id
               </a>
             )}
 
-            {/* Manage Models — prominent button */}
-            <Link
-              href={`/crm/projects/${project.id}/models`}
+            {/* Scroll to Models & Units section via anchor */}
+            <a
+              href="#models-units"
               className="inline-flex items-center gap-2 text-sm font-semibold text-white bg-[#D4AF37] hover:bg-[#b5952f] rounded-lg py-2 px-4 transition shadow-sm"
             >
               <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"/>
               </svg>
-              إدارة النماذج والوحدات
-            </Link>
+              النماذج والوحدات ↓
+            </a>
 
             {/* Back */}
             <Link href="/crm/projects" className="text-sm text-gray-400 hover:text-gray-700 py-1.5 px-2 transition">
@@ -81,7 +82,8 @@ export default async function EditProjectPage({ params }: { params: Promise<{ id
         </div>
       </div>
 
-      {/* ── Form ── */}
+      {/* ── Project Form ── */}
+      {/* NOTE: ProjectModelsUnitsManager is OUTSIDE this ClientForm to prevent nested forms */}
       <div className="bg-white shadow-sm sm:rounded-xl border border-gray-100">
         <ClientForm action={updateAction} successMessage="تم تحديث المشروع بنجاح" className="space-y-0 p-6">
           <ProjectFormFields initialData={project} />
@@ -102,6 +104,9 @@ export default async function EditProjectPage({ params }: { params: Promise<{ id
           </div>
         </ClientForm>
       </div>
+
+      {/* ── Models & Units Manager ── OUTSIDE project form ── */}
+      <ProjectModelsUnitsManager projectId={project.id} />
 
     </div>
   );
