@@ -1,4 +1,4 @@
-﻿import { NextRequest, NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 import { writeFile, mkdir } from "fs/promises";
 import { join } from "path";
 import crypto from "crypto";
@@ -47,33 +47,55 @@ export async function POST(req: NextRequest) {
     // 1. Supabase Storage (Priority)
     const isSupabaseEnabled = !!(
       process.env.NEXT_PUBLIC_SUPABASE_URL && 
-      process.env.SUPABASE_SERVICE_ROLE_KEY && 
-      process.env.SUPABASE_STORAGE_BUCKET
+      process.env.SUPABASE_SERVICE_ROLE_KEY
     );
 
     if (isSupabaseEnabled) {
-      const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
-      const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY!;
-      const bucket = process.env.SUPABASE_STORAGE_BUCKET!;
+      // Normalize URL (Remove trailing slash, /rest/v1 or /storage/v1)
+      let supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!.trim().replace(/\/$/, "");
+      supabaseUrl = supabaseUrl.replace(/\/(rest|storage)\/v1\/?$/, "");
       
-      const supabase = createClient(supabaseUrl, supabaseKey);
-      const filePath = `forms/${folder}/${safeName}`;
+      const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY!.trim();
+      
+      // Normalize bucket
+      let bucket = (process.env.SUPABASE_STORAGE_BUCKET || "naht-media").trim().replace(/^\/+|\/+$/g, "");
+      
+      // Normalize folder
+      let safeFolder = folder.trim().replace(/^\/+|\/+$/g, "").replace(/[^a-zA-Z0-9_-]/g, "");
+      if (!safeFolder) {
+        safeFolder = "general";
+      }
+
+      const supabase = createClient(supabaseUrl, supabaseKey, {
+        auth: {
+          persistSession: false,
+          autoRefreshToken: false,
+          detectSessionInUrl: false,
+        },
+      });
+
+      const objectPath = `forms/${safeFolder}/${safeName}`;
 
       const { data, error } = await supabase.storage
         .from(bucket)
-        .upload(filePath, buffer, {
+        .upload(objectPath, buffer, {
           contentType: file.type || "application/octet-stream",
-          upsert: true
+          cacheControl: "3600",
+          upsert: false
         });
 
       if (error) {
-        console.error("Supabase Storage Error:", error);
+        console.error("Supabase Storage Error:", {
+          message: error.message,
+          status: (error as any).status,
+          statusCode: (error as any).statusCode,
+        });
         return NextResponse.json({ error: "Failed to upload to Supabase Storage" }, { status: 500 });
       }
 
       const { data: { publicUrl } } = supabase.storage
         .from(bucket)
-        .getPublicUrl(filePath);
+        .getPublicUrl(objectPath);
 
       return NextResponse.json({ url: publicUrl }, { status: 200 });
     }
