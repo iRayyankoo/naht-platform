@@ -18,6 +18,19 @@ enum Role {
   VIEWER
 }
 
+enum NavigationLocation {
+  HEADER
+  FOOTER
+  BOTH
+}
+
+enum UserStatus {
+  ACTIVE
+  INACTIVE
+  INVITED
+  SUSPENDED
+}
+
 model User {
   id            String         @id @default(cuid())
   name          String?
@@ -27,6 +40,11 @@ model User {
   image         String?
   role          Role           @default(SALES)
   isActive      Boolean        @default(true)
+  phone         String?
+  jobTitle      String?
+  departmentId  String?
+  status        UserStatus     @default(ACTIVE)
+
   accounts      Account[]
   sessions      Session[]
   createdAt     DateTime       @default(now())
@@ -34,6 +52,9 @@ model User {
   assignedLeads Lead[]         @relation("AssignedLeads")
   leadNotes     LeadNote[]
   campaignLinks CampaignLink[]
+
+  department    Department?    @relation(fields: [departmentId], references: [id])
+  userRoles     UserRole[]
 }
 
 model Account {
@@ -610,3 +631,134 @@ model ContactPageContent {
 
   updatedAt DateTime @updatedAt
 }
+
+// -----------------------------------------------------
+// Phase 6E-10 CMS Site Map Models
+// -----------------------------------------------------
+
+model SitePage {
+  id             String   @id @default(cuid())
+  title          String
+  slug           String   @unique
+  parentId       String?
+  sortOrder      Int      @default(0)
+  isActive       Boolean  @default(true)
+  showInNavbar   Boolean  @default(false)
+  showInFooter   Boolean  @default(false)
+  seoTitle       String?
+  seoDescription String?
+  ctaLabel       String?
+  ctaHref        String?
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  parent         SitePage?  @relation("PageHierarchy", fields: [parentId], references: [id])
+  children       SitePage[] @relation("PageHierarchy")
+}
+
+model NavigationItem {
+  id           String             @id @default(cuid())
+  label        String
+  href         String
+  location     NavigationLocation @default(HEADER)
+  sortOrder    Int                @default(0)
+  isActive     Boolean            @default(true)
+  openInNewTab Boolean            @default(false)
+  parentId     String?
+  createdAt    DateTime           @default(now())
+  updatedAt    DateTime           @updatedAt
+
+  parent       NavigationItem?  @relation("NavHierarchy", fields: [parentId], references: [id])
+  children     NavigationItem[] @relation("NavHierarchy")
+}
+
+model UserFlowSection {
+  id          String   @id @default(cuid())
+  pageKey     String   @default("home")
+  sectionKey  String
+  adminLabel  String
+  title       String?
+  subtitle    String?
+  ctaLabel    String?
+  ctaHref     String?
+  sortOrder   Int      @default(0)
+  isVisible   Boolean  @default(true)
+  isLocked    Boolean  @default(false)
+  notes       String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@unique([pageKey, sectionKey])
+}
+
+// -----------------------------------------------------
+// Phase 6E-10 Org Structure & RBAC Models
+// -----------------------------------------------------
+
+model Department {
+  id          String   @id @default(cuid())
+  name        String   @unique
+  code        String   @unique
+  description String?
+  parentId    String?
+  managerId   String?  // References User.id
+  isActive    Boolean  @default(true)
+  sortOrder   Int      @default(0)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  parent      Department?  @relation("DeptHierarchy", fields: [parentId], references: [id])
+  children    Department[] @relation("DeptHierarchy")
+  users       User[]
+}
+
+model AppRole {
+  id          String   @id @default(cuid())
+  name        String   @unique
+  code        String   @unique
+  description String?
+  isSystem    Boolean  @default(false)
+  isActive    Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  permissions RolePermission[]
+  users       UserRole[]
+}
+
+model Permission {
+  id          String   @id @default(cuid())
+  module      String   
+  action      String   
+  code        String   @unique
+  description String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  roles       RolePermission[]
+}
+
+model RolePermission {
+  id           String   @id @default(cuid())
+  roleId       String
+  permissionId String
+  createdAt    DateTime @default(now())
+
+  role         AppRole    @relation(fields: [roleId], references: [id], onDelete: Cascade)
+  permission   Permission @relation(fields: [permissionId], references: [id], onDelete: Cascade)
+
+  @@unique([roleId, permissionId])
+}
+
+model UserRole {
+  id        String   @id @default(cuid())
+  userId    String
+  roleId    String
+  createdAt DateTime @default(now())
+
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  role      AppRole  @relation(fields: [roleId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, roleId])
+}
+
