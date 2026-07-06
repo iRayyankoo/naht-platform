@@ -57,11 +57,11 @@ export default function TrustStrip() {
               className="flex flex-col items-center md:items-start gap-3 text-center md:text-right"
             >
               {/* Icon circle */}
-              <div className="w-12 h-12 rounded-xl bg-primary/8 flex items-center justify-center text-primary shrink-0">
+              <div className="w-12 h-12 rounded-xl bg-brand-cafe/10 flex items-center justify-center text-brand-cafe shrink-0">
                 {item.icon}
               </div>
               <div>
-                <h3 className="text-sm font-bold text-gray-900 mb-1 leading-snug">
+                <h3 className="text-sm font-bold text-brand-coal mb-1 leading-snug">
                   {item.title}
                 </h3>
                 <p className="text-xs text-gray-500 font-light leading-relaxed">

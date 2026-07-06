@@ -75,7 +75,7 @@ export default function ClientJourney() {
           {steps.map((step, i) => (
             <div
               key={i}
-              className="relative z-10 flex flex-col items-center text-center bg-white rounded-2xl border border-gray-100 p-6 md:p-8 hover:shadow-[0_8px_32px_rgba(0,0,0,0.08)] hover:-translate-y-1 transition-all duration-300"
+              className="relative z-10 flex flex-col items-center text-center bg-brand-offwhite rounded-2xl border border-brand-cafe/20 p-6 md:p-8 hover:shadow-[0_8px_32px_rgba(0,0,0,0.08)] hover:-translate-y-1 transition-all duration-300"
             >
               {/* Step number */}
               <span className="text-xs font-black text-primary/40 tracking-[0.25em] mb-3 block">
@@ -88,7 +88,7 @@ export default function ClientJourney() {
               </div>
 
               {/* Title */}
-              <h3 className="text-base font-bold text-gray-900 mb-2 leading-snug">
+              <h3 className="text-base font-bold text-brand-coal mb-2 leading-snug">
                 {step.title}
               </h3>
 
@@ -104,7 +104,7 @@ export default function ClientJourney() {
         <div className="text-center mt-10 md:mt-14">
           <a
             href="/projects"
-            className="inline-flex items-center gap-2 bg-primary text-white font-bold text-sm px-7 py-3.5 rounded-full hover:bg-primary/90 transition-colors shadow-[0_4px_20px_rgba(0,0,0,0.12)]"
+            className="inline-flex items-center gap-2 bg-brand-cafe hover:bg-brand-coal text-white font-bold text-sm px-7 py-3.5 transition-colors shadow-[0_4px_20px_rgba(0,0,0,0.12)] [clip-path:polygon(0_0,calc(100%-16px)_0,100%_16px,100%_100%,0_100%)]"
           >
             ابدأ باستعراض المشاريع
             <svg className="w-4 h-4 rtl:rotate-180" fill="none" stroke="currentColor" viewBox="0 0 24 24">

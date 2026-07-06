@@ -79,7 +79,7 @@ export default function ProjectCard({ project }: ProjectCardProps) {
 
         {/* Project Name */}
         <Link href={`/projects/${project.slug}`}>
-          <h3 className="text-lg font-bold text-gray-900 group-hover:text-[#D4AF37] transition-colors mb-3 leading-snug line-clamp-2">
+          <h3 className="text-lg font-bold text-brand-coal group-hover:text-brand-cafe transition-colors mb-3 leading-snug line-clamp-2">
             {project.name}
           </h3>
         </Link>
@@ -94,25 +94,25 @@ export default function ProjectCard({ project }: ProjectCardProps) {
         {/* ── Specs row ── */}
         <div className="flex flex-wrap gap-3 mb-5 mt-auto">
           {project.price && (
-            <div className="flex flex-col bg-gray-50 px-3 py-2 rounded-lg border border-gray-100 min-w-[80px]">
+            <div className="flex flex-col bg-brand-offwhite px-3 py-2 rounded-lg border border-brand-cafe/20 min-w-[80px]">
               <span className="text-[9px] text-gray-400 font-bold uppercase tracking-wider mb-0.5">السعر</span>
-              <span className="text-sm font-bold text-gray-900">
+              <span className="text-sm font-bold text-brand-coal">
                 {project.price.toLocaleString()} <span className="text-[10px] font-normal text-gray-500">ر.س</span>
               </span>
             </div>
           )}
           {project.area && (
-            <div className="flex flex-col bg-gray-50 px-3 py-2 rounded-lg border border-gray-100 min-w-[80px]">
+            <div className="flex flex-col bg-brand-offwhite px-3 py-2 rounded-lg border border-brand-cafe/20 min-w-[80px]">
               <span className="text-[9px] text-gray-400 font-bold uppercase tracking-wider mb-0.5">المساحة</span>
-              <span className="text-sm font-bold text-gray-900">
+              <span className="text-sm font-bold text-brand-coal">
                 {project.area} <span className="text-[10px] font-normal text-gray-500">م²</span>
               </span>
             </div>
           )}
           {project.rooms && (
-            <div className="flex flex-col bg-gray-50 px-3 py-2 rounded-lg border border-gray-100">
+            <div className="flex flex-col bg-brand-offwhite px-3 py-2 rounded-lg border border-brand-cafe/20">
               <span className="text-[9px] text-gray-400 font-bold uppercase tracking-wider mb-0.5">الغرف</span>
-              <span className="text-sm font-bold text-gray-900">{project.rooms}</span>
+              <span className="text-sm font-bold text-brand-coal">{project.rooms}</span>
             </div>
           )}
         </div>
@@ -121,7 +121,7 @@ export default function ProjectCard({ project }: ProjectCardProps) {
         <div className="pt-4 border-t border-gray-100">
           <Link
             href={`/projects/${project.slug}`}
-            className="flex items-center justify-center gap-2 w-full bg-[#050505] hover:bg-[#D4AF37] text-white hover:text-[#050505] font-bold py-3 px-4 rounded-xl transition-all duration-300 text-sm shadow-sm"
+            className="flex items-center justify-center gap-2 w-full bg-brand-cafe hover:bg-brand-coal text-white font-bold py-3 px-4 transition-all duration-300 text-sm shadow-sm [clip-path:polygon(0_0,calc(100%-16px)_0,100%_16px,100%_100%,0_100%)]"
           >
             عرض التفاصيل
             <svg className="w-4 h-4 rtl:rotate-180" fill="none" stroke="currentColor" viewBox="0 0 24 24">
