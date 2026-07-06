@@ -116,8 +116,8 @@ export default function TimedProductCardsHero({ content, projects, settings }: T
         >
           {/* Small Top Title */}
           <div className="mb-4 flex items-center gap-3">
-            <span className="h-[2px] w-8 bg-[#D4AF37]"></span>
-            <span className="text-[#D4AF37] text-sm font-bold tracking-wider">
+            <span className="h-[2px] w-8 bg-brand-cafe"></span>
+            <span className="text-brand-cafe text-sm font-bold tracking-wider">
               {content?.heroTitle || "نحت العقارية - مشاريعنا"}
             </span>
           </div>
@@ -177,7 +177,7 @@ export default function TimedProductCardsHero({ content, projects, settings }: T
           <div className="flex flex-col sm:flex-row items-center gap-4">
             <Link 
               href={`/projects/${activeProject.slug}`}
-              className="w-full sm:w-auto flex items-center justify-center gap-2 bg-[#D4AF37] hover:bg-[#b5952f] text-[#050505] px-8 py-3.5 rounded-xl font-bold transition-all shadow-lg shadow-[#D4AF37]/20 group"
+              className="w-full sm:w-auto flex items-center justify-center gap-2 bg-brand-cafe hover:bg-brand-coal text-white px-8 py-3.5 font-bold transition-all shadow-lg group [clip-path:polygon(0_0,calc(100%-16px)_0,100%_16px,100%_100%,0_100%)]"
             >
               عرض التفاصيل
               <ArrowLeft className="w-5 h-5 group-hover:-translate-x-1 transition-transform" />
@@ -187,7 +187,7 @@ export default function TimedProductCardsHero({ content, projects, settings }: T
                 href={whatsappUrl} 
                 target="_blank" 
                 rel="noreferrer"
-                className="w-full sm:w-auto flex items-center justify-center gap-2 bg-white/10 hover:bg-white/20 text-white border border-white/20 px-8 py-3.5 rounded-xl font-bold transition-all backdrop-blur-sm"
+                className="w-full sm:w-auto flex items-center justify-center gap-2 bg-white/10 hover:bg-white/20 text-white border border-white/20 px-8 py-3.5 font-bold transition-all backdrop-blur-sm [clip-path:polygon(0_0,calc(100%-16px)_0,100%_16px,100%_100%,0_100%)]"
               >
                 تواصل معنا
               </a>
@@ -212,7 +212,7 @@ export default function TimedProductCardsHero({ content, projects, settings }: T
                 <div className="absolute top-0 right-0 w-full h-[2px] bg-white/10 rounded-t-2xl overflow-hidden origin-right">
                   <div 
                     key={`progress-${activeIndex}`}
-                    className="h-full bg-[#D4AF37] w-full"
+                    className="h-full bg-brand-cafe w-full"
                     style={{ animation: "progressAnim 6s linear forwards" }}
                   />
                 </div>

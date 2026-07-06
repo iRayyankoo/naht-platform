@@ -73,8 +73,8 @@ export default function HeroSection({ content }: { content: HomePageContent | nu
       <div className="relative z-30 max-w-7xl mx-auto px-6 w-full flex flex-col items-start justify-center text-right mt-10 md:mt-0 pt-16 md:pt-24">
         <div className="max-w-3xl">
           <div className="flex items-center gap-4 mb-6 md:mb-10 opacity-0 animate-[fadeInUp_1s_ease-out_0.2s_forwards]">
-            <div className="w-12 h-[1px] bg-primary/80"></div>
-            <span className="text-xs md:text-sm font-bold tracking-[0.2em] text-primary uppercase">نحت للأصول العقارية</span>
+            <div className="w-12 h-[1px] bg-brand-cafe/80"></div>
+            <span className="text-xs md:text-sm font-bold tracking-[0.2em] text-brand-cafe uppercase">نحت للأصول العقارية</span>
           </div>
           
           <h1 className="text-4xl md:text-6xl lg:text-[5rem] font-bold mb-6 md:mb-8 leading-[1.1] tracking-tight drop-shadow-2xl opacity-0 animate-[fadeInUp_1s_ease-out_0.4s_forwards]">
@@ -86,7 +86,7 @@ export default function HeroSection({ content }: { content: HomePageContent | nu
           </p>
           
           <div className="flex flex-col sm:flex-row gap-5 w-full sm:w-auto opacity-0 animate-[fadeInUp_1s_ease-out_0.8s_forwards]">
-            <Link href={content?.ctaButtonUrl || "/projects"} className="group relative flex items-center justify-center gap-4 w-full sm:w-auto bg-white/95 text-gray-950 px-10 py-4 rounded-3xl font-bold text-sm md:text-base transition-all duration-500 hover:bg-white hover:shadow-[0_8px_30px_rgba(255,255,255,0.15)] hover:-translate-y-1 tracking-widest uppercase overflow-hidden">
+            <Link href={content?.ctaButtonUrl || "/projects"} className="group relative flex items-center justify-center gap-4 w-full sm:w-auto bg-brand-cafe text-white px-10 py-4 font-bold text-sm md:text-base transition-all duration-500 hover:bg-brand-coal hover:shadow-[0_8px_30px_rgba(255,255,255,0.15)] hover:-translate-y-1 tracking-widest uppercase overflow-hidden [clip-path:polygon(0_0,calc(100%-20px)_0,100%_20px,100%_100%,0_100%)]">
               <span className="relative z-10">{content?.ctaButtonText || "استكشف التفاصيل"}</span>
               <svg className="w-4 h-4 rtl:rotate-180 transition-transform duration-500 group-hover:-translate-x-2 relative z-10" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M17 8l4 4m0 0l-4 4m4-4H3"></path></svg>
             </Link>

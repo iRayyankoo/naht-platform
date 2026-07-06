@@ -9,10 +9,13 @@ export default function HomeFaq({ faqs }: { faqs: Faq[] }) {
   if (!faqs || faqs.length === 0) return null;
 
   return (
-    <div className="bg-transparent h-full flex flex-col">
+    <div className="bg-transparent h-full flex flex-col relative z-0">
+      {/* Subtle Naht Brand Identity Pattern (Diagonal lines) */}
+      <div className="absolute inset-0 z-[-1] pointer-events-none" style={{ backgroundImage: 'repeating-linear-gradient(-45deg, transparent, transparent 15px, rgba(163,148,126,0.03) 15px, rgba(163,148,126,0.03) 16px)' }} />
+
       <div className="mb-12">
-        <h2 className="text-3xl md:text-4xl font-bold text-gray-900 mb-4 tracking-tight">الأسئلة الشائعة</h2>
-        <div className="w-16 h-1 bg-[#D4AF37] mb-6"></div>
+        <h2 className="text-3xl md:text-4xl font-bold text-brand-coal mb-4 tracking-tight">الأسئلة الشائعة</h2>
+        <div className="w-16 h-1 bg-brand-cafe mb-6"></div>
           <p className="text-lg text-gray-500 font-light">إجابات وافية لأهم التساؤلات حول خدماتنا ومشاريعنا.</p>
         </div>
 
@@ -28,10 +31,10 @@ export default function HomeFaq({ faqs }: { faqs: Faq[] }) {
                   onClick={() => setOpenId(isOpen ? null : faq.id)}
                   className="w-full text-right py-6 flex items-center justify-between gap-4 focus:outline-none group"
                 >
-                  <span className={`text-xl font-bold transition-colors ${isOpen ? 'text-primary' : 'text-gray-900 group-hover:text-gray-600'}`}>
+                  <span className={`text-xl font-bold transition-colors ${isOpen ? 'text-brand-cafe' : 'text-brand-coal group-hover:text-brand-cafe/80'}`}>
                     {faq.question}
                   </span>
-                  <div className={`w-8 h-8 rounded-full flex items-center justify-center shrink-0 transition-transform duration-300 ${isOpen ? 'rotate-180 text-primary' : 'text-gray-400'}`}>
+                  <div className={`w-8 h-8 rounded-full flex items-center justify-center shrink-0 transition-transform duration-300 ${isOpen ? 'rotate-180 text-brand-cafe' : 'text-gray-400'}`}>
                     <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7"></path>
                     </svg>

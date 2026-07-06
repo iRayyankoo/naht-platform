@@ -81,20 +81,20 @@ export default function FeaturedProjects({ projects }: { projects: Project[] }) 
         {/* ── Section Header ── */}
         <div className="flex flex-col md:flex-row md:items-end justify-between gap-5 mb-10 md:mb-14">
           <div>
-            <p className="text-[11px] text-primary font-bold tracking-[0.3em] uppercase mb-2">
+            <p className="text-[11px] text-brand-cafe font-bold tracking-[0.3em] uppercase mb-2">
               NAHT REAL ESTATE
             </p>
             <h2 className="text-3xl md:text-4xl lg:text-5xl font-bold text-gray-950 leading-tight tracking-tight">
               المشاريع المختارة
             </h2>
-            <div className="w-12 h-[2px] bg-primary/60 rounded-full mt-4 mb-3" />
+            <div className="w-12 h-[2px] bg-brand-cafe/60 rounded-full mt-4 mb-3" />
             <p className="text-gray-500 text-sm md:text-base font-light leading-relaxed max-w-lg">
               انتقاء حصري لأبرز مشاريعنا، تجمع بين التصميم المعماري الراقي وأفضل المواقع الاستراتيجية.
             </p>
           </div>
           <Link
             href="/projects"
-            className="hidden md:inline-flex items-center gap-2 text-sm font-bold text-gray-800 hover:text-primary border border-gray-200 hover:border-primary/40 px-5 py-2.5 rounded-full transition-all duration-300 hover:bg-primary/5 whitespace-nowrap"
+            className="hidden md:inline-flex items-center gap-2 text-sm font-bold text-brand-coal hover:text-brand-cafe border border-brand-cafe/20 hover:border-brand-cafe/40 px-5 py-2.5 transition-all duration-300 hover:bg-brand-cafe/5 whitespace-nowrap [clip-path:polygon(0_0,calc(100%-16px)_0,100%_16px,100%_100%,0_100%)]"
           >
             عرض جميع المشاريع
             <svg className="w-4 h-4 rtl:rotate-180" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -134,7 +134,7 @@ export default function FeaturedProjects({ projects }: { projects: Project[] }) 
 
               {/* Info panel at bottom */}
               <div className="absolute bottom-0 left-0 right-0 p-6 md:p-8">
-                <p className="text-[11px] text-primary font-bold tracking-[0.25em] uppercase mb-2">
+                <p className="text-[11px] text-brand-cafe font-bold tracking-[0.25em] uppercase mb-2">
                   {main.type} • {main.neighborhood || main.city}
                 </p>
                 <h3 className="text-2xl md:text-3xl lg:text-4xl font-bold text-white mb-2 leading-tight drop-shadow">
@@ -148,14 +148,14 @@ export default function FeaturedProjects({ projects }: { projects: Project[] }) 
                 <div className="flex flex-wrap items-center gap-4 mb-5">
                   {fmt(main.price) && (
                     <span className="text-sm text-gray-200">
-                      يبدأ من <span className="text-primary font-bold">{fmt(main.price)}</span>
+                      يبدأ من <span className="text-brand-cafe font-bold">{fmt(main.price)}</span>
                     </span>
                   )}
                   {main.area && (
                     <span className="text-sm text-gray-300">{main.area} م²</span>
                   )}
                 </div>
-                <span className="inline-flex items-center gap-2 text-sm font-bold text-white/90 group-hover:text-primary transition-colors tracking-wide">
+                <span className="inline-flex items-center gap-2 text-sm font-bold text-white/90 group-hover:text-brand-cafe transition-colors tracking-wide">
                   استعرض التفاصيل
                   <svg className="w-4 h-4 rtl:rotate-180 transition-transform group-hover:-translate-x-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M17 8l4 4m0 0l-4 4m4-4H3" />
@@ -189,7 +189,7 @@ export default function FeaturedProjects({ projects }: { projects: Project[] }) 
         <div className="mt-8 md:hidden">
           <Link
             href="/projects"
-            className="flex items-center justify-center gap-2 w-full py-3.5 rounded-xl border border-gray-200 text-gray-800 font-bold text-sm hover:border-primary/40 hover:text-primary hover:bg-primary/5 transition-colors"
+            className="flex items-center justify-center gap-2 w-full py-3.5 border border-brand-cafe/20 text-brand-coal font-bold text-sm hover:border-brand-cafe/40 hover:text-brand-cafe hover:bg-brand-cafe/5 transition-colors [clip-path:polygon(0_0,calc(100%-16px)_0,100%_16px,100%_100%,0_100%)]"
           >
             عرض جميع المشاريع
             <svg className="w-4 h-4 rtl:rotate-180" fill="none" stroke="currentColor" viewBox="0 0 24 24">
