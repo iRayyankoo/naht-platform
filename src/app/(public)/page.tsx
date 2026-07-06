@@ -77,8 +77,18 @@ export default async function HomePage() {
         <StatsSection content={content} />
         <WhyChooseUs content={content} />
         <ClientJourney />
-        <HomeFaq faqs={faqs} />
-        <HomeContact settings={settings} />
+        <section className="py-24">
+          <div className="max-w-7xl mx-auto px-6">
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 lg:gap-16">
+              <div className="order-1">
+                <HomeFaq faqs={faqs} />
+              </div>
+              <div className="order-2">
+                <HomeContact settings={settings} />
+              </div>
+            </div>
+          </div>
+        </section>
       </div>
       <StickyMobileCta whatsappNumber={settings?.whatsappNumber} contactPhone={settings?.contactPhone} />
     </div>

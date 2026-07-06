@@ -34,6 +34,14 @@ export default function ContactForm({ submitButtonText, helperText }: ContactFor
     setError(null);
 
     const formData = new FormData(e.currentTarget);
+    const phoneVal = formData.get("phone") as string;
+
+    if (!/^05\d{8}$/.test(phoneVal)) {
+      setError("يرجى إدخال رقم جوال سعودي صحيح يبدأ بـ 05");
+      setIsSubmitting(false);
+      return;
+    }
+
     const data = {
       name: formData.get("name"),
       phone: formData.get("phone"),
@@ -72,7 +80,7 @@ export default function ContactForm({ submitButtonText, helperText }: ContactFor
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-5 md:gap-6">
         <div>
           <label className="block text-sm md:text-base font-bold text-gray-800 mb-2">رقم الجوال <span className="text-red-500">*</span></label>
-          <input type="tel" name="phone" dir="ltr" required className="w-full bg-gray-50 border-gray-200 rounded-lg p-3.5 md:p-4 border focus:bg-white focus:ring-2 focus:ring-primary/20 focus:border-primary text-right text-base transition-colors" placeholder="05xxxxxxxx" />
+          <input type="tel" name="phone" dir="ltr" required pattern="^05\d{8}$" className="w-full bg-gray-50 border-gray-200 rounded-lg p-3.5 md:p-4 border focus:bg-white focus:ring-2 focus:ring-primary/20 focus:border-primary text-right text-base transition-colors" placeholder="05xxxxxxxx" />
         </div>
         <div>
           <label className="block text-sm md:text-base font-bold text-gray-800 mb-2">البريد الإلكتروني (اختياري)</label>

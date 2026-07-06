@@ -9,11 +9,10 @@ export default function HomeFaq({ faqs }: { faqs: Faq[] }) {
   if (!faqs || faqs.length === 0) return null;
 
   return (
-    <section className="py-24 bg-white border-t border-gray-100">
-      <div className="max-w-4xl mx-auto px-6">
-        <div className="text-center mb-16">
-          <h2 className="text-3xl md:text-4xl font-bold text-gray-900 mb-6 tracking-tight">الأسئلة الشائعة</h2>
-          <div className="w-16 h-1 bg-primary mx-auto mb-6"></div>
+    <div className="bg-transparent h-full flex flex-col">
+      <div className="mb-12">
+        <h2 className="text-3xl md:text-4xl font-bold text-gray-900 mb-4 tracking-tight">الأسئلة الشائعة</h2>
+        <div className="w-16 h-1 bg-[#D4AF37] mb-6"></div>
           <p className="text-lg text-gray-500 font-light">إجابات وافية لأهم التساؤلات حول خدماتنا ومشاريعنا.</p>
         </div>
 
@@ -49,7 +48,6 @@ export default function HomeFaq({ faqs }: { faqs: Faq[] }) {
             );
           })}
         </div>
-      </div>
-    </section>
+    </div>
   );
 }

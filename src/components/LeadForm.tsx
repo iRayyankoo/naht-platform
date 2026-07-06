@@ -38,6 +38,14 @@ export default function LeadForm({ projectId, projectSlug, formType = "GENERAL" 
     setError("");
 
     const formData = new FormData(e.currentTarget);
+    const phoneVal = formData.get("phone") as string;
+
+    if (!/^05\d{8}$/.test(phoneVal)) {
+      setError("يرجى إدخال رقم جوال سعودي صحيح يبدأ بـ 05");
+      setIsSubmitting(false);
+      return;
+    }
+
     const data = Object.fromEntries(formData.entries());
 
     const payload = {
@@ -91,7 +99,7 @@ export default function LeadForm({ projectId, projectSlug, formType = "GENERAL" 
       
       <div>
         <label htmlFor="phone" className="block text-sm md:text-base font-medium text-gray-700 mb-1.5">رقم الجوال *</label>
-        <input type="tel" id="phone" name="phone" required pattern="^[+\d\s]{9,20}$" className="w-full border border-gray-300 bg-white rounded-md shadow-sm focus:ring-2 focus:ring-primary focus:border-primary p-3 md:p-3.5 text-base text-gray-900 font-medium hover:border-gray-400 transition-colors placeholder:text-gray-400 placeholder:font-normal" placeholder="05XXXXXXXX" dir="ltr" />
+        <input type="tel" id="phone" name="phone" required pattern="^05\d{8}$" className="w-full border border-gray-300 bg-white rounded-md shadow-sm focus:ring-2 focus:ring-primary focus:border-primary p-3 md:p-3.5 text-base text-gray-900 font-medium hover:border-gray-400 transition-colors placeholder:text-gray-400 placeholder:font-normal" placeholder="05XXXXXXXX" dir="ltr" />
       </div>
       
       <div>
