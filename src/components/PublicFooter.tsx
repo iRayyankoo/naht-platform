@@ -17,8 +17,8 @@ export default async function PublicFooter() {
   const showSocialLinks = settings?.showSocialLinks ?? true;
 
   return (
-    <footer className="bg-gray-900 text-white pt-20 pb-10">
-      <div className="max-w-7xl mx-auto px-6 grid grid-cols-1 md:grid-cols-12 gap-12 lg:gap-8 border-b border-gray-800 pb-16">
+    <footer className="bg-brand-coal text-white pt-20 pb-10">
+      <div className="max-w-7xl mx-auto px-6 grid grid-cols-1 md:grid-cols-12 gap-12 lg:gap-8 border-b border-white/10 pb-16">
         <div className="md:col-span-5 text-center md:text-right">
           <Link href="/" className="inline-block mb-6">
             {showFooterLogo && (settings?.footerLogoUrl || settings?.logoUrl) ? (
@@ -33,7 +33,7 @@ export default async function PublicFooter() {
           {showSocialLinks && socials.length > 0 && (
             <div className="flex justify-center md:justify-start gap-3">
               {socials.map(s => (
-                <a key={s.id} href={s.url} target="_blank" rel="noreferrer" className="w-10 h-10 bg-white/5 border border-white/10 rounded-full flex items-center justify-center text-gray-400 hover:text-white hover:bg-primary hover:border-primary transition-all duration-300" title={s.platformName}>
+                <a key={s.id} href={s.url} target="_blank" rel="noreferrer" className="w-10 h-10 bg-white/5 border border-white/10 rounded-full flex items-center justify-center text-gray-400 hover:text-white hover:bg-brand-cafe hover:border-brand-cafe transition-all duration-300" title={s.platformName}>
                   {s.icon ? <span dangerouslySetInnerHTML={{__html: s.icon}} className="w-4 h-4 flex items-center justify-center" /> : <span className="text-xs font-bold">{s.platformName.charAt(0)}</span>}
                 </a>
               ))}
@@ -45,7 +45,7 @@ export default async function PublicFooter() {
           <div className="md:col-span-3 text-center md:text-right">
             <h4 className="text-lg font-bold mb-6 text-white tracking-wide relative inline-block">
               روابط هامة
-              <span className="absolute -bottom-2 right-0 w-8 h-1 bg-primary rounded-full"></span>
+              <span className="absolute -bottom-2 right-0 w-8 h-1 bg-brand-cafe rounded-full"></span>
             </h4>
             <ul className="space-y-4 text-base text-gray-400">
               {footerLinks.length > 0 ? (
@@ -55,7 +55,7 @@ export default async function PublicFooter() {
                       href={link.url} 
                       target={link.isExternal ? "_blank" : undefined}
                       rel={link.isExternal ? "noreferrer" : undefined}
-                      className="hover:text-primary transition-colors inline-block hover:-translate-x-1 duration-300"
+                      className="hover:text-brand-cafe transition-colors inline-block hover:-translate-x-1 duration-300"
                     >
                       {link.label}
                     </Link>
@@ -63,11 +63,11 @@ export default async function PublicFooter() {
                 ))
               ) : (
                 <>
-                  <li><Link href="/" className="hover:text-primary transition-colors inline-block hover:-translate-x-1 duration-300">الرئيسية</Link></li>
-                  <li><Link href="/about" className="hover:text-primary transition-colors inline-block hover:-translate-x-1 duration-300">من نحن</Link></li>
-                  <li><Link href="/services" className="hover:text-primary transition-colors inline-block hover:-translate-x-1 duration-300">خدماتنا</Link></li>
-                  <li><Link href="/projects" className="hover:text-primary transition-colors inline-block hover:-translate-x-1 duration-300">مشاريعنا</Link></li>
-                  <li><Link href="/careers" className="hover:text-primary transition-colors inline-block hover:-translate-x-1 duration-300">التوظيف</Link></li>
+                  <li><Link href="/" className="hover:text-brand-cafe transition-colors inline-block hover:-translate-x-1 duration-300">الرئيسية</Link></li>
+                  <li><Link href="/about" className="hover:text-brand-cafe transition-colors inline-block hover:-translate-x-1 duration-300">من نحن</Link></li>
+                  <li><Link href="/services" className="hover:text-brand-cafe transition-colors inline-block hover:-translate-x-1 duration-300">خدماتنا</Link></li>
+                  <li><Link href="/projects" className="hover:text-brand-cafe transition-colors inline-block hover:-translate-x-1 duration-300">مشاريعنا</Link></li>
+                  <li><Link href="/careers" className="hover:text-brand-cafe transition-colors inline-block hover:-translate-x-1 duration-300">التوظيف</Link></li>
                 </>
               )}
             </ul>
@@ -78,13 +78,13 @@ export default async function PublicFooter() {
           <div className="md:col-span-4 text-center md:text-right">
             <h4 className="text-lg font-bold mb-6 text-white tracking-wide relative inline-block">
               تواصل معنا
-              <span className="absolute -bottom-2 right-0 w-8 h-1 bg-primary rounded-full"></span>
+              <span className="absolute -bottom-2 right-0 w-8 h-1 bg-brand-cafe rounded-full"></span>
             </h4>
             <ul className="space-y-5 text-base text-gray-400">
               {settings?.address && (
                 <li className="flex items-start justify-center md:justify-start gap-4">
                   <div className="w-10 h-10 rounded-full bg-white/5 flex items-center justify-center shrink-0 border border-white/10">
-                    <svg className="w-5 h-5 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.5" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"/><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.5" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
+                    <svg className="w-5 h-5 text-brand-cafe" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.5" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"/><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.5" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
                   </div>
                   <span className="pt-2 leading-relaxed">{settings.address}</span>
                 </li>
@@ -92,7 +92,7 @@ export default async function PublicFooter() {
               {settings?.contactPhone && (
                 <li className="flex items-center justify-center md:justify-start gap-4">
                   <div className="w-10 h-10 rounded-full bg-white/5 flex items-center justify-center shrink-0 border border-white/10">
-                    <svg className="w-5 h-5 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.5" d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z"/></svg>
+                    <svg className="w-5 h-5 text-brand-cafe" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.5" d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z"/></svg>
                   </div>
                   <span className="pt-1 font-bold tracking-wider" dir="ltr">{settings.contactPhone}</span>
                 </li>
@@ -100,7 +100,7 @@ export default async function PublicFooter() {
               {settings?.contactEmail && (
                 <li className="flex items-center justify-center md:justify-start gap-4">
                   <div className="w-10 h-10 rounded-full bg-white/5 flex items-center justify-center shrink-0 border border-white/10">
-                    <svg className="w-5 h-5 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.5" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/></svg>
+                    <svg className="w-5 h-5 text-brand-cafe" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.5" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/></svg>
                   </div>
                   <a href={`mailto:${settings.contactEmail}`} className="pt-1 hover:text-white transition-colors">{settings.contactEmail}</a>
                 </li>
