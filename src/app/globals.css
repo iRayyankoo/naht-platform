@@ -4,6 +4,12 @@
   --background: #ffffff;
   --foreground: #171717;
   
+  /* Brand Identity Tokens - Phase 6E-9B (For gradual implementation) */
+  --brand-cafe-beige: #A3947E;
+  --brand-off-white-beige: #EDEAE2;
+  --brand-pastel-green: #B4B596;
+  --brand-coal: #4D4948;
+  
   /* Fallbacks for brand settings */
   --brand-primary: #c09d73; /* لون نحت الذهبي */
   --brand-secondary: #2c3e50;
@@ -18,6 +24,12 @@
   --color-background: var(--background);
   --color-foreground: var(--foreground);
   
+  /* Brand Identity Tailwind Extensions */
+  --color-brand-cafe: var(--brand-cafe-beige);
+  --color-brand-offwhite: var(--brand-off-white-beige);
+  --color-brand-pastel: var(--brand-pastel-green);
+  --color-brand-coal: var(--brand-coal);
+
   /* Map Tailwind colors to CSS Variables injected from DB or fallbacks */
   --color-primary: var(--color-primary-override, var(--brand-primary));
   --color-secondary: var(--color-secondary-override, var(--brand-secondary));
