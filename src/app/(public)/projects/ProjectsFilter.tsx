@@ -49,7 +49,22 @@ export default function ProjectsFilter({ types, statuses, cities }: ProjectsFilt
   };
 
   return (
-    <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100 mb-10 max-w-5xl mx-auto -mt-10 relative z-10">
+    <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100 mb-8 max-w-5xl mx-auto -mt-10 relative z-10">
+      {/* Filter Header */}
+      <div className="flex items-center justify-between mb-5">
+        <div>
+          <p className="text-[10px] text-primary font-bold tracking-[0.2em] uppercase mb-0.5">SEARCH</p>
+          <h2 className="text-sm font-bold text-gray-900">ابحث عن مشروعك المناسب</h2>
+        </div>
+        {hasFilters && (
+          <button
+            onClick={clearFilters}
+            className="text-xs text-red-500 hover:text-red-600 font-bold transition-colors border border-red-100 hover:border-red-200 px-3 py-1.5 rounded-lg"
+          >
+            مسح الفلاتر
+          </button>
+        )}
+      </div>
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4 items-end">
         
         {/* Text Search */}
@@ -139,17 +154,6 @@ export default function ProjectsFilter({ types, statuses, cities }: ProjectsFilt
           </div>
         </div>
       </div>
-
-      {hasFilters && (
-        <div className="mt-4 flex justify-end">
-          <button
-            onClick={clearFilters}
-            className="text-sm text-red-600 hover:text-red-700 font-bold transition-colors"
-          >
-            مسح الفلاتر
-          </button>
-        </div>
-      )}
     </div>
   );
 }
