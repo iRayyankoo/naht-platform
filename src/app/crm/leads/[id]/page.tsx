@@ -157,16 +157,6 @@ export default async function LeadDetailsPage({ params }: { params: Promise<{ id
           </div>
         </div>
         
-        {userRole === "ADMIN" && (
-          <form action={async () => {
-            "use server";
-            await deleteLead(lead.id);
-          }}>
-            <button type="submit" className="text-sm bg-red-50 text-red-600 hover:bg-red-100 px-4 py-2 rounded-md font-medium">
-              حذف العميل
-            </button>
-          </form>
-        )}
       </div>
 
       {/* Main Grid */}
@@ -366,6 +356,26 @@ export default async function LeadDetailsPage({ params }: { params: Promise<{ id
 
         </div>
       </div>
+
+      {/* ── Advanced Actions (Admin Only) ─────────────────────────────── */}
+      {userRole === "ADMIN" && (
+        <div className="mt-8 border border-red-100 rounded-xl p-5 bg-red-50/40">
+          <h3 className="text-sm font-bold text-red-700 mb-1">إجراءات متقدمة</h3>
+          <p className="text-xs text-red-500 mb-4">استخدم هذا الخيار فقط عند الحاجة. لا يمكن التراجع عن الحذف.</p>
+          <form action={async () => {
+            "use server";
+            await deleteLead(lead.id);
+          }}>
+            <button
+              type="submit"
+              className="text-sm border border-red-300 text-red-600 hover:bg-red-100 bg-white px-4 py-2 rounded-lg font-medium transition-colors"
+            >
+              حذف العميل
+            </button>
+          </form>
+        </div>
+      )}
+
     </div>
   );
 }
