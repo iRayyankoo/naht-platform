@@ -1,128 +1,223 @@
 import Link from "next/link";
 import { Project } from "@prisma/client";
 
+// ── Status helpers ──────────────────────────────────────────────────
+const statusLabel = (s: string) =>
+  s === "AVAILABLE" ? "متاح" : s === "SOLD_OUT" ? "مباع بالكامل" : "قيد الإنشاء";
+
+const statusColor = (s: string) =>
+  s === "AVAILABLE"
+    ? "bg-emerald-500/20 text-emerald-300 border-emerald-400/30"
+    : s === "SOLD_OUT"
+    ? "bg-red-500/20 text-red-300 border-red-400/30"
+    : "bg-amber-500/20 text-amber-300 border-amber-400/30";
+
+// ── Price formatter ─────────────────────────────────────────────────
+const fmt = (n: number | null) =>
+  n ? `ر.س ${n.toLocaleString("ar-SA")}` : null;
+
+// ── Small Card ──────────────────────────────────────────────────────
+function SmallCard({ project }: { project: Project }) {
+  return (
+    <Link
+      href={`/projects/${project.slug}`}
+      className="group relative flex flex-col overflow-hidden rounded-2xl border border-white/8 bg-white/4 hover:border-[#D4AF37]/30 transition-all duration-500 hover:-translate-y-1 hover:shadow-[0_16px_48px_rgba(212,175,55,0.12)]"
+    >
+      {/* Image */}
+      <div className="relative h-48 w-full overflow-hidden bg-gray-900 shrink-0">
+        {project.mainImage ? (
+          <img
+            src={project.mainImage}
+            alt={project.name}
+            className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
+          />
+        ) : (
+          <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-gray-800 to-gray-900">
+            <svg className="w-10 h-10 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1"
+                d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5" />
+            </svg>
+          </div>
+        )}
+        {/* Gradient overlay */}
+        <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent" />
+        {/* Status badge */}
+        <span className={`absolute top-3 right-3 text-[10px] font-bold tracking-wider border rounded-full px-2.5 py-1 backdrop-blur-sm ${statusColor(project.status)}`}>
+          {statusLabel(project.status)}
+        </span>
+      </div>
+
+      {/* Info */}
+      <div className="p-4 flex flex-col gap-2 flex-1">
+        <p className="text-[11px] text-[#D4AF37]/70 font-semibold tracking-widest uppercase">
+          {project.type} • {project.neighborhood || project.city}
+        </p>
+        <h3 className="text-base font-bold text-white group-hover:text-[#D4AF37] transition-colors leading-snug line-clamp-1">
+          {project.name}
+        </h3>
+        <div className="flex items-center justify-between mt-auto pt-2 border-t border-white/8">
+          {fmt(project.price) && (
+            <span className="text-xs text-gray-300 font-medium">
+              يبدأ من <span className="text-[#D4AF37] font-bold">{fmt(project.price)}</span>
+            </span>
+          )}
+          {project.area && (
+            <span className="text-xs text-gray-500">{project.area} م²</span>
+          )}
+        </div>
+      </div>
+    </Link>
+  );
+}
+
+// ── Main Component ──────────────────────────────────────────────────
 export default function FeaturedProjects({ projects }: { projects: Project[] }) {
   if (!projects || projects.length === 0) return null;
 
-  const mainProject = projects[0];
-  const curatedProjects = projects.slice(1, 5); // Take up to 4 curated projects
+  const main = projects[0];
+  const curated = projects.slice(1, 5);
 
   return (
-    <section className="py-12 md:py-20 bg-[#F9F9F7] overflow-hidden">
-      <div className="max-w-[1400px] mx-auto px-6">
-        
-        {/* Section Header */}
-        <div className="flex flex-col md:flex-row justify-between items-start md:items-end mb-10 md:mb-16 gap-6">
-          <div className="max-w-2xl">
-            <h2 className="text-3xl md:text-4xl lg:text-5xl font-bold text-gray-950 mb-4 tracking-tight font-serif leading-tight">المشاريع المختارة</h2>
-            <div className="w-16 h-[2px] bg-primary/70 mb-4 rounded-full"></div>
-            <p className="text-base md:text-lg text-gray-500 font-light leading-relaxed max-w-xl">
-              انتقاء حصري لأرقى مشاريعنا، تعكس شغفنا بالتفاصيل وروعة التصميم المعماري الحديث في أفضل المواقع.
+    <section className="relative bg-[#0a0a0a] overflow-hidden">
+      {/* Top gradient blend from hero */}
+      <div className="absolute top-0 left-0 right-0 h-24 bg-gradient-to-b from-[#050505] to-transparent pointer-events-none z-10" />
+
+      {/* Subtle gold ambient glow */}
+      <div className="absolute top-1/3 left-1/2 -translate-x-1/2 w-[800px] h-[400px] bg-[#D4AF37]/4 rounded-full blur-[120px] pointer-events-none" />
+
+      <div className="relative z-20 max-w-[1400px] mx-auto px-5 md:px-8 py-16 md:py-24">
+
+        {/* ── Header ── */}
+        <div className="flex flex-col md:flex-row md:items-end justify-between gap-5 mb-12 md:mb-16">
+          <div>
+            <p className="text-[11px] text-[#D4AF37] font-bold tracking-[0.3em] uppercase mb-3">
+              NAHT REAL ESTATE
+            </p>
+            <h2 className="text-3xl md:text-4xl lg:text-5xl font-bold text-white leading-tight tracking-tight">
+              مشاريع مختارة بعناية
+            </h2>
+            <div className="w-12 h-[2px] bg-[#D4AF37] rounded-full mt-4 mb-3" />
+            <p className="text-gray-400 text-sm md:text-base font-light leading-relaxed max-w-lg">
+              استعرض أبرز مشاريع نحت المتاحة والمميزة، مصممة لأعلى معايير الجودة والموقع.
             </p>
           </div>
-          <Link href="/projects" className="hidden md:inline-flex items-center gap-3 text-gray-950 hover:text-primary font-bold transition-all group uppercase tracking-widest opacity-80 hover:opacity-100">
-            <span className="border-b border-gray-300/50 group-hover:border-primary pb-1 transition-colors">عرض المجموعة كاملة</span>
-            <svg className="w-5 h-5 rtl:rotate-180 transition-transform group-hover:-translate-x-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M17 8l4 4m0 0l-4 4m4-4H3"></path></svg>
+          <Link
+            href="/projects"
+            className="hidden md:inline-flex items-center gap-2 text-sm font-bold text-[#D4AF37] hover:text-white border border-[#D4AF37]/30 hover:border-[#D4AF37]/70 px-5 py-2.5 rounded-full transition-all duration-300 hover:bg-[#D4AF37]/10 whitespace-nowrap"
+          >
+            عرض جميع المشاريع
+            <svg className="w-4 h-4 rtl:rotate-180" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M17 8l4 4m0 0l-4 4m4-4H3" />
+            </svg>
           </Link>
         </div>
 
-        {/* The Signature Project (Editorial Style) */}
-        <div className="mb-12 md:mb-20">
-          <Link href={`/projects/${mainProject.slug}`} className="group block relative w-full h-[60vh] md:h-[80vh] overflow-hidden rounded-3xl shadow-[0_20px_60px_rgba(0,0,0,0.05)]">
-            {mainProject.mainImage ? (
-              <img 
-                src={mainProject.mainImage} 
-                alt={mainProject.name} 
-                className="w-full h-full object-cover transition-transform duration-[2s] ease-out group-hover:scale-105" 
-              />
-            ) : (
-              <div className="w-full h-full bg-gradient-to-br from-gray-200 to-gray-300 flex items-center justify-center transition-transform duration-[2s] ease-out group-hover:scale-105">
-                <span className="text-4xl text-gray-400 font-serif opacity-50">{mainProject.name}</span>
-              </div>
-            )}
-            
-            <div className="absolute inset-0 bg-gradient-to-t from-gray-950/70 via-gray-950/10 to-transparent"></div>
-            
-            {/* Floating Information Panel */}
-            <div className="absolute bottom-6 md:bottom-12 left-6 md:left-12 right-6 md:right-auto bg-white/10 backdrop-blur-2xl border border-white/10 p-8 md:p-10 max-w-xl text-white transform transition-all duration-700 group-hover:translate-y-[-10px] rounded-3xl shadow-[0_10px_40px_rgba(0,0,0,0.1)]">
-              <div className="flex items-center gap-3 text-xs md:text-sm font-bold text-gray-300/90 mb-4 tracking-widest uppercase">
-                <span>{mainProject.type}</span>
-                <span className="w-1.5 h-1.5 rounded-full bg-primary/80"></span>
-                <span>{mainProject.neighborhood || mainProject.city}</span>
-              </div>
-              <h3 className="text-4xl md:text-6xl font-bold mb-4 tracking-tight font-serif drop-shadow-sm">{mainProject.name}</h3>
-              <p className="text-gray-200/90 font-light line-clamp-2 md:line-clamp-3 mb-8 leading-relaxed">
-                {mainProject.shortDesc}
-              </p>
-              <div className="inline-flex items-center gap-3 text-sm font-bold tracking-widest uppercase text-white/90 group-hover:text-primary transition-colors">
-                استعرض التفاصيل
-                <svg className="w-4 h-4 rtl:rotate-180 transition-transform group-hover:-translate-x-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M17 8l4 4m0 0l-4 4m4-4H3"></path></svg>
-              </div>
-            </div>
+        {/* ── Desktop: Signature + Grid | Mobile: full-width signature + scroll ── */}
+        <div className="grid grid-cols-1 lg:grid-cols-5 gap-5 md:gap-6">
 
-            {/* Status Badge */}
-            <div className="absolute top-6 right-6 md:top-10 md:right-10 bg-white/95 backdrop-blur-md text-gray-950 px-6 py-2.5 text-xs font-bold tracking-widest uppercase shadow-xl rounded-full">
-              {mainProject.status === "AVAILABLE" ? "متاح" : mainProject.status === "SOLD_OUT" ? "مباع بالكامل" : "قيد الإنشاء"}
+          {/* Signature Card — spans 3 cols on desktop */}
+          <Link
+            href={`/projects/${main.slug}`}
+            className="group lg:col-span-3 relative block rounded-3xl overflow-hidden bg-gray-900 border border-white/8 hover:border-[#D4AF37]/30 transition-all duration-700 hover:shadow-[0_24px_80px_rgba(212,175,55,0.15)]"
+          >
+            <div className="relative h-[60vw] md:h-[460px] lg:h-full min-h-[350px] max-h-[600px]">
+              {main.mainImage ? (
+                <img
+                  src={main.mainImage}
+                  alt={main.name}
+                  className="w-full h-full object-cover transition-transform duration-[2s] ease-out group-hover:scale-105"
+                />
+              ) : (
+                <div className="w-full h-full bg-gradient-to-br from-gray-800 to-gray-900 flex items-center justify-center">
+                  <span className="text-4xl text-gray-600 font-bold">{main.name.charAt(0)}</span>
+                </div>
+              )}
+              {/* Gradient */}
+              <div className="absolute inset-0 bg-gradient-to-t from-gray-950/90 via-gray-950/20 to-transparent" />
+
+              {/* Status badge */}
+              <span className={`absolute top-5 right-5 text-xs font-bold tracking-wider border rounded-full px-3 py-1.5 backdrop-blur-md ${statusColor(main.status)}`}>
+                {statusLabel(main.status)}
+              </span>
+
+              {/* Info panel */}
+              <div className="absolute bottom-0 left-0 right-0 p-6 md:p-8">
+                <p className="text-[11px] text-[#D4AF37]/80 font-bold tracking-[0.25em] uppercase mb-2">
+                  {main.type} • {main.neighborhood || main.city}
+                </p>
+                <h3 className="text-2xl md:text-3xl lg:text-4xl font-bold text-white mb-2 leading-tight drop-shadow-sm">
+                  {main.name}
+                </h3>
+                {main.shortDesc && (
+                  <p className="text-gray-300/80 text-sm line-clamp-2 mb-4 font-light leading-relaxed max-w-lg">
+                    {main.shortDesc}
+                  </p>
+                )}
+                <div className="flex flex-wrap items-center gap-4 mb-5">
+                  {fmt(main.price) && (
+                    <span className="text-sm text-gray-300">
+                      يبدأ من <span className="text-[#D4AF37] font-bold">{fmt(main.price)}</span>
+                    </span>
+                  )}
+                  {main.area && (
+                    <span className="text-sm text-gray-400">{main.area} م²</span>
+                  )}
+                </div>
+                <span className="inline-flex items-center gap-2 text-sm font-bold text-white group-hover:text-[#D4AF37] transition-colors tracking-wide">
+                  استعرض التفاصيل
+                  <svg className="w-4 h-4 rtl:rotate-180 transition-transform group-hover:-translate-x-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M17 8l4 4m0 0l-4 4m4-4H3" />
+                  </svg>
+                </span>
+              </div>
             </div>
           </Link>
+
+          {/* Small Cards — desktop: vertical stack | mobile: horizontal scroll */}
+          {curated.length > 0 && (
+            <div className="lg:col-span-2">
+              {/* Desktop 2-row vertical */}
+              <div className="hidden lg:flex flex-col gap-5 h-full">
+                {curated.slice(0, 4).map((p) => (
+                  <SmallCard key={p.id} project={p} />
+                ))}
+              </div>
+
+              {/* Mobile: horizontal scroll-snap */}
+              <div className="lg:hidden flex gap-4 overflow-x-auto pb-4 snap-x snap-mandatory hide-scrollbar -mx-5 px-5">
+                {curated.map((p) => (
+                  <div key={p.id} className="flex-none w-[78vw] snap-center">
+                    <SmallCard project={p} />
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
         </div>
 
-        {/* Curated Collection (Horizontal Mobile Carousel / Desktop Grid) */}
-        {curatedProjects.length > 0 && (
-          <div className="relative">
-            {/* Hide scrollbar but keep functionality for mobile */}
-            <div className="flex md:grid md:grid-cols-2 lg:grid-cols-4 gap-6 md:gap-8 overflow-x-auto pb-12 snap-x snap-mandatory hide-scrollbar -mx-6 px-6 md:mx-0 md:px-0">
-              {curatedProjects.map((project) => (
-                <Link key={project.id} href={`/projects/${project.slug}`} className="group flex-none w-[85vw] md:w-auto snap-center">
-                  <div className="relative h-[450px] md:h-[500px] overflow-hidden rounded-3xl bg-gray-100 mb-6 shadow-sm group-hover:shadow-xl transition-shadow duration-700">
-                    {project.mainImage ? (
-                      <img 
-                        src={project.mainImage} 
-                        alt={project.name} 
-                        className="w-full h-full object-cover transition-all duration-[1.5s] ease-out filter sepia-[0.05] contrast-[1.05] group-hover:scale-105 group-hover:sepia-0" 
-                      />
-                    ) : (
-                      <div className="w-full h-full bg-gradient-to-br from-gray-100 to-gray-200 flex items-center justify-center transition-transform duration-[1.5s] ease-out group-hover:scale-105">
-                        <span className="text-2xl text-gray-400 font-serif opacity-50">{project.name}</span>
-                      </div>
-                    )}
-                    <div className="absolute inset-0 bg-black/5 group-hover:bg-transparent transition-colors duration-700"></div>
-                  </div>
-                  <div className="px-2">
-                    <div className="flex items-center justify-between mb-3">
-                      <div className="text-xs font-bold text-gray-400 tracking-widest uppercase">
-                        {project.type}
-                      </div>
-                      <div className={`text-xs font-bold tracking-widest uppercase ${project.status === 'AVAILABLE' ? 'text-primary/90' : 'text-gray-400/80'}`}>
-                        {project.status === "AVAILABLE" ? "متاح" : project.status === "SOLD_OUT" ? "مباع" : "تحت الإنشاء"}
-                      </div>
-                    </div>
-                    <h3 className="text-2xl font-bold text-gray-950 mb-2 font-serif group-hover:text-primary transition-colors">{project.name}</h3>
-                    <p className="text-sm text-gray-500/80 font-light truncate">{project.neighborhood || project.city}</p>
-                  </div>
-                </Link>
-              ))}
-            </div>
-          </div>
-        )}
-
-        <div className="text-center mt-4 md:hidden">
-          <Link href="/projects" className="inline-flex items-center justify-center w-full gap-3 bg-white text-gray-950 shadow-[0_10px_30px_rgba(0,0,0,0.05)] rounded-full px-8 py-4 font-bold tracking-widest uppercase transition-all hover:-translate-y-1">
-            عرض كل المشاريع
+        {/* Mobile: "View all" button */}
+        <div className="mt-8 md:hidden">
+          <Link
+            href="/projects"
+            className="flex items-center justify-center gap-2 w-full py-3.5 rounded-xl border border-[#D4AF37]/40 text-[#D4AF37] font-bold text-sm hover:bg-[#D4AF37]/10 transition-colors"
+          >
+            عرض جميع المشاريع
+            <svg className="w-4 h-4 rtl:rotate-180" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M17 8l4 4m0 0l-4 4m4-4H3" />
+            </svg>
           </Link>
         </div>
 
       </div>
 
+      {/* Bottom gradient blend to next section */}
+      <div className="absolute bottom-0 left-0 right-0 h-16 bg-gradient-to-t from-[#0d0d0d] to-transparent pointer-events-none" />
+
       <style dangerouslySetInnerHTML={{__html: `
-        .hide-scrollbar::-webkit-scrollbar {
-          display: none;
-        }
-        .hide-scrollbar {
-          -ms-overflow-style: none;
-          scrollbar-width: none;
-        }
+        .hide-scrollbar::-webkit-scrollbar { display: none; }
+        .hide-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
       `}} />
     </section>
   );
 }
+
