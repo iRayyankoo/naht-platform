@@ -10,6 +10,8 @@ import HomeFaq from "./components/HomeFaq";
 import HomeContact from "./components/HomeContact";
 import NahtStandard from "./components/NahtStandard";
 import StickyMobileCta from "./components/StickyMobileCta";
+import TrustStrip from "./components/TrustStrip";
+import ClientJourney from "./components/ClientJourney";
 
 export async function generateMetadata() {
   const content = await prisma.homePageContent.findUnique({ where: { id: "global" } });
@@ -67,12 +69,14 @@ export default async function HomePage() {
     <div className="bg-[#050505]"> {/* Main luxury background */}
       <PublicHeroRenderer content={content} projects={featuredProjects} settings={settings} />
       <FeaturedProjects projects={featuredProjects} />
+      <TrustStrip />
       <NahtStandard content={content} />
       <div className="bg-[#F9F9F7]"> {/* Light background for the rest */}
         <AboutBrief content={content} />
         <InteractiveMap content={content} projects={mapProjects} />
         <StatsSection content={content} />
         <WhyChooseUs content={content} />
+        <ClientJourney />
         <HomeFaq faqs={faqs} />
         <HomeContact settings={settings} />
       </div>
