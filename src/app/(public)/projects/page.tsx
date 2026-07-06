@@ -63,9 +63,9 @@ export default async function PublicProjectsPage({ searchParams }: { searchParam
         <div className="max-w-7xl mx-auto px-6 relative z-10 text-center">
           {/* Label */}
           <div className="inline-flex items-center gap-3 mb-5">
-            <span className="h-[1px] w-8 bg-[#D4AF37]" />
-            <span className="text-[#D4AF37] text-xs font-bold tracking-[0.3em] uppercase">نحت العقارية</span>
-            <span className="h-[1px] w-8 bg-[#D4AF37]" />
+            <span className="h-[1px] w-8 bg-brand-cafe" />
+            <span className="text-brand-cafe text-xs font-bold tracking-[0.3em] uppercase">نحت العقارية</span>
+            <span className="h-[1px] w-8 bg-brand-cafe" />
           </div>
           {/* Title */}
           <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold text-white mb-5 tracking-tight drop-shadow-md">
@@ -76,7 +76,7 @@ export default async function PublicProjectsPage({ searchParams }: { searchParam
             {content?.description || "استعرض مشاريعنا السكنية المتاحة واختر ما يناسبك."}
           </p>
           {/* Trust line */}
-          <p className="text-sm text-[#D4AF37]/70 font-medium tracking-wide">
+          <p className="text-sm text-brand-cafe font-medium tracking-wide">
             مشاريع مختارة بعناية في مواقع واعدة
           </p>
         </div>
@@ -118,7 +118,7 @@ export default async function PublicProjectsPage({ searchParams }: { searchParam
             <p className="text-gray-500 mb-8 max-w-md mx-auto leading-relaxed text-sm">
               {content?.emptyStateText || "جرّب تعديل الفلاتر أو مسحها لعرض جميع المشاريع المتاحة."}
             </p>
-            <Link href="/projects" className="inline-block bg-[#D4AF37] hover:bg-[#b5952f] text-white font-bold py-2.5 px-8 rounded-xl transition-colors shadow-md text-sm">
+            <Link href="/projects" className="inline-block bg-brand-cafe hover:bg-brand-coal text-white font-bold py-2.5 px-8 transition-colors shadow-md text-sm [clip-path:polygon(0_0,calc(100%-16px)_0,100%_16px,100%_100%,0_100%)]">
               عرض كل المشاريع
             </Link>
           </div>

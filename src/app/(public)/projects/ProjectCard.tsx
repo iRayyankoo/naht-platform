@@ -68,7 +68,7 @@ export default function ProjectCard({ project }: ProjectCardProps) {
       <div className="p-5 flex flex-col flex-1">
 
         {/* Location */}
-        <div className="flex items-center gap-1.5 text-xs text-[#D4AF37] font-semibold mb-2">
+        <div className="flex items-center gap-1.5 text-xs text-brand-cafe font-semibold mb-2">
           <svg className="w-3.5 h-3.5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2"
               d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />

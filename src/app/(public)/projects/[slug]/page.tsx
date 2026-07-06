@@ -9,7 +9,7 @@ import Image from "next/image";
 
 function UnitCard({ unit }: { unit: any }) {
   return (
-    <div className="bg-white border border-gray-100 rounded-3xl p-5 shadow-sm hover:shadow-md hover:-translate-y-1 hover:border-[#D4AF37]/30 transition-all duration-300 flex flex-col h-full">
+    <div className="bg-white border border-gray-100 rounded-3xl p-5 shadow-sm hover:shadow-md hover:-translate-y-1 hover:border-brand-cafe/20 transition-all duration-300 flex flex-col h-full">
       {/* Header */}
       <div className="flex justify-between items-start mb-4 gap-3">
         <div>
@@ -28,31 +28,31 @@ function UnitCard({ unit }: { unit: any }) {
       <div className="grid grid-cols-2 gap-3 mb-5 flex-1">
         {!!unit.area && (
           <div className="flex items-center gap-2 text-gray-700 bg-gray-50 p-3 rounded-xl border border-gray-100">
-            <svg className="w-4 h-4 text-[#D4AF37] shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 8V4m0 0h4M4 4l5 5m11-1V4m0 0h-4m4 0l-5 5M4 16v4m0 0h4m-4 0l5-5m11 5l-5-5m5 5v-4m0 4h-4"></path></svg>
+            <svg className="w-4 h-4 text-brand-cafe shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 8V4m0 0h4M4 4l5 5m11-1V4m0 0h-4m4 0l-5 5M4 16v4m0 0h4m-4 0l5-5m11 5l-5-5m5 5v-4m0 4h-4"></path></svg>
             <span className="text-xs md:text-sm font-bold">{unit.area} م²</span>
           </div>
         )}
         {!!unit.rooms && (
           <div className="flex items-center gap-2 text-gray-700 bg-gray-50 p-3 rounded-xl border border-gray-100">
-            <svg className="w-4 h-4 text-[#D4AF37] shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"></path></svg>
+            <svg className="w-4 h-4 text-brand-cafe shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"></path></svg>
             <span className="text-xs md:text-sm font-bold">{unit.rooms} غرف</span>
           </div>
         )}
         {!!unit.baths && (
           <div className="flex items-center gap-2 text-gray-700 bg-gray-50 p-3 rounded-xl border border-gray-100">
-            <svg className="w-4 h-4 text-[#D4AF37] shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M8 14v3m4-3v3m4-3v3M3 21h18M3 10h18M3 7l9-4 9 4M4 10h16v11H4V10z"></path></svg>
+            <svg className="w-4 h-4 text-brand-cafe shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M8 14v3m4-3v3m4-3v3M3 21h18M3 10h18M3 7l9-4 9 4M4 10h16v11H4V10z"></path></svg>
             <span className="text-xs md:text-sm font-bold">{unit.baths} حمامات</span>
           </div>
         )}
         {!!unit.floor && (
           <div className="flex items-center gap-2 text-gray-700 bg-gray-50 p-3 rounded-xl border border-gray-100">
-            <svg className="w-4 h-4 text-[#D4AF37] shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"></path></svg>
+            <svg className="w-4 h-4 text-brand-cafe shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"></path></svg>
             <span className="text-xs md:text-sm font-bold">الدور {unit.floor}</span>
           </div>
         )}
         {!!unit.facade && (
           <div className="flex items-center gap-2 text-gray-700 bg-gray-50 p-3 rounded-xl border border-gray-100">
-            <svg className="w-4 h-4 text-[#D4AF37] shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M3 21v-4m0 0V5a2 2 0 012-2h6.5l1 1H21l-3 6 3 6h-8.5l-1-1H5a2 2 0 00-2 2zm9-13.5V9"></path></svg>
+            <svg className="w-4 h-4 text-brand-cafe shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M3 21v-4m0 0V5a2 2 0 012-2h6.5l1 1H21l-3 6 3 6h-8.5l-1-1H5a2 2 0 00-2 2zm9-13.5V9"></path></svg>
             <span className="text-xs md:text-sm font-bold">الواجهة {unit.facade}</span>
           </div>
         )}
@@ -61,7 +61,7 @@ function UnitCard({ unit }: { unit: any }) {
       {/* unitPlanImage */}
       {!!unit.unitPlanImage && (
         <div className="mb-4">
-          <a href={unit.unitPlanImage} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-2 text-[#D4AF37] hover:text-gray-900 font-bold text-sm transition-colors">
+          <a href={unit.unitPlanImage} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-2 text-brand-cafe hover:text-gray-900 font-bold text-sm transition-colors">
             <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg>
             عرض مخطط الوحدة
           </a>
@@ -72,7 +72,7 @@ function UnitCard({ unit }: { unit: any }) {
       {!!unit.price && (
         <div className="pt-4 border-t border-gray-100 flex items-center justify-between mt-auto">
           <span className="text-xs md:text-sm text-gray-500 font-bold">السعر</span>
-          <span className="font-black text-lg md:text-xl text-[#D4AF37]">
+          <span className="font-black text-lg md:text-xl text-brand-cafe">
             {unit.price.toLocaleString()} ر.س
           </span>
         </div>
@@ -152,7 +152,7 @@ export default async function PublicProjectDetailsPage({ params }: { params: Pro
         <div className="absolute inset-0 bg-gradient-to-b from-black/40 to-transparent opacity-60"></div>
         
         <div className="absolute top-20 right-6 lg:right-12 z-20">
-           <Link href="/projects" className="inline-flex items-center gap-2 text-white hover:text-[#D4AF37] bg-black/40 backdrop-blur-md px-4 py-2 rounded-full border border-white/10 transition-all text-sm font-medium shadow-sm">
+           <Link href="/projects" className="inline-flex items-center gap-2 text-white hover:text-brand-cafe bg-black/40 backdrop-blur-md px-4 py-2 rounded-full border border-white/10 transition-all text-sm font-medium shadow-sm">
              <svg className="w-4 h-4 transform rotate-180" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 19l-7-7 7-7"></path></svg>
              الرجوع للمشاريع
            </Link>
@@ -176,14 +176,14 @@ export default async function PublicProjectDetailsPage({ params }: { params: Pro
             </h1>
             
             <div className="flex items-center gap-2 text-base md:text-xl text-gray-100 drop-shadow-md mb-6">
-              <svg className="w-5 h-5 text-[#D4AF37]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"></path><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"></path></svg>
+              <svg className="w-5 h-5 text-brand-cafe" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"></path><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"></path></svg>
               <span>{project.city} {project.neighborhood ? `- ${project.neighborhood}` : ''}</span>
             </div>
 
             {/* Hero Quick Actions */}
             <div className="flex flex-wrap items-center gap-3">
               {!isSold ? (
-                <Link href="#interest-form" className="bg-[#D4AF37] hover:bg-[#b5952f] text-white font-bold py-3 px-6 rounded-xl shadow-lg transition-colors flex items-center gap-2 text-sm md:text-base">
+                <Link href="#interest-form" className="bg-brand-cafe hover:bg-brand-coal text-white font-bold py-3 px-6 shadow-lg transition-colors flex items-center gap-2 text-sm md:text-base [clip-path:polygon(0_0,calc(100%-16px)_0,100%_16px,100%_100%,0_100%)]">
                   سجل اهتمامك
                   <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 14l-7 7m0 0l-7-7m7 7V3" /></svg>
                 </Link>
@@ -208,7 +208,7 @@ export default async function PublicProjectDetailsPage({ params }: { params: Pro
       <div className="bg-white border-b border-gray-100 shadow-sm relative z-20">
         <div className="max-w-7xl mx-auto px-6 lg:px-8 py-4 flex flex-col sm:flex-row items-center justify-between gap-4">
           <p className="text-gray-600 font-bold text-sm md:text-base text-center sm:text-right flex items-center gap-2">
-            <span className="w-2 h-2 rounded-full bg-[#D4AF37] animate-pulse"></span>
+            <span className="w-2 h-2 rounded-full bg-brand-cafe animate-pulse"></span>
             هل تبحث عن تفاصيل أكثر أو ترغب بزيارة الموقع؟
           </p>
           <div className="flex flex-wrap justify-center items-center gap-3">
@@ -252,7 +252,7 @@ export default async function PublicProjectDetailsPage({ params }: { params: Pro
             {/* Overview */}
             <section>
               <h2 className="text-2xl font-bold text-gray-900 mb-4 flex items-center gap-3">
-                <span className="w-1.5 h-6 bg-[#D4AF37] rounded-full"></span>
+                <span className="w-1.5 h-6 bg-brand-cafe rounded-full"></span>
                 نظرة عامة على المشروع
               </h2>
               <div className="bg-white p-6 md:p-8 rounded-3xl shadow-sm border border-gray-100 prose prose-sm md:prose-base text-gray-600 max-w-none leading-loose">
@@ -267,7 +267,7 @@ export default async function PublicProjectDetailsPage({ params }: { params: Pro
             {/* Specs, Features, and Warranties */}
             <section>
               <h2 className="text-2xl font-bold text-gray-900 mb-6 flex items-center gap-3">
-                <span className="w-1.5 h-6 bg-[#D4AF37] rounded-full"></span>
+                <span className="w-1.5 h-6 bg-brand-cafe rounded-full"></span>
                 المواصفات والمزايا
               </h2>
               <div className="space-y-6">
@@ -275,8 +275,8 @@ export default async function PublicProjectDetailsPage({ params }: { params: Pro
                 {/* Core Specs Grid */}
                 <div className="grid grid-cols-2 md:grid-cols-4 gap-3 md:gap-4">
                   {!!project.price && (
-                    <div className="bg-white p-5 rounded-2xl shadow-sm border border-gray-100 flex flex-col items-center text-center hover:border-[#D4AF37]/30 transition-colors">
-                      <div className="w-12 h-12 rounded-xl bg-[#D4AF37]/10 flex items-center justify-center text-[#D4AF37] mb-3">
+                    <div className="bg-white p-5 rounded-2xl shadow-sm border border-gray-100 flex flex-col items-center text-center hover:border-brand-cafe/20 transition-colors">
+                      <div className="w-12 h-12 rounded-xl bg-brand-cafe/10 flex items-center justify-center text-brand-cafe mb-3">
                         <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
                       </div>
                       <span className="text-xs text-gray-500 font-bold tracking-wider mb-1">السعر يبدأ من</span>
@@ -284,8 +284,8 @@ export default async function PublicProjectDetailsPage({ params }: { params: Pro
                     </div>
                   )}
                   {!!project.area && (
-                    <div className="bg-white p-5 rounded-2xl shadow-sm border border-gray-100 flex flex-col items-center text-center hover:border-[#D4AF37]/30 transition-colors">
-                      <div className="w-12 h-12 rounded-xl bg-[#D4AF37]/10 flex items-center justify-center text-[#D4AF37] mb-3">
+                    <div className="bg-white p-5 rounded-2xl shadow-sm border border-gray-100 flex flex-col items-center text-center hover:border-brand-cafe/20 transition-colors">
+                      <div className="w-12 h-12 rounded-xl bg-brand-cafe/10 flex items-center justify-center text-brand-cafe mb-3">
                         <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 8V4m0 0h4M4 4l5 5m11-1V4m0 0h-4m4 0l-5 5M4 16v4m0 0h4m-4 0l5-5m11 5l-5-5m5 5v-4m0 4h-4"></path></svg>
                       </div>
                       <span className="text-xs text-gray-500 font-bold tracking-wider mb-1">المساحة</span>
@@ -293,8 +293,8 @@ export default async function PublicProjectDetailsPage({ params }: { params: Pro
                     </div>
                   )}
                   {!!project.rooms && (
-                    <div className="bg-white p-5 rounded-2xl shadow-sm border border-gray-100 flex flex-col items-center text-center hover:border-[#D4AF37]/30 transition-colors">
-                      <div className="w-12 h-12 rounded-xl bg-[#D4AF37]/10 flex items-center justify-center text-[#D4AF37] mb-3">
+                    <div className="bg-white p-5 rounded-2xl shadow-sm border border-gray-100 flex flex-col items-center text-center hover:border-brand-cafe/20 transition-colors">
+                      <div className="w-12 h-12 rounded-xl bg-brand-cafe/10 flex items-center justify-center text-brand-cafe mb-3">
                         <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"></path></svg>
                       </div>
                       <span className="text-xs text-gray-500 font-bold tracking-wider mb-1">الغرف</span>
@@ -302,8 +302,8 @@ export default async function PublicProjectDetailsPage({ params }: { params: Pro
                     </div>
                   )}
                   {!!project.baths && (
-                    <div className="bg-white p-5 rounded-2xl shadow-sm border border-gray-100 flex flex-col items-center text-center hover:border-[#D4AF37]/30 transition-colors">
-                      <div className="w-12 h-12 rounded-xl bg-[#D4AF37]/10 flex items-center justify-center text-[#D4AF37] mb-3">
+                    <div className="bg-white p-5 rounded-2xl shadow-sm border border-gray-100 flex flex-col items-center text-center hover:border-brand-cafe/20 transition-colors">
+                      <div className="w-12 h-12 rounded-xl bg-brand-cafe/10 flex items-center justify-center text-brand-cafe mb-3">
                         <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M8 14v3m4-3v3m4-3v3M3 21h18M3 10h18M3 7l9-4 9 4M4 10h16v11H4V10z"></path></svg>
                       </div>
                       <span className="text-xs text-gray-500 font-bold tracking-wider mb-1">دورات المياه</span>
@@ -311,13 +311,13 @@ export default async function PublicProjectDetailsPage({ params }: { params: Pro
                     </div>
                   )}
                   {project.progressPercent !== null && (
-                    <div className="bg-white p-5 rounded-2xl shadow-sm border border-gray-100 flex flex-col items-center justify-center text-center col-span-2 md:col-span-4 hover:border-[#D4AF37]/30 transition-colors">
+                    <div className="bg-white p-5 rounded-2xl shadow-sm border border-gray-100 flex flex-col items-center justify-center text-center col-span-2 md:col-span-4 hover:border-brand-cafe/20 transition-colors">
                       <div className="w-full flex items-center justify-between mb-3">
                         <span className="text-sm font-bold text-gray-500">{project.progressLabel || "نسبة الإنجاز"}</span>
                         <span className="text-2xl font-black text-gray-900">{project.progressPercent}%</span>
                       </div>
                       <div className="w-full bg-gray-100 rounded-full h-3 overflow-hidden">
-                        <div className="bg-gradient-to-r from-[#D4AF37] to-[#e6ca6a] h-full rounded-full transition-all duration-1000" style={{ width: `${project.progressPercent}%` }}></div>
+                        <div className="bg-brand-cafe h-full rounded-full transition-all duration-1000" style={{ width: `${project.progressPercent}%` }}></div>
                       </div>
                     </div>
                   )}
@@ -328,13 +328,13 @@ export default async function PublicProjectDetailsPage({ params }: { params: Pro
                   {project.features.length > 0 && (
                     <div className="bg-white rounded-3xl p-6 shadow-sm border border-gray-100">
                       <h3 className="font-bold text-lg text-gray-900 mb-5 flex items-center gap-2">
-                        <svg className="w-5 h-5 text-[#D4AF37]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7"></path></svg>
+                        <svg className="w-5 h-5 text-brand-cafe" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7"></path></svg>
                         أبرز المرافق
                       </h3>
                       <div className="space-y-4">
                         {project.features.map(feature => (
                           <div key={feature.id} className="flex items-start gap-3">
-                            <div className="w-2 h-2 rounded-full bg-[#D4AF37] mt-2 shrink-0"></div>
+                            <div className="w-2 h-2 rounded-full bg-brand-cafe mt-2 shrink-0"></div>
                             <div>
                               <h4 className="font-bold text-sm text-gray-800">{feature.title}</h4>
                               {feature.desc && <p className="text-xs text-gray-500 mt-0.5">{feature.desc}</p>}
@@ -361,7 +361,7 @@ export default async function PublicProjectDetailsPage({ params }: { params: Pro
                               </div>
                             </div>
                             {warranty.duration && (
-                              <span className="text-[#D4AF37] font-bold bg-[#D4AF37]/10 px-3 py-1 rounded-md text-xs shrink-0">
+                              <span className="text-brand-cafe font-bold bg-brand-cafe/10 px-3 py-1 rounded-md text-xs shrink-0">
                                 {warranty.duration}
                               </span>
                             )}
@@ -378,7 +378,7 @@ export default async function PublicProjectDetailsPage({ params }: { params: Pro
             {project.planImage && (
               <section>
                 <h2 className="text-2xl font-bold text-gray-900 mb-6 flex items-center gap-3">
-                  <span className="w-1.5 h-6 bg-[#D4AF37] rounded-full"></span>
+                  <span className="w-1.5 h-6 bg-brand-cafe rounded-full"></span>
                   المخطط العام للمشروع
                 </h2>
                 <div className="bg-white p-4 md:p-6 rounded-3xl shadow-sm border border-gray-100 flex flex-col items-center">
@@ -394,7 +394,7 @@ export default async function PublicProjectDetailsPage({ params }: { params: Pro
                     href={project.planImage} 
                     target="_blank" 
                     rel="noopener noreferrer" 
-                    className="inline-flex items-center gap-2 bg-gray-900 hover:bg-[#D4AF37] text-white font-bold py-3 px-8 rounded-xl transition-colors shadow-sm text-sm"
+                    className="inline-flex items-center gap-2 bg-gray-900 hover:bg-brand-cafe text-white font-bold py-3 px-8 rounded-xl transition-colors shadow-sm text-sm"
                   >
                     <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"></path></svg>
                     تكبير المخطط
@@ -408,7 +408,7 @@ export default async function PublicProjectDetailsPage({ params }: { params: Pro
               <>
                 <section className="space-y-8">
                   <h2 className="text-2xl font-bold text-gray-900 mb-6 flex items-center gap-3">
-                    <span className="w-1.5 h-6 bg-[#D4AF37] rounded-full"></span>
+                    <span className="w-1.5 h-6 bg-brand-cafe rounded-full"></span>
                     نماذج المشروع والوحدات
                   </h2>
                   <div className="space-y-8">
@@ -442,19 +442,19 @@ export default async function PublicProjectDetailsPage({ params }: { params: Pro
                             <div className="flex flex-wrap items-center gap-4">
                               {!!model.area && (
                                 <div className="flex items-center gap-2 text-sm font-bold text-gray-700 bg-white px-3 py-1.5 rounded-lg border border-gray-100 shadow-sm">
-                                  <svg className="w-4 h-4 text-[#D4AF37]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 8V4m0 0h4M4 4l5 5m11-1V4m0 0h-4m4 0l-5 5M4 16v4m0 0h4m-4 0l5-5m11 5l-5-5m5 5v-4m0 4h-4"></path></svg>
+                                  <svg className="w-4 h-4 text-brand-cafe" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 8V4m0 0h4M4 4l5 5m11-1V4m0 0h-4m4 0l-5 5M4 16v4m0 0h4m-4 0l5-5m11 5l-5-5m5 5v-4m0 4h-4"></path></svg>
                                   {model.area} م²
                                 </div>
                               )}
                               {!!model.rooms && (
                                 <div className="flex items-center gap-2 text-sm font-bold text-gray-700 bg-white px-3 py-1.5 rounded-lg border border-gray-100 shadow-sm">
-                                  <svg className="w-4 h-4 text-[#D4AF37]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"></path></svg>
+                                  <svg className="w-4 h-4 text-brand-cafe" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"></path></svg>
                                   {model.rooms} غرف
                                 </div>
                               )}
                               {!!model.baths && (
                                 <div className="flex items-center gap-2 text-sm font-bold text-gray-700 bg-white px-3 py-1.5 rounded-lg border border-gray-100 shadow-sm">
-                                  <svg className="w-4 h-4 text-[#D4AF37]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M8 14v3m4-3v3m4-3v3M3 21h18M3 10h18M3 7l9-4 9 4M4 10h16v11H4V10z"></path></svg>
+                                  <svg className="w-4 h-4 text-brand-cafe" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M8 14v3m4-3v3m4-3v3M3 21h18M3 10h18M3 7l9-4 9 4M4 10h16v11H4V10z"></path></svg>
                                   {model.baths} حمامات
                                 </div>
                               )}
@@ -499,7 +499,7 @@ export default async function PublicProjectDetailsPage({ params }: { params: Pro
               project.units.length > 0 && (
                 <section>
                   <h2 className="text-2xl font-bold text-gray-900 mb-6 flex items-center gap-3">
-                    <span className="w-1.5 h-6 bg-[#D4AF37] rounded-full"></span>
+                    <span className="w-1.5 h-6 bg-brand-cafe rounded-full"></span>
                     الوحدات المتاحة
                   </h2>
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -515,7 +515,7 @@ export default async function PublicProjectDetailsPage({ params }: { params: Pro
             {project.galleryImages.length > 0 && (
               <section>
                 <h2 className="text-2xl font-bold text-gray-900 mb-6 flex items-center gap-3">
-                  <span className="w-1.5 h-6 bg-[#D4AF37] rounded-full"></span>
+                  <span className="w-1.5 h-6 bg-brand-cafe rounded-full"></span>
                   معرض الصور
                 </h2>
                 <div className="bg-white p-4 md:p-6 rounded-3xl shadow-sm border border-gray-100">
@@ -553,12 +553,12 @@ export default async function PublicProjectDetailsPage({ params }: { params: Pro
             {project.googleMapsUrl && (
               <section>
                 <h2 className="text-2xl font-bold text-gray-900 mb-6 flex items-center gap-3">
-                  <span className="w-1.5 h-6 bg-[#D4AF37] rounded-full"></span>
+                  <span className="w-1.5 h-6 bg-brand-cafe rounded-full"></span>
                   الموقع والوصول
                 </h2>
                 <div className="bg-white p-6 md:p-8 rounded-3xl shadow-sm border border-gray-100 flex flex-col md:flex-row items-center justify-between gap-6">
                   <div className="flex-1 text-center md:text-right">
-                    <div className="w-12 h-12 bg-gray-50 rounded-xl flex items-center justify-center text-[#D4AF37] mb-4 mx-auto md:mx-0 border border-gray-100">
+                    <div className="w-12 h-12 bg-gray-50 rounded-xl flex items-center justify-center text-brand-cafe mb-4 mx-auto md:mx-0 border border-gray-100">
                       <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"></path><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"></path></svg>
                     </div>
                     <h3 className="text-xl font-bold text-gray-900 mb-2">موقع المشروع</h3>
@@ -566,7 +566,7 @@ export default async function PublicProjectDetailsPage({ params }: { params: Pro
                       {project.locationText || 'الموقع الإستراتيجي للمشروع يوفر سهولة الوصول إلى أهم المعالم والخدمات الرئيسية.'}
                     </p>
                   </div>
-                  <a href={project.googleMapsUrl} target="_blank" rel="noopener noreferrer" className="shrink-0 bg-gray-900 hover:bg-[#D4AF37] text-white font-bold py-3 px-8 rounded-xl transition-colors shadow-lg shadow-gray-900/20 text-base flex items-center gap-2">
+                  <a href={project.googleMapsUrl} target="_blank" rel="noopener noreferrer" className="shrink-0 bg-gray-900 hover:bg-brand-cafe text-white font-bold py-3 px-8 rounded-xl transition-colors shadow-lg shadow-gray-900/20 text-base flex items-center gap-2">
                     افتح في خرائط جوجل
                     <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"></path></svg>
                   </a>
@@ -577,8 +577,8 @@ export default async function PublicProjectDetailsPage({ params }: { params: Pro
             {/* Final CTA Card */}
             <section className="bg-gray-900 rounded-3xl p-8 md:p-12 shadow-2xl relative overflow-hidden flex flex-col items-center text-center">
               <div className="absolute top-0 left-0 w-full h-full bg-[url('/pattern.svg')] opacity-5"></div>
-              <div className="absolute -top-24 -right-24 w-48 h-48 bg-[#D4AF37] rounded-full blur-[100px] opacity-30"></div>
-              <div className="absolute -bottom-24 -left-24 w-48 h-48 bg-[#D4AF37] rounded-full blur-[100px] opacity-20"></div>
+              <div className="absolute -top-24 -right-24 w-48 h-48 bg-brand-cafe rounded-full blur-[100px] opacity-30"></div>
+              <div className="absolute -bottom-24 -left-24 w-48 h-48 bg-brand-cafe rounded-full blur-[100px] opacity-20"></div>
               
               <div className="relative z-10 max-w-2xl">
                 <h2 className="text-2xl md:text-3xl font-black text-white mb-4">مهتم بهذا المشروع؟</h2>
@@ -586,7 +586,7 @@ export default async function PublicProjectDetailsPage({ params }: { params: Pro
                   اترك بياناتك وسيتواصل معك أحد مستشاري المبيعات لدينا لتقديم كافة التفاصيل والإجابة على استفساراتك.
                 </p>
                 <div className="flex flex-wrap items-center justify-center gap-4">
-                  <Link href="#interest-form" className="bg-[#D4AF37] hover:bg-[#b5952f] text-white font-bold py-3.5 px-8 rounded-xl transition-colors shadow-lg text-base">
+                  <Link href="#interest-form" className="bg-brand-cafe hover:bg-brand-coal text-white font-bold py-3.5 px-8 shadow-lg text-base transition-colors [clip-path:polygon(0_0,calc(100%-16px)_0,100%_16px,100%_100%,0_100%)]">
                     تعبئة نموذج الاهتمام
                   </Link>
                   {settings?.whatsappNumber && (
