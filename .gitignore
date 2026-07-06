@@ -59,3 +59,5 @@ private_local_*
 scripts/legacy-import/dry-run-report.json
 scripts/legacy-import/*.json
 scripts/legacy-import/*.csv
+
+_brand-input/
