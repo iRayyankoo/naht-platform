@@ -12,7 +12,17 @@ export default async function EditUserPage({ params }: { params: Promise<{ id: s
   
   const id = (await params).id;
   const user = await prisma.user.findUnique({
-    where: { id }
+    where: { id },
+    include: {
+      userRoles: {
+        include: { role: true }
+      }
+    }
+  });
+
+  const departments = await prisma.department.findMany({
+    where: { isActive: true },
+    orderBy: { sortOrder: "asc" }
   });
 
   if (!user) {
@@ -92,13 +102,91 @@ export default async function EditUserPage({ params }: { params: Promise<{ id: s
             </div>
 
             <div className="sm:col-span-2 lg:col-span-1">
-              <label className="block text-sm font-semibold text-gray-700 mb-2">حالة الحساب</label>
+              <label htmlFor="departmentId" className="block text-sm font-semibold text-gray-700">القسم (Department)</label>
+              <div className="mt-2">
+                <select 
+                  id="departmentId" 
+                  name="departmentId" 
+                  defaultValue={user.departmentId || ""}
+                  className="shadow-sm focus:ring-primary focus:border-primary block w-full sm:text-sm border-gray-300 rounded-lg py-2.5 px-4 border bg-white transition-colors cursor-pointer"
+                >
+                  <option value="">بدون قسم</option>
+                  {departments.map(dept => (
+                    <option key={dept.id} value={dept.id}>{dept.name}</option>
+                  ))}
+                </select>
+              </div>
+            </div>
+
+            <div className="sm:col-span-2 lg:col-span-1">
+              <label htmlFor="jobTitle" className="block text-sm font-semibold text-gray-700">المسمى الوظيفي</label>
+              <div className="mt-2">
+                <input 
+                  type="text" 
+                  name="jobTitle" 
+                  id="jobTitle" 
+                  defaultValue={user.jobTitle || ""}
+                  placeholder="مثال: مدير تسويق"
+                  className="shadow-sm focus:ring-primary focus:border-primary block w-full sm:text-sm border-gray-300 rounded-lg py-2.5 px-4 border transition-colors" 
+                />
+              </div>
+            </div>
+
+            <div className="sm:col-span-2 lg:col-span-1">
+              <label htmlFor="phone" className="block text-sm font-semibold text-gray-700">رقم الهاتف</label>
+              <div className="mt-2">
+                <input 
+                  type="tel" 
+                  name="phone" 
+                  id="phone" 
+                  dir="ltr"
+                  defaultValue={user.phone || ""}
+                  placeholder="+966..."
+                  className="shadow-sm focus:ring-primary focus:border-primary block w-full sm:text-sm border-gray-300 rounded-lg py-2.5 px-4 border text-left transition-colors" 
+                />
+              </div>
+            </div>
+
+            <div className="sm:col-span-2 lg:col-span-1">
+              <label htmlFor="status" className="block text-sm font-semibold text-gray-700">حالة المستخدم (Status)</label>
+              <div className="mt-2">
+                <select 
+                  id="status" 
+                  name="status" 
+                  defaultValue={user.status || "ACTIVE"} 
+                  className="shadow-sm focus:ring-primary focus:border-primary block w-full sm:text-sm border-gray-300 rounded-lg py-2.5 px-4 border bg-white transition-colors cursor-pointer"
+                >
+                  <option value="ACTIVE">نشط (ACTIVE)</option>
+                  <option value="INACTIVE">غير نشط (INACTIVE)</option>
+                  <option value="SUSPENDED">موقوف (SUSPENDED)</option>
+                  <option value="PENDING">معلق (PENDING)</option>
+                </select>
+              </div>
+            </div>
+
+            <div className="sm:col-span-2 lg:col-span-1">
+              <label className="block text-sm font-semibold text-gray-700 mb-2">تسجيل الدخول (Login Access)</label>
               <div className="mt-3 bg-gray-50/50 p-3 rounded-lg border border-gray-100 flex items-center justify-between">
                 <span className="text-sm font-medium text-gray-900">تفعيل حساب المستخدم</span>
                 <label className="inline-flex items-center cursor-pointer">
                   <input type="checkbox" name="isActive" defaultChecked={user.isActive} className="sr-only peer" />
                   <div className="relative w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-primary/20 rounded-full peer peer-checked:after:translate-x-full rtl:peer-checked:after:-translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-primary"></div>
                 </label>
+              </div>
+            </div>
+
+            <div className="sm:col-span-2">
+              <label className="block text-sm font-semibold text-gray-700 mb-2">الأدوار الجديدة (AppRoles) - قراءة فقط</label>
+              <div className="mt-2 bg-gray-50/50 p-4 rounded-lg border border-gray-100 min-h-[60px] flex flex-wrap gap-2 items-center">
+                {user.userRoles.length > 0 ? (
+                  user.userRoles.map(ur => (
+                    <span key={ur.roleId} className="inline-flex items-center px-3 py-1 rounded-md text-xs font-bold bg-primary/10 text-primary">
+                      {ur.role.name} ({ur.role.code})
+                    </span>
+                  ))
+                ) : (
+                  <span className="text-sm text-gray-400">لا يوجد أدوار جديدة مرتبطة حالياً.</span>
+                )}
               </div>
             </div>
           </div>

@@ -5,8 +5,15 @@ import { createUser } from "@/actions/users";
 import ContentCard from "@/components/platform/layout/ContentCard";
 import PasswordInput from "@/components/crm/PasswordInput";
 
+import { prisma } from "@/lib/prisma";
+
 export default async function NewUserPage() {
   await requireRole(["ADMIN"]);
+
+  const departments = await prisma.department.findMany({
+    where: { isActive: true },
+    orderBy: { sortOrder: "asc" }
+  });
 
   return (
     <div className="space-y-4 xl:space-y-6 max-w-4xl mx-auto w-full pb-6">
@@ -91,7 +98,67 @@ export default async function NewUserPage() {
             </div>
 
             <div className="sm:col-span-2 lg:col-span-1">
-              <label className="block text-sm font-semibold text-gray-700 mb-2">حالة الحساب</label>
+              <label htmlFor="departmentId" className="block text-sm font-semibold text-gray-700">القسم (Department)</label>
+              <div className="mt-2">
+                <select 
+                  id="departmentId" 
+                  name="departmentId" 
+                  className="shadow-sm focus:ring-primary focus:border-primary block w-full sm:text-sm border-gray-300 rounded-lg py-2.5 px-4 border bg-white transition-colors cursor-pointer"
+                >
+                  <option value="">بدون قسم</option>
+                  {departments.map(dept => (
+                    <option key={dept.id} value={dept.id}>{dept.name}</option>
+                  ))}
+                </select>
+              </div>
+            </div>
+
+            <div className="sm:col-span-2 lg:col-span-1">
+              <label htmlFor="jobTitle" className="block text-sm font-semibold text-gray-700">المسمى الوظيفي</label>
+              <div className="mt-2">
+                <input 
+                  type="text" 
+                  name="jobTitle" 
+                  id="jobTitle" 
+                  placeholder="مثال: مدير تسويق"
+                  className="shadow-sm focus:ring-primary focus:border-primary block w-full sm:text-sm border-gray-300 rounded-lg py-2.5 px-4 border transition-colors" 
+                />
+              </div>
+            </div>
+
+            <div className="sm:col-span-2 lg:col-span-1">
+              <label htmlFor="phone" className="block text-sm font-semibold text-gray-700">رقم الهاتف</label>
+              <div className="mt-2">
+                <input 
+                  type="tel" 
+                  name="phone" 
+                  id="phone" 
+                  dir="ltr"
+                  placeholder="+966..."
+                  className="shadow-sm focus:ring-primary focus:border-primary block w-full sm:text-sm border-gray-300 rounded-lg py-2.5 px-4 border text-left transition-colors" 
+                />
+              </div>
+            </div>
+
+            <div className="sm:col-span-2 lg:col-span-1">
+              <label htmlFor="status" className="block text-sm font-semibold text-gray-700">حالة المستخدم (Status)</label>
+              <div className="mt-2">
+                <select 
+                  id="status" 
+                  name="status" 
+                  defaultValue="ACTIVE" 
+                  className="shadow-sm focus:ring-primary focus:border-primary block w-full sm:text-sm border-gray-300 rounded-lg py-2.5 px-4 border bg-white transition-colors cursor-pointer"
+                >
+                  <option value="ACTIVE">نشط (ACTIVE)</option>
+                  <option value="INACTIVE">غير نشط (INACTIVE)</option>
+                  <option value="SUSPENDED">موقوف (SUSPENDED)</option>
+                  <option value="PENDING">معلق (PENDING)</option>
+                </select>
+              </div>
+            </div>
+
+            <div className="sm:col-span-2 lg:col-span-1">
+              <label className="block text-sm font-semibold text-gray-700 mb-2">تسجيل الدخول (Login Access)</label>
               <div className="mt-3 bg-gray-50/50 p-3 rounded-lg border border-gray-100 flex items-center justify-between">
                 <span className="text-sm font-medium text-gray-900">تفعيل حساب المستخدم</span>
                 <label className="inline-flex items-center cursor-pointer">

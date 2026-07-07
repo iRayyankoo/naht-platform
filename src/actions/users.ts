@@ -12,7 +12,11 @@ export async function createUser(formData: FormData) {
   const email = formData.get("email") as string;
   const password = formData.get("password") as string;
   const role = formData.get("role") as any;
+  const status = formData.get("status") as any;
   const isActive = formData.get("isActive") === "on";
+  const departmentId = formData.get("departmentId") as string;
+  const jobTitle = formData.get("jobTitle") as string;
+  const phone = formData.get("phone") as string;
 
   if (!email || !password || !name) {
     throw new Error("يجب تعبئة جميع الحقول المطلوبة.");
@@ -32,6 +36,10 @@ export async function createUser(formData: FormData) {
       password: hashedPassword,
       role,
       isActive,
+      status: status || "ACTIVE",
+      departmentId: departmentId || null,
+      jobTitle: jobTitle || null,
+      phone: phone || null,
     },
   });
 
@@ -47,7 +55,11 @@ export async function updateUser(id: string, formData: FormData) {
   const name = formData.get("name") as string;
   const email = formData.get("email") as string;
   const role = formData.get("role") as any;
+  const status = formData.get("status") as any;
   const isActive = formData.get("isActive") === "on";
+  const departmentId = formData.get("departmentId") as string;
+  const jobTitle = formData.get("jobTitle") as string;
+  const phone = formData.get("phone") as string;
 
   // Prevent disabling or downgrading the last ADMIN
   if (user.role === "ADMIN" && (role !== "ADMIN" || !isActive)) {
@@ -64,6 +76,10 @@ export async function updateUser(id: string, formData: FormData) {
       email,
       role,
       isActive,
+      status: status || user.status,
+      departmentId: departmentId || null,
+      jobTitle: jobTitle || null,
+      phone: phone || null,
     },
   });
 

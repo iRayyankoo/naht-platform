@@ -8,6 +8,14 @@ export default async function UsersPage() {
 
   const users = await prisma.user.findMany({
     orderBy: { createdAt: "desc" },
+    include: {
+      department: true,
+      userRoles: {
+        include: {
+          role: true
+        }
+      }
+    }
   });
 
   const getRoleLabel = (r: string) => {
@@ -65,8 +73,10 @@ export default async function UsersPage() {
                 <thead className="text-xs text-gray-500 bg-gray-50 border-b border-gray-100 uppercase tracking-wider">
                   <tr>
                     <th className="px-6 py-4 font-medium">المستخدم</th>
-                    <th className="px-6 py-4 font-medium text-center">البريد الإلكتروني</th>
-                    <th className="px-6 py-4 font-medium text-center">الدور والصلاحية</th>
+                    <th className="px-6 py-4 font-medium text-center">الإيميل</th>
+                    <th className="px-6 py-4 font-medium text-center">القسم</th>
+                    <th className="px-6 py-4 font-medium text-center">الدور القديم</th>
+                    <th className="px-6 py-4 font-medium text-center">الأدوار الجديدة</th>
                     <th className="px-6 py-4 font-medium text-center">تاريخ الإضافة</th>
                     <th className="px-6 py-4 font-medium text-center">الحالة</th>
                     <th className="px-6 py-4 font-medium text-left">إجراءات</th>
@@ -82,9 +92,26 @@ export default async function UsersPage() {
                         {user.email}
                       </td>
                       <td className="px-6 py-4 text-center">
+                        <div className="font-semibold text-gray-900">{user.department?.name || "-"}</div>
+                        {user.jobTitle && <div className="text-xs text-gray-500 mt-1">{user.jobTitle}</div>}
+                      </td>
+                      <td className="px-6 py-4 text-center">
                         <span className={`inline-flex items-center px-2.5 py-1 rounded-full text-xs font-semibold ${getRoleColor(user.role)}`}>
                           {getRoleLabel(user.role)}
                         </span>
+                      </td>
+                      <td className="px-6 py-4 text-center">
+                        {user.userRoles.length > 0 ? (
+                          <div className="flex flex-wrap gap-1 justify-center">
+                            {user.userRoles.map(ur => (
+                              <span key={ur.roleId} className="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-medium bg-gray-100 text-gray-800" title={ur.role.name}>
+                                {ur.role.code}
+                              </span>
+                            ))}
+                          </div>
+                        ) : (
+                          <span className="text-gray-400 text-xs">-</span>
+                        )}
                       </td>
                       <td className="px-6 py-4 text-center text-gray-500">
                         {new Date(user.createdAt).toLocaleDateString('ar-EG', { year: 'numeric', month: 'short', day: 'numeric' })}
@@ -126,9 +153,21 @@ export default async function UsersPage() {
                   </div>
                   
                   <div className="flex items-center justify-between mt-4 pt-3 border-t border-gray-50">
-                    <span className={`inline-flex px-2 py-1 rounded-md text-xs font-semibold ${getRoleColor(user.role)}`}>
-                      {getRoleLabel(user.role)}
-                    </span>
+                    <div className="flex flex-col gap-1">
+                      <span className={`inline-flex px-2 py-1 rounded-md text-[10px] font-semibold w-fit ${getRoleColor(user.role)}`}>
+                        {getRoleLabel(user.role)}
+                      </span>
+                      {user.department && (
+                        <span className="text-xs text-gray-500 font-medium">
+                          {user.department.name} {user.jobTitle ? `- ${user.jobTitle}` : ''}
+                        </span>
+                      )}
+                      {user.userRoles.length > 0 && (
+                        <span className="text-[10px] text-gray-400">
+                          {user.userRoles.length} أدوار نظام
+                        </span>
+                      )}
+                    </div>
                     <Link 
                       href={`/crm/users/${user.id}/edit`}
                       className="text-primary text-sm font-semibold flex items-center gap-1 bg-primary/5 hover:bg-primary/10 px-3 py-1.5 rounded-lg transition-colors"
