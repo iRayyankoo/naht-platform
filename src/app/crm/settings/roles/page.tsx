@@ -1,12 +1,14 @@
 import { prisma } from "@/lib/prisma";
 import { requireRole } from "@/lib/auth-helpers";
-import { requirePermissionLogging } from "@/lib/rbac-helpers";
+import { requirePermission } from "@/lib/rbac-helpers";
+import AccessDenied from "@/components/crm/AccessDenied";
 import Link from "next/link";
 import ContentCard from "@/components/platform/layout/ContentCard";
 
 export default async function RolesPage() {
   await requireRole(["ADMIN"]);
-  await requirePermissionLogging("RBAC_VIEW", "Roles Page");
+  const hasAccess = await requirePermission("RBAC_VIEW", { context: "Roles Page" });
+  if (!hasAccess) return <AccessDenied />;
 
   const roles = await prisma.appRole.findMany({
     include: {

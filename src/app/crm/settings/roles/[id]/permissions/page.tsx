@@ -1,6 +1,7 @@
 import { prisma } from "@/lib/prisma";
 import { requireRole } from "@/lib/auth-helpers";
-import { requirePermissionLogging } from "@/lib/rbac-helpers";
+import { requirePermission } from "@/lib/rbac-helpers";
+import AccessDenied from "@/components/crm/AccessDenied";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import ClientForm from "@/components/crm/ClientForm";
@@ -9,7 +10,8 @@ import { updateRolePermissions } from "./actions";
 
 export default async function RolePermissionsPage({ params }: { params: Promise<{ id: string }> }) {
   await requireRole(["ADMIN"]);
-  await requirePermissionLogging("RBAC_MANAGE", "RolePermissions Page");
+  const hasAccess = await requirePermission("RBAC_MANAGE", { context: "RolePermissions Page" });
+  if (!hasAccess) return <AccessDenied />;
   
   const id = (await params).id;
   const role = await prisma.appRole.findUnique({

@@ -2,13 +2,14 @@
 
 import { prisma } from "@/lib/prisma";
 import { actionRequireRole } from "@/lib/auth-helpers";
-import { requirePermissionLogging } from "@/lib/rbac-helpers";
+import { requirePermission } from "@/lib/rbac-helpers";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 
 export async function createDepartment(formData: FormData) {
   await actionRequireRole(["ADMIN"]);
-  await requirePermissionLogging("ORG_MANAGE", "createDepartment Action");
+  const hasAccess = await requirePermission("ORG_MANAGE", { context: "createDepartment Action" });
+  if (!hasAccess) throw new Error("ليس لديك صلاحية لإجراء هذه العملية");
 
   const name = formData.get("name") as string;
   const code = formData.get("code") as string;
@@ -36,7 +37,8 @@ export async function createDepartment(formData: FormData) {
 
 export async function updateDepartment(id: string, formData: FormData) {
   await actionRequireRole(["ADMIN"]);
-  await requirePermissionLogging("ORG_MANAGE", "updateDepartment Action");
+  const hasAccess = await requirePermission("ORG_MANAGE", { context: "updateDepartment Action" });
+  if (!hasAccess) throw new Error("ليس لديك صلاحية لإجراء هذه العملية");
 
   const name = formData.get("name") as string;
   const code = formData.get("code") as string;

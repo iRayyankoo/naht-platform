@@ -1,6 +1,7 @@
 import { prisma } from "@/lib/prisma";
 import { requireRole } from "@/lib/auth-helpers";
-import { requirePermissionLogging } from "@/lib/rbac-helpers";
+import { requirePermission } from "@/lib/rbac-helpers";
+import AccessDenied from "@/components/crm/AccessDenied";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import ContentCard from "@/components/platform/layout/ContentCard";
@@ -8,7 +9,8 @@ import { assignUserRoles } from "./actions";
 
 export default async function UserRolesPage({ params }: { params: Promise<{ id: string }> }) {
   await requireRole(["ADMIN"]);
-  await requirePermissionLogging("USERS_MANAGE_ROLES", "UserRoles Page");
+  const hasAccess = await requirePermission("USERS_MANAGE_ROLES", { context: "UserRoles Page" });
+  if (!hasAccess) return <AccessDenied />;
   
   const resolvedParams = await params;
   const userId = resolvedParams.id;

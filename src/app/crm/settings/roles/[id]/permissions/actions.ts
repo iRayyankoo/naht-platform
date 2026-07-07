@@ -2,13 +2,14 @@
 
 import { prisma } from "@/lib/prisma";
 import { requireRole } from "@/lib/auth-helpers";
-import { requirePermissionLogging } from "@/lib/rbac-helpers";
+import { requirePermission } from "@/lib/rbac-helpers";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 
 export async function updateRolePermissions(roleId: string, formData: FormData) {
   await requireRole(["ADMIN"]);
-  await requirePermissionLogging("RBAC_MANAGE", "updateRolePermissions Action");
+  const hasAccess = await requirePermission("RBAC_MANAGE", { context: "updateRolePermissions Action" });
+  if (!hasAccess) throw new Error("ليس لديك صلاحية لإجراء هذه العملية");
 
   // We are expecting checkboxes in format: permission_{id}=on
   const permissionIds: string[] = [];
