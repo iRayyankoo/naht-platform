@@ -51,7 +51,6 @@ export default async function PermissionsPage({ searchParams }: { searchParams: 
                 id="module"
                 name="module"
                 defaultValue={moduleFilter || ""}
-                onChange={(e) => e.target.form?.submit()}
                 className="shadow-sm focus:ring-primary focus:border-primary block w-full sm:text-sm border-gray-300 rounded-lg py-2 px-3 border bg-white cursor-pointer"
               >
                 <option value="">الكل (All)</option>
@@ -59,6 +58,12 @@ export default async function PermissionsPage({ searchParams }: { searchParams: 
                   <option key={m.module} value={m.module}>{m.module}</option>
                 ))}
               </select>
+              <button 
+                type="submit" 
+                className="inline-flex items-center justify-center bg-primary hover:bg-primary-dark text-white px-4 py-2 rounded-lg text-sm font-semibold transition-colors"
+              >
+                تطبيق
+              </button>
             </form>
           </div>
           <div className="text-sm text-gray-500 font-medium">
