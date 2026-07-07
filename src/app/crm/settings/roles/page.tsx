@@ -1,10 +1,12 @@
 import { prisma } from "@/lib/prisma";
 import { requireRole } from "@/lib/auth-helpers";
+import { requirePermissionLogging } from "@/lib/rbac-helpers";
 import Link from "next/link";
 import ContentCard from "@/components/platform/layout/ContentCard";
 
 export default async function RolesPage() {
   await requireRole(["ADMIN"]);
+  await requirePermissionLogging("RBAC_VIEW", "Roles Page");
 
   const roles = await prisma.appRole.findMany({
     include: {

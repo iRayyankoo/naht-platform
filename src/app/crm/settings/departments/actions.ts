@@ -1,12 +1,14 @@
 "use server";
 
 import { prisma } from "@/lib/prisma";
-import { requireRole } from "@/lib/auth-helpers";
+import { actionRequireRole } from "@/lib/auth-helpers";
+import { requirePermissionLogging } from "@/lib/rbac-helpers";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 
 export async function createDepartment(formData: FormData) {
-  await requireRole(["ADMIN"]);
+  await actionRequireRole(["ADMIN"]);
+  await requirePermissionLogging("ORG_MANAGE", "createDepartment Action");
 
   const name = formData.get("name") as string;
   const code = formData.get("code") as string;
@@ -33,7 +35,8 @@ export async function createDepartment(formData: FormData) {
 }
 
 export async function updateDepartment(id: string, formData: FormData) {
-  await requireRole(["ADMIN"]);
+  await actionRequireRole(["ADMIN"]);
+  await requirePermissionLogging("ORG_MANAGE", "updateDepartment Action");
 
   const name = formData.get("name") as string;
   const code = formData.get("code") as string;

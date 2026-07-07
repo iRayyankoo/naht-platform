@@ -1,10 +1,12 @@
 import { prisma } from "@/lib/prisma";
 import { requireRole } from "@/lib/auth-helpers";
+import { requirePermissionLogging } from "@/lib/rbac-helpers";
 import Link from "next/link";
 import ContentCard from "@/components/platform/layout/ContentCard";
 
 export default async function PermissionsPage({ searchParams }: { searchParams: Promise<{ module?: string }> }) {
   await requireRole(["ADMIN"]);
+  await requirePermissionLogging("RBAC_VIEW", "Permissions Page");
 
   const moduleFilter = (await searchParams).module;
 

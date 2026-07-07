@@ -2,11 +2,13 @@
 
 import { prisma } from "@/lib/prisma";
 import { requireRole } from "@/lib/auth-helpers";
+import { requirePermissionLogging } from "@/lib/rbac-helpers";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 
 export async function createRole(formData: FormData) {
   await requireRole(["ADMIN"]);
+  await requirePermissionLogging("RBAC_MANAGE", "createRole Action");
 
   const name = formData.get("name") as string;
   const code = formData.get("code") as string;
@@ -32,6 +34,7 @@ export async function createRole(formData: FormData) {
 
 export async function updateRole(id: string, formData: FormData) {
   await requireRole(["ADMIN"]);
+  await requirePermissionLogging("RBAC_MANAGE", "updateRole Action");
 
   const name = formData.get("name") as string;
   const code = formData.get("code") as string;

@@ -1,10 +1,12 @@
 import { prisma } from "@/lib/prisma";
 import { requireRole } from "@/lib/auth-helpers";
+import { requirePermissionLogging } from "@/lib/rbac-helpers";
 import Link from "next/link";
 import ContentCard from "@/components/platform/layout/ContentCard";
 
 export default async function DepartmentsPage() {
   await requireRole(["ADMIN"]);
+  await requirePermissionLogging("ORG_VIEW", "Departments Page");
 
   const departments = await prisma.department.findMany({
     orderBy: { sortOrder: "asc" },
