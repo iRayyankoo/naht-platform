@@ -41,15 +41,23 @@ export default async function EditUserPage({ params }: { params: Promise<{ id: s
           <h1 className="text-2xl font-bold text-gray-900 tracking-tight">تعديل مستخدم</h1>
           <p className="text-sm text-gray-500 mt-1">تحديث بيانات وصلاحيات المستخدم: {user.name}</p>
         </div>
-        <Link 
-          href="/crm/users" 
-          className="inline-flex items-center justify-center gap-2 bg-white hover:bg-gray-50 text-gray-700 border border-gray-200 px-5 py-2.5 rounded-xl text-sm font-semibold transition-all shadow-sm"
-        >
-          <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" strokeWidth="2" stroke="currentColor">
-            <path strokeLinecap="round" strokeLinejoin="round" d="M9 15L3 9m0 0l6-6M3 9h12a6 6 0 010 12h-3" />
-          </svg>
-          العودة للمستخدمين
-        </Link>
+        <div className="flex items-center gap-3">
+          <Link 
+            href={`/crm/users/${user.id}/roles`} 
+            className="inline-flex items-center justify-center gap-2 bg-white hover:bg-primary/5 text-primary border border-primary/20 px-5 py-2.5 rounded-xl text-sm font-bold transition-all shadow-sm"
+          >
+            إدارة الأدوار (AppRoles)
+          </Link>
+          <Link 
+            href="/crm/users" 
+            className="inline-flex items-center justify-center gap-2 bg-white hover:bg-gray-50 text-gray-700 border border-gray-200 px-5 py-2.5 rounded-xl text-sm font-semibold transition-all shadow-sm"
+          >
+            <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" strokeWidth="2" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" d="M9 15L3 9m0 0l6-6M3 9h12a6 6 0 010 12h-3" />
+            </svg>
+            العودة للمستخدمين
+          </Link>
+        </div>
       </div>
 
       <ContentCard title="البيانات الأساسية">
