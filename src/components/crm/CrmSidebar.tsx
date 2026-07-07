@@ -128,6 +128,8 @@ const allNavGroups: NavGroup[] = [
     ),
     links: [
       { name: "الأقسام (Departments)", href: "/crm/settings/departments" },
+      { name: "الأدوار (Roles)", href: "/crm/settings/roles" },
+      { name: "الصلاحيات (Permissions)", href: "/crm/settings/permissions" },
     ],
   },
 ];
