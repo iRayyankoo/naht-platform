@@ -55,12 +55,41 @@ export async function hasAnyPermission(userId: string, permissionCodes: string[]
   return permissionCodes.some(code => perms.includes(code));
 }
 
-// LOGGING MODE ONLY
-export async function requirePermissionLogging(permissionCode: string, context: string) {
-  const user = await getCurrentUser();
-  if (!user) return true; // Auth middleware/helpers handle this
+export function getRbacEnforcementMode(): "logging" | "enforce" {
+  return process.env.ENABLE_RBAC_ENFORCEMENT === "true" ? "enforce" : "logging";
+}
 
-  // Anti-lockout
+export function isRbacEnforcementEnabled(): boolean {
+  return getRbacEnforcementMode() === "enforce";
+}
+
+export async function checkPermission(permissionCode: string, context: string = ""): Promise<boolean> {
+  const user = await getCurrentUser();
+  if (!user) return false;
+  if (user.email === "nahtmkt@gmail.com") return true;
+
+  try {
+    const isSuper = await isSuperAdmin(user.id);
+    if (isSuper) return true;
+    return await hasPermission(user.id, permissionCode);
+  } catch (err) {
+    console.warn(`[RBAC] Error checking permission ${permissionCode} for user ${user.email} in context ${context}`, err);
+    return false; // Safe default for check
+  }
+}
+
+export interface RequirePermissionOptions {
+  mode?: "logging" | "enforce";
+  context?: string;
+}
+
+export async function requirePermission(permissionCode: string, options?: RequirePermissionOptions): Promise<boolean> {
+  const mode = options?.mode ?? getRbacEnforcementMode();
+  const context = options?.context ?? "Unknown Context";
+
+  const user = await getCurrentUser();
+  if (!user) return true; // Auth middleware/helpers handle unauthenticated
+
   if (user.email === "nahtmkt@gmail.com") return true;
 
   try {
@@ -69,19 +98,26 @@ export async function requirePermissionLogging(permissionCode: string, context: 
 
     const hasPerm = await hasPermission(user.id, permissionCode);
     if (!hasPerm) {
-      console.warn(`[RBAC LOG] Access Denied for User ${user.email} to ${context}. Missing permission: ${permissionCode}. Allowed via legacy ADMIN fallback.`);
+      if (mode === "enforce") {
+        console.warn(`[RBAC ENFORCE] Access Denied for User ${user.email} to ${context}. Missing permission: ${permissionCode}.`);
+        return false;
+      } else {
+        console.warn(`[RBAC LOG] Access Denied for User ${user.email} to ${context}. Missing permission: ${permissionCode}. Allowed via legacy ADMIN fallback.`);
+      }
     } else {
       console.info(`[RBAC LOG] Access Granted for User ${user.email} to ${context} via permission: ${permissionCode}.`);
     }
   } catch (err) {
-    console.warn(`[RBAC LOG] Error checking permissions for user ${user.email}. Missing permission code: ${permissionCode}. Allowed via legacy ADMIN fallback.`, err);
+    console.warn(`[RBAC LOG] Error checking permissions for user ${user?.email}. Missing permission code: ${permissionCode}. Allowed via legacy ADMIN fallback.`, err);
   }
   
-  // Always allow in logging mode (fallback to whatever requireRole did previously)
   return true;
 }
 
-export async function requireAnyPermissionLogging(permissionCodes: string[], context: string) {
+export async function requireAnyPermission(permissionCodes: string[], options?: RequirePermissionOptions): Promise<boolean> {
+  const mode = options?.mode ?? getRbacEnforcementMode();
+  const context = options?.context ?? "Unknown Context";
+
   const user = await getCurrentUser();
   if (!user) return true;
 
@@ -93,13 +129,27 @@ export async function requireAnyPermissionLogging(permissionCodes: string[], con
 
     const hasPerm = await hasAnyPermission(user.id, permissionCodes);
     if (!hasPerm) {
-      console.warn(`[RBAC LOG] Access Denied for User ${user.email} to ${context}. Missing any of: ${permissionCodes.join(", ")}. Allowed via legacy ADMIN fallback.`);
+      if (mode === "enforce") {
+        console.warn(`[RBAC ENFORCE] Access Denied for User ${user.email} to ${context}. Missing any of: ${permissionCodes.join(", ")}.`);
+        return false;
+      } else {
+        console.warn(`[RBAC LOG] Access Denied for User ${user.email} to ${context}. Missing any of: ${permissionCodes.join(", ")}. Allowed via legacy ADMIN fallback.`);
+      }
     } else {
       console.info(`[RBAC LOG] Access Granted for User ${user.email} to ${context} via any of: ${permissionCodes.join(", ")}.`);
     }
   } catch (err) {
-    console.warn(`[RBAC LOG] Error checking permissions for user ${user.email}. Missing any of: ${permissionCodes.join(", ")}. Allowed via legacy ADMIN fallback.`, err);
+    console.warn(`[RBAC LOG] Error checking permissions for user ${user?.email}. Missing any of: ${permissionCodes.join(", ")}. Allowed via legacy ADMIN fallback.`, err);
   }
 
   return true;
+}
+
+// LOGGING MODE ONLY (Legacy Wrappers)
+export async function requirePermissionLogging(permissionCode: string, context: string) {
+  return requirePermission(permissionCode, { mode: "logging", context });
+}
+
+export async function requireAnyPermissionLogging(permissionCodes: string[], context: string) {
+  return requireAnyPermission(permissionCodes, { mode: "logging", context });
 }
