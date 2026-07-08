@@ -2,7 +2,8 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { redirect } from "next/navigation";
 import Link from "next/link";
-
+import { ImpersonationBanner } from "@/components/crm/ImpersonationBanner";
+import { getDisabledImpersonationRuntimeContext } from "@/lib/impersonation-helpers";
 import CrmSidebar from "@/components/crm/CrmSidebar";
 
 export default async function AdminLayout({
@@ -26,6 +27,7 @@ export default async function AdminLayout({
 
       {/* Main Content */}
       <div className="flex-1 flex flex-col overflow-hidden">
+        <ImpersonationBanner context={getDisabledImpersonationRuntimeContext()} />
         <header className="h-16 bg-white border-b border-gray-200 flex items-center justify-between px-6">
           <div className="flex items-center md:hidden">
             <h1 className="text-xl font-bold text-primary">نحت العقارية</h1>

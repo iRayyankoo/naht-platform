@@ -20,6 +20,13 @@ export interface ImpersonationCookieResult {
   payload?: ImpersonationCookiePayload;
 }
 
+export interface ImpersonationRuntimeContext {
+  mode: ImpersonationMode;
+  targetRoleKey?: string;
+  targetUserId?: string;
+  userLabel?: string;
+}
+
 export function isImpersonationEnabled(): boolean {
   if (process.env.VERCEL_ENV === "production") {
     return false;
@@ -142,6 +149,12 @@ export function verifyImpersonationCookieValue(cookieValue: string): Impersonati
   }
   
   return validateImpersonationPayloadShape(payloadObject);
+}
+
+export function getDisabledImpersonationRuntimeContext(): ImpersonationRuntimeContext | null {
+  // Returns null always for now to keep the banner disabled/hidden.
+  // No cookies or headers are read.
+  return null;
 }
 
 // Keeping these placeholders for now if used by other components
