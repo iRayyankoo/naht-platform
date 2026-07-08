@@ -3,7 +3,7 @@ import { authOptions } from "@/lib/auth";
 import { redirect } from "next/navigation";
 import Link from "next/link";
 import { ImpersonationBanner } from "@/components/crm/ImpersonationBanner";
-import { getDisabledImpersonationRuntimeContext } from "@/lib/impersonation-helpers";
+import { getImpersonationRuntimeContext } from "@/lib/impersonation-runtime-context";
 import CrmSidebar from "@/components/crm/CrmSidebar";
 
 export default async function AdminLayout({
@@ -17,6 +17,8 @@ export default async function AdminLayout({
     redirect("/auth/login");
   }
 
+  const impersonationContext = await getImpersonationRuntimeContext();
+
   return (
     <div className="flex min-h-screen bg-gray-50 text-gray-900">
       {/* Sidebar */}
@@ -27,7 +29,7 @@ export default async function AdminLayout({
 
       {/* Main Content */}
       <div className="flex-1 flex flex-col overflow-hidden">
-        <ImpersonationBanner context={getDisabledImpersonationRuntimeContext()} />
+        <ImpersonationBanner context={impersonationContext} />
         <header className="h-16 bg-white border-b border-gray-200 flex items-center justify-between px-6">
           <div className="flex items-center md:hidden">
             <h1 className="text-xl font-bold text-primary">نحت العقارية</h1>
