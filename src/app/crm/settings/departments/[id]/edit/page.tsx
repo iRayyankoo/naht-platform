@@ -5,11 +5,12 @@ import { notFound } from "next/navigation";
 import ContentCard from "@/components/platform/layout/ContentCard";
 import { updateDepartment } from "../../actions";
 
-export default async function EditDepartmentPage({ params }: { params: { id: string } }) {
+export default async function EditDepartmentPage({ params }: { params: Promise<{ id: string }> }) {
   await requireRole(["ADMIN"]);
 
+  const id = (await params).id;
   const department = await prisma.department.findUnique({
-    where: { id: params.id },
+    where: { id },
   });
 
   if (!department) {
