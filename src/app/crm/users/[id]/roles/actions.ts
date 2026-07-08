@@ -4,16 +4,11 @@ import { prisma } from "@/lib/prisma";
 import { revalidatePath } from "next/cache";
 import { actionRequireRole } from "@/lib/auth-helpers";
 import { requirePermission } from "@/lib/rbac-helpers";
-import { getImpersonationRuntimeContext } from "@/lib/impersonation-runtime-context";
-import { assertNotImpersonatingForWrite } from "@/lib/impersonation-helpers";
 
 export async function assignUserRoles(userId: string, formData: FormData) {
   await actionRequireRole(["ADMIN"]);
   const hasAccess = await requirePermission("USERS_MANAGE_ROLES", { context: "assignUserRoles Action" });
   if (!hasAccess) throw new Error("ليس لديك صلاحية لإجراء هذه العملية");
-
-  const impersonationContext = await getImpersonationRuntimeContext();
-  assertNotImpersonatingForWrite(impersonationContext, "assignUserRoles");
 
   // 1. Fetch the user to ensure they exist and check for SUPER_ADMIN protection
   const targetUser = await prisma.user.findUnique({
