@@ -762,3 +762,26 @@ model UserRole {
   @@unique([userId, roleId])
 }
 
+// -----------------------------------------------------
+// Phase 6E-10L Security & Audit Models
+// -----------------------------------------------------
+
+model AuditLog {
+  id           String   @id @default(cuid())
+  action       String
+  actorUserId  String?
+  targetUserId String?
+  entityType   String?
+  entityId     String?
+  route        String?
+  method       String?
+  ipAddress    String?
+  userAgent    String?
+  metadata     Json?
+  createdAt    DateTime @default(now())
+
+  @@index([action])
+  @@index([actorUserId])
+  @@index([targetUserId])
+  @@index([createdAt])
+}
