@@ -173,3 +173,35 @@ export async function getImpersonationState(): Promise<ImpersonationState> {
     targetName: null
   };
 }
+
+export interface WriteProtectionResult {
+  allowed: boolean;
+  reason?: string;
+  actionName?: string;
+}
+
+export function isImpersonatingRuntime(context: ImpersonationRuntimeContext | null): boolean {
+  return context !== null;
+}
+
+export function denyWritesDuringImpersonation(
+  context: ImpersonationRuntimeContext | null,
+  actionName?: string
+): WriteProtectionResult {
+  if (context === null) {
+    return { allowed: true };
+  }
+
+  // Future optional log (disabled right now since context is null, but pre-written for when we activate)
+  console.warn(`[IMPERSONATION WRITE BLOCKED] action: ${actionName || "unknown"}, mode: ${context.mode}`);
+
+  throw new Error("لا يمكن تنفيذ هذا الإجراء أثناء وضع التقمص. قم بإنهاء التقمص أولاً.");
+}
+
+export function assertNotImpersonatingForWrite(
+  context: ImpersonationRuntimeContext | null,
+  actionName: string
+) {
+  denyWritesDuringImpersonation(context, actionName);
+}
+
