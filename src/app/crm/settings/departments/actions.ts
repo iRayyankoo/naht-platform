@@ -5,6 +5,7 @@ import { actionRequireRole } from "@/lib/auth-helpers";
 import { requirePermission } from "@/lib/rbac-helpers";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
+import { enforceWriteProtection } from "@/lib/impersonation-runtime-context";
 
 export async function createDepartment(formData: FormData) {
   await actionRequireRole(["ADMIN"]);
@@ -36,6 +37,8 @@ export async function createDepartment(formData: FormData) {
 }
 
 export async function updateDepartment(id: string, formData: FormData) {
+  await enforceWriteProtection("updateDepartment");
+  
   await actionRequireRole(["ADMIN"]);
   const hasAccess = await requirePermission("ORG_MANAGE", { context: "updateDepartment Action" });
   if (!hasAccess) throw new Error("ليس لديك صلاحية لإجراء هذه العملية");

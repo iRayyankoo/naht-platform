@@ -74,3 +74,11 @@ export async function getImpersonationRuntimeContext(): Promise<ExtendedImperson
     source: "cookie",
   };
 }
+
+export async function enforceWriteProtection(actionName: string) {
+  const context = await getImpersonationRuntimeContext();
+  if (context !== null) {
+    console.warn(`[IMPERSONATION WRITE BLOCKED] action: ${actionName}, mode: ${context.mode}`);
+    throw new Error("Write actions are blocked during impersonation.");
+  }
+}
