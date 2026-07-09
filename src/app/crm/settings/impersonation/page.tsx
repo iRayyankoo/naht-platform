@@ -3,6 +3,9 @@ import { getCurrentUser } from "@/lib/auth-helpers";
 import { isSuperAdmin } from "@/lib/rbac-helpers";
 import { isImpersonationEnabled } from "@/lib/impersonation-helpers";
 import AccessDenied from "@/components/crm/AccessDenied";
+import { prisma } from "@/lib/prisma";
+import { startRoleImpersonationAction, startUserImpersonationAction } from "./actions";
+import { redirect } from "next/navigation";
 
 export default async function ImpersonationPage() {
   const user = await getCurrentUser();
@@ -12,6 +15,34 @@ export default async function ImpersonationPage() {
   if (!isSuper) return <AccessDenied />;
 
   const enabled = isImpersonationEnabled();
+  
+  // Always fetch roles to populate the dropdown
+  const roles = await prisma.appRole.findMany({
+    where: { isActive: true },
+    orderBy: { name: 'asc' }
+  });
+
+  async function handleRoleAction(formData: FormData) {
+    "use server";
+    if (!isImpersonationEnabled()) throw new Error("ميزة التقمص غير مفعلة");
+    const roleKey = formData.get("roleKey") as string;
+    if (roleKey) {
+      await startRoleImpersonationAction(roleKey);
+      redirect("/crm");
+    }
+  }
+
+  async function handleUserAction(formData: FormData) {
+    "use server";
+    if (!isImpersonationEnabled()) throw new Error("ميزة التقمص غير مفعلة");
+    const email = formData.get("email") as string;
+    if (email) {
+      const targetUser = await prisma.user.findUnique({ where: { email } });
+      if (!targetUser) throw new Error("المستخدم غير موجود");
+      await startUserImpersonationAction(targetUser.id);
+      redirect("/crm");
+    }
+  }
 
   return (
     <div className="max-w-4xl mx-auto space-y-6">
@@ -46,8 +77,8 @@ export default async function ImpersonationPage() {
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         {/* View as Role Card */}
-        <div className="bg-white border border-gray-200 rounded-lg shadow-sm overflow-hidden opacity-75">
-          <div className="p-6">
+        <div className={`bg-white border border-gray-200 rounded-lg shadow-sm overflow-hidden ${!enabled ? 'opacity-75' : ''}`}>
+          <form action={handleRoleAction} className="p-6">
             <div className="flex items-center">
               <div className="p-2 bg-indigo-50 rounded-lg">
                 <svg className="h-6 w-6 text-indigo-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -61,25 +92,36 @@ export default async function ImpersonationPage() {
             </p>
             
             <div className="mt-6">
-              <label className="block text-sm font-medium text-gray-700 mb-2">اختر الدور</label>
-              <select disabled className="block w-full bg-gray-50 border-gray-300 rounded-md shadow-sm sm:text-sm cursor-not-allowed text-gray-500 py-2">
-                <option>VIEWER</option>
-                <option>SALES</option>
-                <option>MARKETING</option>
+              <label htmlFor="roleKey" className="block text-sm font-medium text-gray-700 mb-2">اختر الدور</label>
+              <select 
+                id="roleKey"
+                name="roleKey"
+                disabled={!enabled} 
+                className={`block w-full border-gray-300 rounded-md shadow-sm sm:text-sm py-2 px-3 focus:ring-indigo-500 focus:border-indigo-500 ${!enabled ? 'bg-gray-50 text-gray-500 cursor-not-allowed' : 'bg-white text-gray-900'}`}
+                required
+              >
+                <option value="">-- اختر الدور --</option>
+                {roles.map(r => (
+                  <option key={r.code} value={r.code}>{r.name}</option>
+                ))}
               </select>
             </div>
             
             <div className="mt-6">
-              <button disabled className="w-full bg-gray-100 text-gray-400 py-2 px-4 border border-gray-200 rounded-md shadow-sm text-sm font-medium cursor-not-allowed">
+              <button 
+                type="submit" 
+                disabled={!enabled} 
+                className={`w-full py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 ${!enabled ? 'bg-indigo-300 cursor-not-allowed' : 'bg-indigo-600 hover:bg-indigo-700'}`}
+              >
                 بدء التقمص
               </button>
             </div>
-          </div>
+          </form>
         </div>
 
         {/* Impersonate User Card */}
-        <div className="bg-white border border-gray-200 rounded-lg shadow-sm overflow-hidden opacity-75">
-          <div className="p-6">
+        <div className={`bg-white border border-gray-200 rounded-lg shadow-sm overflow-hidden ${!enabled ? 'opacity-75' : ''}`}>
+          <form action={handleUserAction} className="p-6">
             <div className="flex items-center">
               <div className="p-2 bg-rose-50 rounded-lg">
                 <svg className="h-6 w-6 text-rose-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -93,21 +135,28 @@ export default async function ImpersonationPage() {
             </p>
             
             <div className="mt-6">
-              <label className="block text-sm font-medium text-gray-700 mb-2">البريد الإلكتروني للمستخدم</label>
+              <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-2">البريد الإلكتروني للمستخدم</label>
               <input 
+                id="email"
+                name="email"
                 type="email" 
-                disabled 
+                disabled={!enabled} 
                 placeholder="user@example.com"
-                className="block w-full bg-gray-50 border-gray-300 rounded-md shadow-sm sm:text-sm cursor-not-allowed text-gray-500 py-2 px-3"
+                className={`block w-full border-gray-300 rounded-md shadow-sm sm:text-sm py-2 px-3 focus:ring-rose-500 focus:border-rose-500 ${!enabled ? 'bg-gray-50 text-gray-500 cursor-not-allowed' : 'bg-white text-gray-900'}`}
+                required
               />
             </div>
             
             <div className="mt-6">
-              <button disabled className="w-full bg-gray-100 text-gray-400 py-2 px-4 border border-gray-200 rounded-md shadow-sm text-sm font-medium cursor-not-allowed">
+              <button 
+                type="submit" 
+                disabled={!enabled} 
+                className={`w-full py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-rose-500 ${!enabled ? 'bg-rose-300 cursor-not-allowed' : 'bg-rose-600 hover:bg-rose-700'}`}
+              >
                 دخول كالمستخدم
               </button>
             </div>
-          </div>
+          </form>
         </div>
       </div>
     </div>
