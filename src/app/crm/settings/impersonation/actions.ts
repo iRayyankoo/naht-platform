@@ -173,7 +173,22 @@ export async function startUserImpersonationAction(userId: string) {
 export async function stopImpersonationAction() {
   try {
     const cookieStore = await cookies();
-    cookieStore.delete(IMPERSONATION_COOKIE_NAME);
+    const cookieOptions = getImpersonationCookieOptions();
+    
+    // Explicitly overwrite the cookie with maxAge: 0 to ensure deletion across all browsers
+    cookieStore.set(IMPERSONATION_COOKIE_NAME, "", {
+      ...cookieOptions,
+      maxAge: 0,
+      expires: new Date(0),
+    });
+
+    // Legacy cleanup: Also delete the cookie from the old path "/crm"
+    cookieStore.set(IMPERSONATION_COOKIE_NAME, "", {
+      ...cookieOptions,
+      path: "/crm",
+      maxAge: 0,
+      expires: new Date(0),
+    });
 
     let actorUserId: string | undefined;
     try {

@@ -39,7 +39,7 @@ export function getImpersonationCookieOptions() {
     httpOnly: true,
     secure: true,
     sameSite: "lax" as const,
-    path: "/crm",
+    path: "/",
     maxAge: 60 * 60, // 1 hour
   };
 }
