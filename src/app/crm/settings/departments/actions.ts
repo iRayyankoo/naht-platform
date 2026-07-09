@@ -5,7 +5,7 @@ import { actionRequireRole } from "@/lib/auth-helpers";
 import { requirePermission } from "@/lib/rbac-helpers";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
-import { enforceWriteProtection } from "@/lib/impersonation-runtime-context";
+import { enforceWriteProtection } from "@/lib/write-protection";
 
 export async function createDepartment(formData: FormData) {
   await actionRequireRole(["ADMIN"]);
