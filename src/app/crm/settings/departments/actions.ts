@@ -5,6 +5,7 @@ import { actionRequireRole } from "@/lib/auth-helpers";
 import { requirePermission } from "@/lib/rbac-helpers";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
+import { logAuditEvent } from "@/lib/audit-logger";
 
 export async function createDepartment(formData: FormData) {
   await actionRequireRole(["ADMIN"]);
@@ -21,7 +22,7 @@ export async function createDepartment(formData: FormData) {
     throw new Error("Name and code are required");
   }
 
-  await prisma.department.create({
+  const newDepartment = await prisma.department.create({
     data: {
       name,
       code,
@@ -30,6 +31,20 @@ export async function createDepartment(formData: FormData) {
       isActive,
     },
   });
+
+  try {
+    await logAuditEvent({
+      action: "DEPARTMENT_CREATED",
+      entityType: "DEPARTMENT",
+      entityId: newDepartment.id,
+      metadata: {
+        departmentId: newDepartment.id,
+        departmentName: newDepartment.name,
+      }
+    });
+  } catch (e) {
+    console.error("Failed to log DEPARTMENT_CREATED:", e);
+  }
 
   revalidatePath("/crm/settings/departments");
   redirect("/crm/settings/departments");
@@ -51,7 +66,7 @@ export async function updateDepartment(id: string, formData: FormData) {
     throw new Error("Name and code are required");
   }
 
-  await prisma.department.update({
+  const updatedDept = await prisma.department.update({
     where: { id },
     data: {
       name,
@@ -61,6 +76,21 @@ export async function updateDepartment(id: string, formData: FormData) {
       isActive,
     },
   });
+
+  try {
+    await logAuditEvent({
+      action: "DEPARTMENT_UPDATED",
+      entityType: "DEPARTMENT",
+      entityId: updatedDept.id,
+      metadata: {
+        departmentId: updatedDept.id,
+        departmentName: updatedDept.name,
+        changedFields: { name, code, isActive },
+      }
+    });
+  } catch (e) {
+    console.error("Failed to log DEPARTMENT_UPDATED:", e);
+  }
 
   revalidatePath("/crm/settings/departments");
   redirect("/crm/settings/departments");
