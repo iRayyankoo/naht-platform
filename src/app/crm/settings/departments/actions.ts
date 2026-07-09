@@ -8,7 +8,7 @@ import { redirect } from "next/navigation";
 import { logAuditEvent } from "@/lib/audit-logger";
 
 export async function createDepartment(formData: FormData) {
-  await actionRequireRole(["ADMIN"]);
+  const currentUser = await actionRequireRole(["ADMIN"]);
   const hasAccess = await requirePermission("ORG_MANAGE", { context: "createDepartment Action" });
   if (!hasAccess) throw new Error("ليس لديك صلاحية لإجراء هذه العملية");
 
@@ -35,6 +35,7 @@ export async function createDepartment(formData: FormData) {
   try {
     await logAuditEvent({
       action: "DEPARTMENT_CREATED",
+      actorUserId: currentUser.id,
       entityType: "DEPARTMENT",
       entityId: newDepartment.id,
       metadata: {
@@ -52,7 +53,7 @@ export async function createDepartment(formData: FormData) {
 
 export async function updateDepartment(id: string, formData: FormData) {
 
-  await actionRequireRole(["ADMIN"]);
+  const currentUser = await actionRequireRole(["ADMIN"]);
   const hasAccess = await requirePermission("ORG_MANAGE", { context: "updateDepartment Action" });
   if (!hasAccess) throw new Error("ليس لديك صلاحية لإجراء هذه العملية");
 
@@ -80,6 +81,7 @@ export async function updateDepartment(id: string, formData: FormData) {
   try {
     await logAuditEvent({
       action: "DEPARTMENT_UPDATED",
+      actorUserId: currentUser.id,
       entityType: "DEPARTMENT",
       entityId: updatedDept.id,
       metadata: {
