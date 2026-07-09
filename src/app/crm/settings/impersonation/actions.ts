@@ -11,6 +11,7 @@ import {
   getImpersonationCookieOptions,
   IMPERSONATION_COOKIE_NAME
 } from "@/lib/impersonation-helpers";
+import { logAuditEvent } from "@/lib/audit-logger";
 
 async function validateCommonStartConditions() {
   if (!isImpersonationEnabled()) {
@@ -39,94 +40,170 @@ async function validateCommonStartConditions() {
 }
 
 export async function startRoleImpersonationAction(roleKey: string) {
-  const { actorUser, secret } = await validateCommonStartConditions();
+  try {
+    const { actorUser, secret } = await validateCommonStartConditions();
 
-  if (!roleKey) {
-    throw new Error("يجب تحديد الدور المطلوب.");
+    if (!roleKey) {
+      throw new Error("يجب تحديد الدور المطلوب.");
+    }
+
+    const role = await prisma.appRole.findUnique({
+      where: { code: roleKey },
+    });
+
+    if (!role || !role.isActive) {
+      throw new Error("الدور المحدد غير موجود أو غير نشط.");
+    }
+
+    // Create payload
+    const payload = createImpersonationPayload(
+      "ROLE",
+      actorUser.id,
+      undefined,
+      role.code
+    );
+
+    // Sign and encode
+    const signedCookieValue = await encodeSignedImpersonationPayload(payload);
+    if (!signedCookieValue) {
+      throw new Error("فشل توقيع بيانات التقمص.");
+    }
+
+    // Write cookie
+    const cookieOptions = getImpersonationCookieOptions();
+    const cookieStore = await cookies();
+    cookieStore.set(IMPERSONATION_COOKIE_NAME, signedCookieValue, cookieOptions);
+
+    await logAuditEvent({
+      action: "IMPERSONATION_START_ROLE",
+      actorUserId: actorUser.id,
+      metadata: { roleKey }
+    });
+
+    return { success: true };
+  } catch (error: any) {
+    let actorUserId: string | undefined;
+    try {
+      const actorUser = await getCurrentUser();
+      actorUserId = actorUser?.id;
+    } catch (e) {
+      // ignore
+    }
+
+    await logAuditEvent({
+      action: "IMPERSONATION_START_BLOCKED",
+      actorUserId,
+      metadata: { reason: error.message, roleKey }
+    });
+
+    throw error;
   }
-
-  const role = await prisma.appRole.findUnique({
-    where: { code: roleKey },
-  });
-
-  if (!role || !role.isActive) {
-    throw new Error("الدور المحدد غير موجود أو غير نشط.");
-  }
-
-  // Create payload
-  const payload = createImpersonationPayload(
-    "ROLE",
-    actorUser.id,
-    undefined,
-    role.code
-  );
-
-  // Sign and encode
-  const signedCookieValue = await encodeSignedImpersonationPayload(payload);
-  if (!signedCookieValue) {
-    throw new Error("فشل توقيع بيانات التقمص.");
-  }
-
-  // Write cookie
-  const cookieOptions = getImpersonationCookieOptions();
-  const cookieStore = await cookies();
-  cookieStore.set(IMPERSONATION_COOKIE_NAME, signedCookieValue, cookieOptions);
-
-  return { success: true };
 }
 
 export async function startUserImpersonationAction(userId: string) {
-  const { actorUser, secret } = await validateCommonStartConditions();
+  try {
+    const { actorUser, secret } = await validateCommonStartConditions();
 
-  if (!userId) {
-    throw new Error("يجب تحديد المستخدم المطلوب.");
+    if (!userId) {
+      throw new Error("يجب تحديد المستخدم المطلوب.");
+    }
+
+    const targetUser = await prisma.user.findUnique({
+      where: { id: userId },
+    });
+
+    if (!targetUser) {
+      throw new Error("المستخدم المحدد غير موجود.");
+    }
+
+    if (!targetUser.isActive) {
+      throw new Error("لا يمكن تقمص حساب مستخدم غير نشط.");
+    }
+
+    const isTargetSuper = await isSuperAdmin(targetUser.id);
+    if (isTargetSuper) {
+      throw new Error("لا يمكن تقمص حساب يملك صلاحيات SUPER_ADMIN.");
+    }
+
+    // Create payload
+    const payload = createImpersonationPayload(
+      "USER",
+      actorUser.id,
+      targetUser.id,
+      undefined
+    );
+
+    // Sign and encode
+    const signedCookieValue = await encodeSignedImpersonationPayload(payload);
+    if (!signedCookieValue) {
+      throw new Error("فشل توقيع بيانات التقمص.");
+    }
+
+    // Write cookie
+    const cookieOptions = getImpersonationCookieOptions();
+    const cookieStore = await cookies();
+    cookieStore.set(IMPERSONATION_COOKIE_NAME, signedCookieValue, cookieOptions);
+
+    await logAuditEvent({
+      action: "IMPERSONATION_START_USER",
+      actorUserId: actorUser.id,
+      targetUserId: targetUser.id
+    });
+
+    return { success: true };
+  } catch (error: any) {
+    let actorUserId: string | undefined;
+    try {
+      const actorUser = await getCurrentUser();
+      actorUserId = actorUser?.id;
+    } catch (e) {
+      // ignore
+    }
+
+    await logAuditEvent({
+      action: "IMPERSONATION_START_BLOCKED",
+      actorUserId,
+      metadata: { reason: error.message, targetUserId: userId }
+    });
+
+    throw error;
   }
-
-  const targetUser = await prisma.user.findUnique({
-    where: { id: userId },
-  });
-
-  if (!targetUser) {
-    throw new Error("المستخدم المحدد غير موجود.");
-  }
-
-  if (!targetUser.isActive) {
-    throw new Error("لا يمكن تقمص حساب مستخدم غير نشط.");
-  }
-
-  const isTargetSuper = await isSuperAdmin(targetUser.id);
-  if (isTargetSuper) {
-    throw new Error("لا يمكن تقمص حساب يملك صلاحيات SUPER_ADMIN.");
-  }
-
-  // Create payload
-  const payload = createImpersonationPayload(
-    "USER",
-    actorUser.id,
-    targetUser.id,
-    undefined
-  );
-
-  // Note: userLabel isn't part of createImpersonationPayload args, we might need to update the interface or just skip it if it's not supported by the function signature.
-  // Actually, the original signature doesn't take userLabel. We will ignore it for now.
-
-  // Sign and encode
-  const signedCookieValue = await encodeSignedImpersonationPayload(payload);
-  if (!signedCookieValue) {
-    throw new Error("فشل توقيع بيانات التقمص.");
-  }
-
-  // Write cookie
-  const cookieOptions = getImpersonationCookieOptions();
-  const cookieStore = await cookies();
-  cookieStore.set(IMPERSONATION_COOKIE_NAME, signedCookieValue, cookieOptions);
-
-  return { success: true };
 }
 
 export async function stopImpersonationAction() {
-  // Safe stop, doesn't throw if not enabled, just clears the cookie
-  const cookieStore = await cookies();
-  cookieStore.delete(IMPERSONATION_COOKIE_NAME);
-  return { success: true };
+  try {
+    const cookieStore = await cookies();
+    cookieStore.delete(IMPERSONATION_COOKIE_NAME);
+
+    let actorUserId: string | undefined;
+    try {
+      const actorUser = await getCurrentUser();
+      actorUserId = actorUser?.id;
+    } catch (e) {
+      // ignore
+    }
+
+    await logAuditEvent({
+      action: "IMPERSONATION_STOP",
+      actorUserId
+    });
+
+    return { success: true };
+  } catch (error: any) {
+    let actorUserId: string | undefined;
+    try {
+      const actorUser = await getCurrentUser();
+      actorUserId = actorUser?.id;
+    } catch (e) {
+      // ignore
+    }
+
+    await logAuditEvent({
+      action: "IMPERSONATION_STOP_FAILED",
+      actorUserId,
+      metadata: { reason: error.message }
+    });
+
+    throw error;
+  }
 }
