@@ -1,15 +1,27 @@
 import { HomePageContent } from "@prisma/client";
 
-export default function StatsSection({ content }: { content: HomePageContent | null }) {
-  if (!content?.stat1Value && !content?.stat2Value && !content?.stat3Value) {
-    return null;
-  }
+// Fallback stats — تُستخدم فقط عند فراغ CMS
+const FALLBACK_STATS = [
+  { value: "+9",   label: "مشاريع" },
+  { value: "+20",  label: "فرصة عقارية" },
+  { value: "+100", label: "عميل ومهتم" },
+];
 
-  const stats = [
-    content.stat1Value ? { value: content.stat1Value, label: content.stat1Label || "" } : null,
-    content.stat2Value ? { value: content.stat2Value, label: content.stat2Label || "" } : null,
-    content.stat3Value ? { value: content.stat3Value, label: content.stat3Label || "" } : null,
-  ].filter(Boolean);
+export default function StatsSection({ content }: { content: HomePageContent | null }) {
+  // بناء قائمة الإحصائيات — CMS له أولوية، fallback عند الفراغ
+  const hasCmsStats =
+    content?.stat1Value || content?.stat2Value || content?.stat3Value;
+
+  const stats = hasCmsStats
+    ? [
+        content?.stat1Value ? { value: content.stat1Value, label: content.stat1Label || "" } : null,
+        content?.stat2Value ? { value: content.stat2Value, label: content.stat2Label || "" } : null,
+        content?.stat3Value ? { value: content.stat3Value, label: content.stat3Label || "" } : null,
+      ].filter(Boolean) as { value: string; label: string }[]
+    : FALLBACK_STATS;
+
+  const sectionTitle =
+    content?.statsTitle || "إنجازات تُبنى على الثقة";
 
   return (
     <section className="relative py-24 md:py-36 overflow-hidden bg-[#0D0D0D] text-white" dir="rtl">
@@ -17,7 +29,6 @@ export default function StatsSection({ content }: { content: HomePageContent | n
       {/* Architectural silhouette overlay — decorative */}
       <div className="absolute inset-0 z-0 opacity-[0.07]">
         <svg viewBox="0 0 1440 600" preserveAspectRatio="xMidYMid slice" className="w-full h-full" fill="currentColor">
-          {/* Stylized Saudi building silhouette */}
           <rect x="0" y="400" width="1440" height="200" />
           <rect x="100" y="280" width="80" height="120" />
           <rect x="130" y="250" width="20" height="30" />
@@ -39,7 +50,7 @@ export default function StatsSection({ content }: { content: HomePageContent | n
         </svg>
       </div>
 
-      {/* Diagonal accent */}
+      {/* Top accent */}
       <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-transparent via-brand-cafe/40 to-transparent" />
 
       <div className="relative z-10 max-w-[1400px] mx-auto px-5 md:px-8">
@@ -50,7 +61,7 @@ export default function StatsSection({ content }: { content: HomePageContent | n
             OUR ACHIEVEMENTS
           </p>
           <h2 className="text-4xl md:text-5xl lg:text-6xl font-bold text-white leading-tight tracking-tight">
-            {content.statsTitle || "إنجازات تُبنى على الثقة"}
+            {sectionTitle}
           </h2>
           <div className="w-16 h-[2px] bg-brand-cafe/60 rounded-full mx-auto mt-6" />
         </div>
@@ -61,20 +72,20 @@ export default function StatsSection({ content }: { content: HomePageContent | n
             <div
               key={i}
               className={`flex flex-col items-center text-center py-8 md:py-12 px-6 ${
-                i < stats.length - 1 ? 'md:border-l md:border-white/10' : ''
+                i < stats.length - 1 ? "md:border-l md:border-white/10" : ""
               }`}
             >
-              {/* Value with orange/terracotta accent */}
+              {/* Value */}
               <div
                 className="text-6xl md:text-7xl lg:text-8xl font-black leading-none mb-4 tracking-tighter text-white"
                 dir="ltr"
               >
                 <span className="text-brand-cafe">+</span>
-                {stat!.value}
+                {stat.value.replace(/^\+/, "")}
               </div>
               <div className="w-8 h-[1px] bg-brand-cafe/60 mx-auto mb-4" />
               <p className="text-sm md:text-base text-gray-400 font-light tracking-widest uppercase">
-                {stat!.label}
+                {stat.label}
               </p>
             </div>
           ))}
@@ -82,7 +93,7 @@ export default function StatsSection({ content }: { content: HomePageContent | n
 
       </div>
 
-      {/* Bottom diagonal accent */}
+      {/* Bottom accent */}
       <div className="absolute bottom-0 left-0 w-full h-1 bg-gradient-to-r from-transparent via-brand-cafe/30 to-transparent" />
     </section>
   );
