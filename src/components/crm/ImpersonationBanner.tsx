@@ -13,7 +13,7 @@ export function ImpersonationBanner({ context }: ImpersonationBannerProps) {
   async function handleStop() {
     "use server";
     await stopImpersonationAction();
-    redirect("/crm");
+    redirect("/crm/settings/impersonation");
   }
 
   return (

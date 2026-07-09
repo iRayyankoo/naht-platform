@@ -170,25 +170,24 @@ export async function startUserImpersonationAction(userId: string) {
   }
 }
 
+function clearImpersonationCookie(cookieStore: any) {
+  const cookieOptions = getImpersonationCookieOptions();
+  
+  // بسبب طبيعة Next.js (cookies API)، يتم استخدام Map كمفتاح باسم الكوكي.
+  // إذا طلبنا حذف الكوكي مرتين بمسارين مختلفين ("/" و "/crm")، فإن الطلب الثاني يمسح الأول!
+  // لذلك يجب أن نحذف فقط المسار الأساسي "/" الذي نستخدمه الآن في كل مكان.
+  cookieStore.set(IMPERSONATION_COOKIE_NAME, "", {
+    ...cookieOptions,
+    path: "/",
+    maxAge: 0,
+    expires: new Date(0),
+  });
+}
+
 export async function stopImpersonationAction() {
   try {
     const cookieStore = await cookies();
-    const cookieOptions = getImpersonationCookieOptions();
-    
-    // Explicitly overwrite the cookie with maxAge: 0 to ensure deletion across all browsers
-    cookieStore.set(IMPERSONATION_COOKIE_NAME, "", {
-      ...cookieOptions,
-      maxAge: 0,
-      expires: new Date(0),
-    });
-
-    // Legacy cleanup: Also delete the cookie from the old path "/crm"
-    cookieStore.set(IMPERSONATION_COOKIE_NAME, "", {
-      ...cookieOptions,
-      path: "/crm",
-      maxAge: 0,
-      expires: new Date(0),
-    });
+    clearImpersonationCookie(cookieStore);
 
     let actorUserId: string | undefined;
     try {
