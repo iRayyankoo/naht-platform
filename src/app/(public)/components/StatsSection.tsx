@@ -5,38 +5,85 @@ export default function StatsSection({ content }: { content: HomePageContent | n
     return null;
   }
 
+  const stats = [
+    content.stat1Value ? { value: content.stat1Value, label: content.stat1Label || "" } : null,
+    content.stat2Value ? { value: content.stat2Value, label: content.stat2Label || "" } : null,
+    content.stat3Value ? { value: content.stat3Value, label: content.stat3Label || "" } : null,
+  ].filter(Boolean);
+
   return (
-    <section className="py-24 bg-white border-y border-gray-100">
-      <div className="max-w-7xl mx-auto px-6">
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-12 items-center">
-          <div className="md:col-span-1">
-            <h2 className="text-3xl md:text-4xl font-bold text-gray-900 leading-tight">
-              {content.statsTitle || "أرقام تلخص مسيرتنا"}
-            </h2>
-            <div className="w-12 h-1 bg-primary mt-6"></div>
-          </div>
-          <div className="md:col-span-3 grid grid-cols-1 sm:grid-cols-3 gap-8">
-            {content.stat1Value && (
-              <div className="text-center sm:text-right border-r-0 sm:border-r-2 border-gray-100 pr-0 sm:pr-8">
-                <div className="text-5xl md:text-7xl font-bold text-gray-900 mb-2 font-serif tracking-tighter" dir="ltr">{content.stat1Value}</div>
-                <div className="text-lg font-bold text-gray-400 tracking-wide">{content.stat1Label}</div>
-              </div>
-            )}
-            {content.stat2Value && (
-              <div className="text-center sm:text-right border-r-0 sm:border-r-2 border-gray-100 pr-0 sm:pr-8">
-                <div className="text-5xl md:text-7xl font-bold text-gray-900 mb-2 font-serif tracking-tighter" dir="ltr">{content.stat2Value}</div>
-                <div className="text-lg font-bold text-gray-400 tracking-wide">{content.stat2Label}</div>
-              </div>
-            )}
-            {content.stat3Value && (
-              <div className="text-center sm:text-right">
-                <div className="text-5xl md:text-7xl font-bold text-gray-900 mb-2 font-serif tracking-tighter" dir="ltr">{content.stat3Value}</div>
-                <div className="text-lg font-bold text-gray-400 tracking-wide">{content.stat3Label}</div>
-              </div>
-            )}
-          </div>
-        </div>
+    <section className="relative py-24 md:py-36 overflow-hidden bg-[#0D0D0D] text-white" dir="rtl">
+
+      {/* Architectural silhouette overlay — decorative */}
+      <div className="absolute inset-0 z-0 opacity-[0.07]">
+        <svg viewBox="0 0 1440 600" preserveAspectRatio="xMidYMid slice" className="w-full h-full" fill="currentColor">
+          {/* Stylized Saudi building silhouette */}
+          <rect x="0" y="400" width="1440" height="200" />
+          <rect x="100" y="280" width="80" height="120" />
+          <rect x="130" y="250" width="20" height="30" />
+          <path d="M100 280 Q140 240 180 280" />
+          <rect x="220" y="300" width="60" height="100" />
+          <rect x="310" y="260" width="100" height="140" />
+          <path d="M310 260 Q360 220 410 260" />
+          <rect x="450" y="320" width="80" height="80" />
+          <rect x="580" y="200" width="120" height="200" />
+          <path d="M580 200 Q640 160 700 200" />
+          <rect x="620" y="160" width="40" height="40" />
+          <rect x="750" y="280" width="90" height="120" />
+          <rect x="880" y="240" width="110" height="160" />
+          <path d="M880 240 Q935 200 990 240" />
+          <rect x="1040" y="300" width="70" height="100" />
+          <rect x="1150" y="260" width="100" height="140" />
+          <path d="M1150 260 Q1200 220 1250 260" />
+          <rect x="1300" y="320" width="80" height="80" />
+        </svg>
       </div>
+
+      {/* Diagonal accent */}
+      <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-transparent via-brand-cafe/40 to-transparent" />
+
+      <div className="relative z-10 max-w-[1400px] mx-auto px-5 md:px-8">
+
+        {/* Title */}
+        <div className="text-center mb-16 md:mb-20">
+          <p className="text-[11px] text-brand-cafe font-bold tracking-[0.3em] uppercase mb-4">
+            OUR ACHIEVEMENTS
+          </p>
+          <h2 className="text-4xl md:text-5xl lg:text-6xl font-bold text-white leading-tight tracking-tight">
+            {content.statsTitle || "إنجازات تُبنى على الثقة"}
+          </h2>
+          <div className="w-16 h-[2px] bg-brand-cafe/60 rounded-full mx-auto mt-6" />
+        </div>
+
+        {/* Stats Grid */}
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-8 md:gap-0">
+          {stats.map((stat, i) => (
+            <div
+              key={i}
+              className={`flex flex-col items-center text-center py-8 md:py-12 px-6 ${
+                i < stats.length - 1 ? 'md:border-l md:border-white/10' : ''
+              }`}
+            >
+              {/* Value with orange/terracotta accent */}
+              <div
+                className="text-6xl md:text-7xl lg:text-8xl font-black leading-none mb-4 tracking-tighter text-white"
+                dir="ltr"
+              >
+                <span className="text-brand-cafe">+</span>
+                {stat!.value}
+              </div>
+              <div className="w-8 h-[1px] bg-brand-cafe/60 mx-auto mb-4" />
+              <p className="text-sm md:text-base text-gray-400 font-light tracking-widest uppercase">
+                {stat!.label}
+              </p>
+            </div>
+          ))}
+        </div>
+
+      </div>
+
+      {/* Bottom diagonal accent */}
+      <div className="absolute bottom-0 left-0 w-full h-1 bg-gradient-to-r from-transparent via-brand-cafe/30 to-transparent" />
     </section>
   );
 }
