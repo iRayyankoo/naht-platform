@@ -12,12 +12,13 @@ interface ContactFormProps {
 export default function ContactForm({ submitButtonText, helperText }: ContactFormProps) {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [utmData, setUtmData] = useState<any>({});
+  const [utmData, setUtmData] = useState<Record<string, string | null>>({});
   const router = useRouter();
 
   useEffect(() => {
     // Capture UTM parameters and Referrer
     const params = new URLSearchParams(window.location.search);
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setUtmData({
       utmSource: params.get("utm_source"),
       utmMedium: params.get("utm_medium"),
@@ -57,8 +58,9 @@ export default function ContactForm({ submitButtonText, helperText }: ContactFor
         trackEvent("form_submit", { formType: "CONTACT_US" });
       }).catch(err => console.error(err));
       router.push("/thank-you/contact");
-    } catch (err: any) {
-      setError(err.message || "حدث خطأ أثناء الإرسال. الرجاء المحاولة لاحقاً.");
+    } catch (err: unknown) {
+      const errorMessage = err instanceof Error ? err.message : "حدث خطأ أثناء الإرسال. الرجاء المحاولة لاحقاً.";
+      setError(errorMessage);
       setIsSubmitting(false);
     }
   };
@@ -73,24 +75,24 @@ export default function ContactForm({ submitButtonText, helperText }: ContactFor
       )}
 
       <div>
-        <label className="block text-sm md:text-base font-bold text-gray-800 mb-2">الاسم الكامل <span className="text-red-500">*</span></label>
-        <input type="text" name="name" required className="w-full bg-gray-50 border-gray-200 rounded-lg p-3.5 md:p-4 border focus:bg-white focus:ring-2 focus:ring-primary/20 focus:border-primary text-base transition-colors" placeholder="اكتب اسمك الكامل" />
+        <label className="block text-sm font-bold text-gray-700 mb-2">الاسم الكامل <span className="text-red-500">*</span></label>
+        <input type="text" name="name" required className="w-full bg-gray-50/50 border-gray-200 rounded-xl p-3.5 md:p-4 border focus:bg-white focus:ring-2 focus:ring-brand-cafe/20 focus:border-brand-cafe text-base transition-colors" placeholder="اكتب اسمك الكامل" />
       </div>
 
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-5 md:gap-6">
         <div>
-          <label className="block text-sm md:text-base font-bold text-gray-800 mb-2">رقم الجوال <span className="text-red-500">*</span></label>
-          <input type="tel" name="phone" dir="ltr" required pattern="^05\d{8}$" className="w-full bg-gray-50 border-gray-200 rounded-lg p-3.5 md:p-4 border focus:bg-white focus:ring-2 focus:ring-primary/20 focus:border-primary text-right text-base transition-colors" placeholder="05xxxxxxxx" />
+          <label className="block text-sm font-bold text-gray-700 mb-2">رقم الجوال <span className="text-red-500">*</span></label>
+          <input type="tel" name="phone" dir="ltr" required pattern="^05\d{8}$" className="w-full bg-gray-50/50 border-gray-200 rounded-xl p-3.5 md:p-4 border focus:bg-white focus:ring-2 focus:ring-brand-cafe/20 focus:border-brand-cafe text-right text-base transition-colors" placeholder="05xxxxxxxx" />
         </div>
         <div>
-          <label className="block text-sm md:text-base font-bold text-gray-800 mb-2">البريد الإلكتروني (اختياري)</label>
-          <input type="email" name="email" dir="ltr" className="w-full bg-gray-50 border-gray-200 rounded-lg p-3.5 md:p-4 border focus:bg-white focus:ring-2 focus:ring-primary/20 focus:border-primary text-right text-base transition-colors" placeholder="example@email.com" />
+          <label className="block text-sm font-bold text-gray-700 mb-2">البريد الإلكتروني (اختياري)</label>
+          <input type="email" name="email" dir="ltr" className="w-full bg-gray-50/50 border-gray-200 rounded-xl p-3.5 md:p-4 border focus:bg-white focus:ring-2 focus:ring-brand-cafe/20 focus:border-brand-cafe text-right text-base transition-colors" placeholder="example@email.com" />
         </div>
       </div>
 
       <div>
-        <label className="block text-sm md:text-base font-bold text-gray-800 mb-2">نوع الاستفسار <span className="text-red-500">*</span></label>
-        <select name="inquiryType" required className="w-full bg-gray-50 border-gray-200 rounded-lg p-3.5 md:p-4 border focus:bg-white focus:ring-2 focus:ring-primary/20 focus:border-primary text-base transition-colors">
+        <label className="block text-sm font-bold text-gray-700 mb-2">نوع الاستفسار <span className="text-red-500">*</span></label>
+        <select name="inquiryType" required className="w-full bg-gray-50/50 border-gray-200 rounded-xl p-3.5 md:p-4 border focus:bg-white focus:ring-2 focus:ring-brand-cafe/20 focus:border-brand-cafe text-base transition-colors">
           <option value="">-- اختر نوع الاستفسار --</option>
           <option value="استفسار عام">استفسار عام</option>
           <option value="مبيعات المشاريع">مبيعات المشاريع</option>
@@ -100,15 +102,15 @@ export default function ContactForm({ submitButtonText, helperText }: ContactFor
       </div>
 
       <div>
-        <label className="block text-sm md:text-base font-bold text-gray-800 mb-2">الرسالة <span className="text-red-500">*</span></label>
-        <textarea name="message" required rows={4} className="w-full bg-gray-50 border-gray-200 rounded-lg p-3.5 md:p-4 border focus:bg-white focus:ring-2 focus:ring-primary/20 focus:border-primary text-base transition-colors resize-y" placeholder="اكتب رسالتك أو استفسارك هنا..."></textarea>
+        <label className="block text-sm font-bold text-gray-700 mb-2">الرسالة <span className="text-red-500">*</span></label>
+        <textarea name="message" required rows={4} className="w-full bg-gray-50/50 border-gray-200 rounded-xl p-3.5 md:p-4 border focus:bg-white focus:ring-2 focus:ring-brand-cafe/20 focus:border-brand-cafe text-base transition-colors resize-y" placeholder="اكتب رسالتك أو استفسارك هنا..."></textarea>
       </div>
 
       <div className="pt-2">
         {helperText && (
-          <p className="text-sm text-gray-600 mb-4 text-center">{helperText}</p>
+          <p className="text-sm text-gray-500 mb-4 text-center">{helperText}</p>
         )}
-        <button type="submit" disabled={isSubmitting} className="w-full bg-primary hover:bg-primary-dark hover:-translate-y-0.5 text-white px-6 py-4 rounded-lg font-bold text-lg disabled:opacity-70 disabled:hover:translate-y-0 disabled:cursor-not-allowed transition-all duration-200 flex items-center justify-center shadow-lg shadow-primary/20">
+        <button type="submit" disabled={isSubmitting} className="w-full bg-brand-cafe hover:bg-[#B3932F] hover:-translate-y-0.5 text-white px-6 py-4 rounded-xl font-bold text-lg disabled:opacity-70 disabled:hover:translate-y-0 disabled:cursor-not-allowed transition-all duration-300 flex items-center justify-center shadow-lg shadow-brand-cafe/20">
           {isSubmitting ? (
             <>
               <svg className="animate-spin -ml-1 mr-3 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">

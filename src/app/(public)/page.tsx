@@ -2,10 +2,8 @@ import { prisma } from "@/lib/prisma";
 import { getBaseMetadata } from "@/lib/seo";
 import PublicHeroRenderer from "./components/PublicHeroRenderer";
 import StatsSection from "./components/StatsSection";
-import AboutBrief from "./components/AboutBrief";
 import FeaturedProjects from "./components/FeaturedProjects";
 import InteractiveMap from "./components/InteractiveMap";
-import WhyChooseUs from "./components/WhyChooseUs";
 import HomeFaq from "./components/HomeFaq";
 import HomeContact from "./components/HomeContact";
 import NahtStandard from "./components/NahtStandard";
@@ -25,21 +23,21 @@ export async function generateMetadata() {
 export default async function HomePage() {
   const content = await prisma.homePageContent.findUnique({ where: { id: "global" } });
   const settings = await prisma.siteSettings.findUnique({ where: { id: "global" } });
-  
-  let featuredProjects = await prisma.project.findMany({ 
-    where: { isVisible: true, isFeatured: true }, 
+
+  let featuredProjects = await prisma.project.findMany({
+    where: { isVisible: true, isFeatured: true },
     take: 5, // We take 5 for the new layout (1 signature + 4 curated)
     orderBy: { createdAt: 'desc' }
   });
 
   if (featuredProjects.length === 0) {
-    featuredProjects = await prisma.project.findMany({ 
-      where: { isVisible: true }, 
+    featuredProjects = await prisma.project.findMany({
+      where: { isVisible: true },
       take: 5,
       orderBy: { createdAt: 'desc' }
     });
   }
-  
+
   const mapProjects = await prisma.project.findMany({
     where: { isVisible: true, showOnHomeMap: true },
     select: {
@@ -59,8 +57,8 @@ export default async function HomePage() {
     }
   });
 
-  const faqs = await prisma.faq.findMany({ 
-    where: { isVisible: true }, 
+  const faqs = await prisma.faq.findMany({
+    where: { isVisible: true },
     orderBy: { order: "asc" },
     take: 5 // Just top 5 for home page
   });
@@ -72,10 +70,8 @@ export default async function HomePage() {
       <TrustStrip />
       <NahtStandard content={content} />
       <div className="bg-[#F9F9F7]"> {/* Light background for the rest */}
-        <AboutBrief content={content} />
         <InteractiveMap content={content} projects={mapProjects} />
         <StatsSection content={content} />
-        <WhyChooseUs content={content} />
         <ClientJourney />
         <section className="py-24">
           <div className="max-w-7xl mx-auto px-6">
