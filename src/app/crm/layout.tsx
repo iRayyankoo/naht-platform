@@ -5,6 +5,7 @@ import Link from "next/link";
 import { ImpersonationBanner } from "@/components/crm/ImpersonationBanner";
 import { getImpersonationRuntimeContext } from "@/lib/impersonation-runtime-context";
 import CrmSidebar from "@/components/crm/CrmSidebar";
+import { getCurrentUserPermissions } from "@/lib/rbac-helpers";
 
 export default async function AdminLayout({
   children,
@@ -18,6 +19,7 @@ export default async function AdminLayout({
   }
 
   const impersonationContext = await getImpersonationRuntimeContext();
+  const permissions = session.user ? await getCurrentUserPermissions(session.user.id) : [];
 
   return (
     <div className="flex min-h-screen bg-gray-50 text-gray-900">
@@ -25,6 +27,7 @@ export default async function AdminLayout({
       <CrmSidebar 
         userName={session.user?.name || "المستخدم"} 
         userRole={(session.user as any)?.role || "ADMIN"} 
+        userPermissions={permissions}
       />
 
       {/* Main Content */}

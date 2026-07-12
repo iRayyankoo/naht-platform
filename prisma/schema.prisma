@@ -32,18 +32,18 @@ enum UserStatus {
 }
 
 model User {
-  id            String         @id @default(cuid())
+  id            String     @id @default(cuid())
   name          String?
-  email         String?        @unique
+  email         String?    @unique
   emailVerified DateTime?
   password      String?
   image         String?
-  role          Role           @default(SALES)
-  isActive      Boolean        @default(true)
+  role          Role       @default(SALES)
+  isActive      Boolean    @default(true)
   phone         String?
   jobTitle      String?
   departmentId  String?
-  status        UserStatus     @default(ACTIVE)
+  status        UserStatus @default(ACTIVE)
 
   accounts      Account[]
   sessions      Session[]
@@ -53,8 +53,17 @@ model User {
   leadNotes     LeadNote[]
   campaignLinks CampaignLink[]
 
-  department    Department?    @relation(fields: [departmentId], references: [id])
-  userRoles     UserRole[]
+  department Department? @relation(fields: [departmentId], references: [id])
+  userRoles  UserRole[]
+
+  // Phase 16 Task Management
+  assignedTasks      Task[]            @relation("AssignedTasks")
+  createdTasks       Task[]            @relation("CreatedTasks")
+  requestedApprovals TaskApproval[]    @relation("RequestedApprovals")
+  decidedApprovals   TaskApproval[]    @relation("DecidedApprovals")
+  taskComments       TaskComment[]
+  taskWatchers       TaskWatcher[]
+  taskActivityLogs   TaskActivityLog[]
 }
 
 model Account {
@@ -93,19 +102,19 @@ model VerificationToken {
 }
 
 model Project {
-  id           String   @id @default(cuid())
-  slug         String   @unique
+  id           String  @id @default(cuid())
+  slug         String  @unique
   name         String
   type         String
   city         String
   neighborhood String
-  status       String   @default("AVAILABLE") // AVAILABLE, SOLD, COMING_SOON
+  status       String  @default("AVAILABLE") // AVAILABLE, SOLD, COMING_SOON
   shortDesc    String?
   fullDesc     String?
   mainImage    String?
-  isFeatured   Boolean  @default(false)
-  isVisible    Boolean  @default(true)
-  
+  isFeatured   Boolean @default(false)
+  isVisible    Boolean @default(true)
+
   // Phase 14 additions
   area            Float?
   price           Float?
@@ -118,17 +127,17 @@ model Project {
   pdfUrl          String?
 
   // Interactive Map Fields (Batch 15 Revision)
-  showOnHomeMap Boolean   @default(false)
+  showOnHomeMap Boolean @default(false)
   mapLat        Float?
   mapLng        Float?
-  mapX          Float?    // Deprecated but kept for image map mode
-  mapY          Float?    // Deprecated but kept for image map mode
-  
+  mapX          Float? // Deprecated but kept for image map mode
+  mapY          Float? // Deprecated but kept for image map mode
+
   // Phase 6E additions
-  planImage     String?
-  
-  createdAt    DateTime @default(now())
-  updatedAt    DateTime @updatedAt
+  planImage String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
   units         Unit[]
   models        ProjectModel[]
@@ -148,7 +157,7 @@ model ProjectFeature {
   icon      String?
   order     Int     @default(0)
 
-  project   Project @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  project Project @relation(fields: [projectId], references: [id], onDelete: Cascade)
 }
 
 model ProjectWarranty {
@@ -159,7 +168,7 @@ model ProjectWarranty {
   duration  String?
   order     Int     @default(0)
 
-  project   Project @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  project Project @relation(fields: [projectId], references: [id], onDelete: Cascade)
 }
 
 model ProjectGalleryImage {
@@ -169,7 +178,7 @@ model ProjectGalleryImage {
   alt       String?
   order     Int     @default(0)
 
-  project   Project @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  project Project @relation(fields: [projectId], references: [id], onDelete: Cascade)
 }
 
 model ProjectModel {
@@ -188,22 +197,22 @@ model ProjectModel {
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 
-  project     Project  @relation(fields: [projectId], references: [id], onDelete: Cascade)
-  units       Unit[]
+  project Project @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  units   Unit[]
 }
 
 model Unit {
-  id        String   @id @default(cuid())
+  id        String  @id @default(cuid())
   projectId String
   unitNum   String
   type      String
   area      Float
   rooms     Int
   baths     Int
-  price     Float    @default(0)
-  status    String   @default("AVAILABLE") // AVAILABLE, SOLD, RESERVED
-  isVisible Boolean  @default(true)
-  
+  price     Float   @default(0)
+  status    String  @default("AVAILABLE") // AVAILABLE, SOLD, RESERVED
+  isVisible Boolean @default(true)
+
   // Phase 6E additions
   modelId       String?
   floor         String?
@@ -214,7 +223,7 @@ model Unit {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  project Project @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  project Project       @relation(fields: [projectId], references: [id], onDelete: Cascade)
   model   ProjectModel? @relation(fields: [modelId], references: [id], onDelete: SetNull)
 }
 
@@ -367,18 +376,18 @@ model SiteSettings {
   borderColor    String?
 
   // Batch 10 Footer Management
-  footerCompanyName   String?
-  footerDescription   String?
-  footerLogoUrl       String?
-  showFooterLogo      Boolean @default(true)
-  showImportantLinks  Boolean @default(true)
-  showContactInfo     Boolean @default(true)
-  showEmployeePortal  Boolean @default(true)
-  showSocialLinks     Boolean @default(true)
+  footerCompanyName  String?
+  footerDescription  String?
+  footerLogoUrl      String?
+  showFooterLogo     Boolean @default(true)
+  showImportantLinks Boolean @default(true)
+  showContactInfo    Boolean @default(true)
+  showEmployeePortal Boolean @default(true)
+  showSocialLinks    Boolean @default(true)
 
   // Batch 12 Header
-  headerCtaText       String? @default("بوابة الشركاء")
-  headerCtaUrl        String? @default("/auth/login")
+  headerCtaText String? @default("بوابة الشركاء")
+  headerCtaUrl  String? @default("/auth/login")
 
   updatedAt DateTime @updatedAt
 }
@@ -395,34 +404,34 @@ model FooterLink {
 }
 
 model TrackingSettings {
-  id                       String   @id @default("global")
-  
-  gtmId                    String?
-  isGtmEnabled             Boolean  @default(false)
-  ga4MeasurementId         String?
-  isGa4Enabled             Boolean  @default(false)
-  
+  id String @id @default("global")
+
+  gtmId            String?
+  isGtmEnabled     Boolean @default(false)
+  ga4MeasurementId String?
+  isGa4Enabled     Boolean @default(false)
+
   googleAdsId              String?
   googleAdsConversionLabel String?
-  isGoogleAdsEnabled       Boolean  @default(false)
-  
-  metaPixelId              String?
-  isMetaPixelEnabled       Boolean  @default(false)
-  tiktokPixelId            String?
-  isTiktokPixelEnabled     Boolean  @default(false)
-  snapchatPixelId          String?
-  isSnapchatPixelEnabled   Boolean  @default(false)
-  linkedinPartnerId        String?
-  isLinkedinEnabled        Boolean  @default(false)
-  xPixelId                 String?
-  isXPixelEnabled          Boolean  @default(false)
-  
-  customHeadScript         String?
-  customBodyStartScript    String?
-  customBodyEndScript      String?
-  isCustomScriptsEnabled   Boolean  @default(false)
-  
-  updatedAt                DateTime @updatedAt
+  isGoogleAdsEnabled       Boolean @default(false)
+
+  metaPixelId            String?
+  isMetaPixelEnabled     Boolean @default(false)
+  tiktokPixelId          String?
+  isTiktokPixelEnabled   Boolean @default(false)
+  snapchatPixelId        String?
+  isSnapchatPixelEnabled Boolean @default(false)
+  linkedinPartnerId      String?
+  isLinkedinEnabled      Boolean @default(false)
+  xPixelId               String?
+  isXPixelEnabled        Boolean @default(false)
+
+  customHeadScript       String?
+  customBodyStartScript  String?
+  customBodyEndScript    String?
+  isCustomScriptsEnabled Boolean @default(false)
+
+  updatedAt DateTime @updatedAt
 }
 
 model SocialLink {
@@ -465,25 +474,25 @@ model HomePageContent {
   nahtStandardTitle       String? @default("The Naht Standard")
   nahtStandardSubtitle    String? @default("نرتقي بمفهوم التطوير العقاري.")
   nahtStandardDescription String? @default("نلتزم في \"نحت\" بأعلى معايير الجودة العالمية، حيث ندمج بين التصميم المعماري العبقري، واستدامة التنفيذ، واختيار أميز المواقع لنخلق أصولاً عقارية تتوارثها الأجيال.")
-  
-  nahtFeature1Title       String? @default("مواقع استراتيجية")
-  nahtFeature1Desc        String? @default("انتقاء دقيق لأرقى الأحياء وأكثرها نمواً لضمان جودة الحياة والعائد الاستثماري.")
-  nahtFeature2Title       String? @default("جودة البناء")
-  nahtFeature2Desc        String? @default("استخدام أفضل المواد وتطبيق أدق معايير الكود السعودي للبناء.")
-  nahtFeature3Title       String? @default("تصاميم استثنائية")
-  nahtFeature3Desc        String? @default("واجهات عصرية وتقسيمات داخلية ذكية تلبي تطلعات العائلة العصرية.")
-  nahtFeature4Title       String? @default("ضمانات ممتدة")
-  nahtFeature4Desc        String? @default("نقدم ضمانات حقيقية تمتد لسنوات لحماية استثمارك وراحتك.")
+
+  nahtFeature1Title String? @default("مواقع استراتيجية")
+  nahtFeature1Desc  String? @default("انتقاء دقيق لأرقى الأحياء وأكثرها نمواً لضمان جودة الحياة والعائد الاستثماري.")
+  nahtFeature2Title String? @default("جودة البناء")
+  nahtFeature2Desc  String? @default("استخدام أفضل المواد وتطبيق أدق معايير الكود السعودي للبناء.")
+  nahtFeature3Title String? @default("تصاميم استثنائية")
+  nahtFeature3Desc  String? @default("واجهات عصرية وتقسيمات داخلية ذكية تلبي تطلعات العائلة العصرية.")
+  nahtFeature4Title String? @default("ضمانات ممتدة")
+  nahtFeature4Desc  String? @default("نقدم ضمانات حقيقية تمتد لسنوات لحماية استثمارك وراحتك.")
 
   // Phase 15 Map Section
-  showMapSection      Boolean @default(true)
-  mapSectionTitle     String?
-  mapSectionDesc      String?
-  mapMode             String? @default("geographic") // geographic | image
-  mapCenterLat        Float?  @default(24.7136)
-  mapCenterLng        Float?  @default(46.6753)
-  mapZoom             Int?    @default(5)
-  mapBackgroundImage  String?
+  showMapSection     Boolean @default(true)
+  mapSectionTitle    String?
+  mapSectionDesc     String?
+  mapMode            String? @default("geographic") // geographic | image
+  mapCenterLat       Float?  @default(24.7136)
+  mapCenterLng       Float?  @default(46.6753)
+  mapZoom            Int?    @default(5)
+  mapBackgroundImage String?
 
   // Pin Settings (Batch 15)
   pinColorAvailable         String? @default("#B5B693")
@@ -495,12 +504,12 @@ model HomePageContent {
   pinLogoSize               Int?    @default(32)
 
   // Map Style Settings (Batch 15)
-  mapTileStyle              String? @default("light") // light, warm, muted, grayscale, dark
-  mapTileBrightness         Int?    @default(100)
-  mapTileContrast           Int?    @default(100)
-  mapTileSaturation         Int?    @default(100)
-  mapTileHue                Int?    @default(0)
-  mapTileGrayscale          Int?    @default(0)
+  mapTileStyle      String? @default("light") // light, warm, muted, grayscale, dark
+  mapTileBrightness Int?    @default(100)
+  mapTileContrast   Int?    @default(100)
+  mapTileSaturation Int?    @default(100)
+  mapTileHue        Int?    @default(0)
+  mapTileGrayscale  Int?    @default(0)
 
   updatedAt DateTime @updatedAt
 }
@@ -652,8 +661,8 @@ model SitePage {
   createdAt      DateTime @default(now())
   updatedAt      DateTime @updatedAt
 
-  parent         SitePage?  @relation("PageHierarchy", fields: [parentId], references: [id])
-  children       SitePage[] @relation("PageHierarchy")
+  parent   SitePage?  @relation("PageHierarchy", fields: [parentId], references: [id])
+  children SitePage[] @relation("PageHierarchy")
 }
 
 model NavigationItem {
@@ -668,25 +677,25 @@ model NavigationItem {
   createdAt    DateTime           @default(now())
   updatedAt    DateTime           @updatedAt
 
-  parent       NavigationItem?  @relation("NavHierarchy", fields: [parentId], references: [id])
-  children     NavigationItem[] @relation("NavHierarchy")
+  parent   NavigationItem?  @relation("NavHierarchy", fields: [parentId], references: [id])
+  children NavigationItem[] @relation("NavHierarchy")
 }
 
 model UserFlowSection {
-  id          String   @id @default(cuid())
-  pageKey     String   @default("home")
-  sectionKey  String
-  adminLabel  String
-  title       String?
-  subtitle    String?
-  ctaLabel    String?
-  ctaHref     String?
-  sortOrder   Int      @default(0)
-  isVisible   Boolean  @default(true)
-  isLocked    Boolean  @default(false)
-  notes       String?
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  id         String   @id @default(cuid())
+  pageKey    String   @default("home")
+  sectionKey String
+  adminLabel String
+  title      String?
+  subtitle   String?
+  ctaLabel   String?
+  ctaHref    String?
+  sortOrder  Int      @default(0)
+  isVisible  Boolean  @default(true)
+  isLocked   Boolean  @default(false)
+  notes      String?
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
 
   @@unique([pageKey, sectionKey])
 }
@@ -701,15 +710,15 @@ model Department {
   code        String   @unique
   description String?
   parentId    String?
-  managerId   String?  // References User.id
+  managerId   String? // References User.id
   isActive    Boolean  @default(true)
   sortOrder   Int      @default(0)
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 
-  parent      Department?  @relation("DeptHierarchy", fields: [parentId], references: [id])
-  children    Department[] @relation("DeptHierarchy")
-  users       User[]
+  parent   Department?  @relation("DeptHierarchy", fields: [parentId], references: [id])
+  children Department[] @relation("DeptHierarchy")
+  users    User[]
 }
 
 model AppRole {
@@ -728,14 +737,14 @@ model AppRole {
 
 model Permission {
   id          String   @id @default(cuid())
-  module      String   
-  action      String   
+  module      String
+  action      String
   code        String   @unique
   description String?
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 
-  roles       RolePermission[]
+  roles RolePermission[]
 }
 
 model RolePermission {
@@ -744,8 +753,8 @@ model RolePermission {
   permissionId String
   createdAt    DateTime @default(now())
 
-  role         AppRole    @relation(fields: [roleId], references: [id], onDelete: Cascade)
-  permission   Permission @relation(fields: [permissionId], references: [id], onDelete: Cascade)
+  role       AppRole    @relation(fields: [roleId], references: [id], onDelete: Cascade)
+  permission Permission @relation(fields: [permissionId], references: [id], onDelete: Cascade)
 
   @@unique([roleId, permissionId])
 }
@@ -756,8 +765,8 @@ model UserRole {
   roleId    String
   createdAt DateTime @default(now())
 
-  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  role      AppRole  @relation(fields: [roleId], references: [id], onDelete: Cascade)
+  user User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  role AppRole @relation(fields: [roleId], references: [id], onDelete: Cascade)
 
   @@unique([userId, roleId])
 }
@@ -784,4 +793,98 @@ model AuditLog {
   @@index([actorUserId])
   @@index([targetUserId])
   @@index([createdAt])
+}
+
+// -----------------------------------------------------
+// Phase 16 Task Management
+// -----------------------------------------------------
+
+model Task {
+  id               String    @id @default(cuid())
+  title            String
+  description      String?
+  assignedToId     String?
+  relatedType      String? // e.g., "PROJECT", "LEAD"
+  relatedId        String?
+  priority         String // LOW, MEDIUM, HIGH
+  taskStatus       String    @default("TODO") // TODO, IN_PROGRESS, DONE, CANCELLED
+  approvalStatus   String    @default("NOT_REQUIRED") // NOT_REQUIRED, PENDING, APPROVED, REJECTED
+  requiresApproval Boolean   @default(false)
+  approvalRound    Int       @default(0)
+  dueDate          DateTime?
+  createdById      String
+  completedAt      DateTime?
+  createdAt        DateTime  @default(now())
+  updatedAt        DateTime  @updatedAt
+
+  assignedTo   User?             @relation("AssignedTasks", fields: [assignedToId], references: [id], onDelete: SetNull)
+  createdBy    User              @relation("CreatedTasks", fields: [createdById], references: [id], onDelete: Restrict)
+  approvals    TaskApproval[]
+  comments     TaskComment[]
+  watchers     TaskWatcher[]
+  activityLogs TaskActivityLog[]
+
+  @@index([taskStatus])
+  @@index([approvalStatus])
+  @@index([assignedToId])
+  @@index([dueDate])
+}
+
+model TaskApproval {
+  id              String    @id @default(cuid())
+  taskId          String
+  approvalRound   Int
+  status          String    @default("PENDING") // PENDING, APPROVED, REJECTED
+  requestedById   String
+  requestedAt     DateTime  @default(now())
+  approverId      String?
+  decisionComment String?
+  decidedAt       DateTime?
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+
+  task        Task  @relation(fields: [taskId], references: [id], onDelete: Cascade)
+  requestedBy User  @relation("RequestedApprovals", fields: [requestedById], references: [id], onDelete: Restrict)
+  approver    User? @relation("DecidedApprovals", fields: [approverId], references: [id], onDelete: SetNull)
+
+  @@unique([taskId, approvalRound])
+  @@index([status])
+}
+
+model TaskComment {
+  id        String   @id @default(cuid())
+  taskId    String
+  userId    String
+  comment   String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  task Task @relation(fields: [taskId], references: [id], onDelete: Cascade)
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model TaskWatcher {
+  id        String   @id @default(cuid())
+  taskId    String
+  userId    String
+  createdAt DateTime @default(now())
+
+  task Task @relation(fields: [taskId], references: [id], onDelete: Cascade)
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([taskId, userId])
+}
+
+model TaskActivityLog {
+  id         String   @id @default(cuid())
+  taskId     String
+  actorId    String?
+  eventType  String // CREATED, UPDATED, ASSIGNED, PRIORITY_CHANGED, IN_PROGRESS, COMMENT_ADDED, SUBMITTED_FOR_APPROVAL, APPROVED, REJECTED, RESUBMITTED, COMPLETED, CANCELLED
+  fromStatus String?
+  toStatus   String?
+  metadata   Json?
+  createdAt  DateTime @default(now())
+
+  task  Task  @relation(fields: [taskId], references: [id], onDelete: Cascade)
+  actor User? @relation(fields: [actorId], references: [id], onDelete: SetNull)
 }

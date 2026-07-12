@@ -7,6 +7,7 @@ import { usePathname } from "next/navigation";
 interface CrmSidebarProps {
   userName: string;
   userRole: string;
+  userPermissions?: string[];
 }
 
 interface NavLink {
@@ -121,6 +122,16 @@ const allNavGroups: NavGroup[] = [
     ],
   },
   {
+    id: "tasks",
+    title: "المهام",
+    icon: (
+      <svg className="w-5 h-5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4"></path></svg>
+    ),
+    links: [
+      { name: "إدارة المهام", href: "/crm/tasks" },
+    ],
+  },
+  {
     id: "settings",
     title: "إعدادات النظام",
     icon: (
@@ -135,10 +146,12 @@ const allNavGroups: NavGroup[] = [
   },
 ];
 
-export default function CrmSidebar({ userName, userRole }: CrmSidebarProps) {
+export default function CrmSidebar({ userName, userRole, userPermissions = [] }: CrmSidebarProps) {
   const pathname = usePathname();
   const [openGroups, setOpenGroups] = useState<Record<string, boolean>>({});
   const [mounted, setMounted] = useState(false);
+
+  const hasPerm = (code: string) => userRole === "ADMIN" || userRole === "SUPER_ADMIN" || userPermissions.includes(code);
 
   // Filter groups and links based on user role
   const navGroups = allNavGroups.map(group => {
@@ -151,12 +164,15 @@ export default function CrmSidebar({ userName, userRole }: CrmSidebarProps) {
     }
     return group;
   }).filter(group => {
-    if (userRole === "ADMIN") return true;
+    // Permission check for tasks
+    if (group.id === "tasks" && !hasPerm("tasks.view")) return false;
+
+    if (userRole === "ADMIN" || userRole === "SUPER_ADMIN") return true;
     if (userRole === "MARKETING") {
-      return group.id !== "users";
+      return group.id !== "users" && group.id !== "settings";
     }
     if (userRole === "SALES") {
-      return ["dashboard", "sales", "projects"].includes(group.id);
+      return ["dashboard", "sales", "projects", "tasks"].includes(group.id);
     }
     return false;
   });
