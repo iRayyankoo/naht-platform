@@ -75,11 +75,11 @@ export default async function HomePage() {
         <ClientJourney />
         <section className="py-24">
           <div className="max-w-7xl mx-auto px-6">
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 lg:gap-16">
-              <div className="order-1">
+            <div className="flex flex-col gap-16 lg:gap-24 w-full">
+              <div className="w-full">
                 <HomeFaq faqs={faqs} />
               </div>
-              <div className="order-2">
+              <div className="w-full">
                 <HomeContact settings={settings} />
               </div>
             </div>
