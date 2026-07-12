@@ -46,6 +46,7 @@ export default function TimedProductCardsHero({ content, projects, settings }: T
   // Handle active index change and delay display index
   useEffect(() => {
     if (activeIndex !== displayIndex) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setIsTransitioning(true);
       const timeout = setTimeout(() => {
         setDisplayIndex(activeIndex);
@@ -60,12 +61,12 @@ export default function TimedProductCardsHero({ content, projects, settings }: T
   useEffect(() => {
     if (displayProjects.length <= 1) return;
 
-    const timer = setInterval(() => {
+    const timer = setTimeout(() => {
       setActiveIndex((prev) => (prev + 1) % displayProjects.length);
-    }, 6000); // 6 seconds
+    }, 8000); // 8 seconds
 
-    return () => clearInterval(timer);
-  }, [displayProjects.length]);
+    return () => clearTimeout(timer);
+  }, [activeIndex, displayProjects.length]);
 
   if (!displayProjects || displayProjects.length === 0) {
     return null; // Safe fallback will be handled by parent if projects is empty
@@ -213,7 +214,7 @@ export default function TimedProductCardsHero({ content, projects, settings }: T
                   <div 
                     key={`progress-${activeIndex}`}
                     className="h-full bg-brand-cafe w-full"
-                    style={{ animation: "progressAnim 6s linear forwards" }}
+                    style={{ animation: "progressAnim 8s linear forwards" }}
                   />
                 </div>
               )}
