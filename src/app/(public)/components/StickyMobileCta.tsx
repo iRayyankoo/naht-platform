@@ -4,30 +4,64 @@ import { useEffect, useState } from "react";
 import TrackedButton from "@/components/TrackedButton";
 
 export default function StickyMobileCta({ whatsappNumber, contactPhone }: { whatsappNumber?: string | null, contactPhone?: string | null }) {
-  const [isVisible, setIsVisible] = useState(false);
+  const [isPastHero, setIsPastHero] = useState(false);
+  const [isFormVisible, setIsFormVisible] = useState(false);
 
   useEffect(() => {
     const handleScroll = () => {
       // Show CTA only after scrolling past the hero section (approx 500px)
-      if (window.scrollY > 500) {
-        setIsVisible(true);
-      } else {
-        setIsVisible(false);
-      }
+      setIsPastHero(window.scrollY > 500);
     };
 
-    window.addEventListener("scroll", handleScroll);
+    window.addEventListener("scroll", handleScroll, { passive: true });
+
+    // Initial check
+    handleScroll();
+
     return () => window.removeEventListener("scroll", handleScroll);
   }, []);
 
-  if (!isVisible) return null;
+  useEffect(() => {
+    // Safely select the contact form (the only form on the home page)
+    const formElement = document.querySelector('form');
+
+    if (!formElement) return;
+
+    // Intersection Observer to detect if the contact form is visible in the viewport
+    const observer = new IntersectionObserver(
+      (entries) => {
+        const [entry] = entries;
+        // Hide the CTA if any part of the form is visible
+        setIsFormVisible(entry.isIntersecting);
+      },
+      {
+        root: null,
+        rootMargin: "0px",
+        threshold: 0,
+      }
+    );
+
+    observer.observe(formElement);
+
+    return () => {
+      observer.disconnect();
+    };
+  }, []);
+
   if (!whatsappNumber && !contactPhone) return null;
 
+  // Show only if we scrolled past the hero AND the contact form is NOT visible
+  const shouldShow = isPastHero && !isFormVisible;
+
   return (
-    <div className="fixed bottom-6 left-4 right-4 z-50 md:hidden transform transition-all duration-700 ease-out">
+    <div
+      className={`fixed bottom-6 left-4 right-4 z-50 md:hidden transform transition-all duration-500 ease-in-out motion-reduce:transition-none ${
+        shouldShow ? "translate-y-0 opacity-100 pointer-events-auto" : "translate-y-12 opacity-0 pointer-events-none"
+      }`}
+    >
       <div className="flex gap-3 bg-white/95 backdrop-blur-xl p-2 rounded-full shadow-[0_10px_40px_rgba(0,0,0,0.15)] border border-gray-100">
         {whatsappNumber && (
-          <TrackedButton 
+          <TrackedButton
             href={`https://wa.me/${whatsappNumber.replace(/[^0-9]/g, '')}`}
             targetContact={whatsappNumber}
             actionType="WHATSAPP"
@@ -38,7 +72,7 @@ export default function StickyMobileCta({ whatsappNumber, contactPhone }: { what
           </TrackedButton>
         )}
         {contactPhone && (
-          <TrackedButton 
+          <TrackedButton
             href={`tel:${contactPhone}`}
             targetContact={contactPhone}
             actionType="CALL"
