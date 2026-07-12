@@ -66,31 +66,31 @@ export default function ContactForm({ submitButtonText, helperText }: ContactFor
   };
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-5 md:space-y-6 pb-8">
+    <form onSubmit={handleSubmit} className="space-y-5 md:space-y-6 pb-2 w-full">
       {error && (
-        <div className="p-4 bg-red-50 text-red-700 rounded-lg text-sm md:text-base border border-red-200 flex items-center gap-3">
+        <div className="p-4 bg-red-50 text-red-700 rounded-lg text-sm md:text-base border border-red-200 flex items-center gap-3 w-full">
           <svg className="w-5 h-5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
           {error}
         </div>
       )}
 
-      <div>
+      <div className="w-full">
         <label className="block text-sm font-bold text-gray-700 mb-2">الاسم الكامل <span className="text-red-500">*</span></label>
         <input type="text" name="name" required className="w-full bg-gray-50/50 border-gray-200 rounded-xl p-3.5 md:p-4 border focus:bg-white focus:ring-2 focus:ring-brand-cafe/20 focus:border-brand-cafe text-base transition-colors" placeholder="اكتب اسمك الكامل" />
       </div>
 
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-5 md:gap-6">
-        <div>
+      <div className="grid grid-cols-1 xl:grid-cols-2 gap-5 md:gap-6 w-full">
+        <div className="w-full">
           <label className="block text-sm font-bold text-gray-700 mb-2">رقم الجوال <span className="text-red-500">*</span></label>
           <input type="tel" name="phone" dir="ltr" required pattern="^05\d{8}$" className="w-full bg-gray-50/50 border-gray-200 rounded-xl p-3.5 md:p-4 border focus:bg-white focus:ring-2 focus:ring-brand-cafe/20 focus:border-brand-cafe text-right text-base transition-colors" placeholder="05xxxxxxxx" />
         </div>
-        <div>
+        <div className="w-full">
           <label className="block text-sm font-bold text-gray-700 mb-2">البريد الإلكتروني (اختياري)</label>
           <input type="email" name="email" dir="ltr" className="w-full bg-gray-50/50 border-gray-200 rounded-xl p-3.5 md:p-4 border focus:bg-white focus:ring-2 focus:ring-brand-cafe/20 focus:border-brand-cafe text-right text-base transition-colors" placeholder="example@email.com" />
         </div>
       </div>
 
-      <div>
+      <div className="w-full">
         <label className="block text-sm font-bold text-gray-700 mb-2">نوع الاستفسار <span className="text-red-500">*</span></label>
         <select name="inquiryType" required className="w-full bg-gray-50/50 border-gray-200 rounded-xl p-3.5 md:p-4 border focus:bg-white focus:ring-2 focus:ring-brand-cafe/20 focus:border-brand-cafe text-base transition-colors">
           <option value="">-- اختر نوع الاستفسار --</option>
@@ -101,14 +101,14 @@ export default function ContactForm({ submitButtonText, helperText }: ContactFor
         </select>
       </div>
 
-      <div>
+      <div className="w-full">
         <label className="block text-sm font-bold text-gray-700 mb-2">الرسالة <span className="text-red-500">*</span></label>
         <textarea name="message" required rows={4} className="w-full bg-gray-50/50 border-gray-200 rounded-xl p-3.5 md:p-4 border focus:bg-white focus:ring-2 focus:ring-brand-cafe/20 focus:border-brand-cafe text-base transition-colors resize-y" placeholder="اكتب رسالتك أو استفسارك هنا..."></textarea>
       </div>
 
-      <div className="pt-2">
+      <div className="pt-2 w-full">
         {helperText && (
-          <p className="text-sm text-gray-500 mb-4 text-center">{helperText}</p>
+          <p className="text-sm text-gray-500 mb-4 text-center w-full">{helperText}</p>
         )}
         <button type="submit" disabled={isSubmitting} className="w-full bg-brand-cafe hover:bg-[#B3932F] hover:-translate-y-0.5 text-white px-6 py-4 rounded-xl font-bold text-lg disabled:opacity-70 disabled:hover:translate-y-0 disabled:cursor-not-allowed transition-all duration-300 flex items-center justify-center shadow-lg shadow-brand-cafe/20">
           {isSubmitting ? (

@@ -22,9 +22,9 @@ function SmallCard({ project }: { project: Project }) {
   return (
     <Link
       href={`/projects/${project.slug}`}
-      className="group flex flex-col bg-white rounded-2xl border border-gray-100 overflow-hidden hover:shadow-xl hover:-translate-y-1 transition-all duration-300"
+      className="group flex flex-col sm:flex-row lg:flex-col bg-white rounded-2xl border border-gray-100 overflow-hidden hover:shadow-xl hover:-translate-y-1 transition-all duration-300"
     >
-      <div className="relative h-40 xl:h-48 overflow-hidden bg-gray-50 shrink-0">
+      <div className="relative h-48 sm:h-auto sm:w-48 lg:w-full lg:h-44 shrink-0 bg-gray-50 overflow-hidden">
         {project.mainImage ? (
           <img
             src={project.mainImage}
@@ -41,15 +41,15 @@ function SmallCard({ project }: { project: Project }) {
         </span>
       </div>
 
-      <div className="p-4 sm:p-5 flex flex-col gap-2 flex-1">
-        <p className="text-[10px] sm:text-xs text-brand-cafe font-bold tracking-widest uppercase">
+      <div className="p-4 sm:p-5 flex flex-col justify-center gap-2 flex-1">
+        <p className="text-[10px] sm:text-xs text-brand-cafe font-bold tracking-widest uppercase line-clamp-1">
           {project.type}{location ? ` • ${location}` : ""}
         </p>
-        <h3 className="text-base sm:text-lg font-bold text-gray-900 group-hover:text-brand-cafe transition-colors leading-tight">
+        <h3 className="text-base sm:text-lg font-bold text-gray-900 group-hover:text-brand-cafe transition-colors leading-tight line-clamp-2">
           {project.name}
         </h3>
 
-        <div className="flex items-center justify-between mt-auto pt-3 sm:pt-4 border-t border-gray-50">
+        <div className="flex items-center justify-between mt-2 pt-3 sm:pt-4 border-t border-gray-50">
           <div className="flex flex-col gap-0.5">
             {fmt(project.price) && (
               <span className="text-xs sm:text-sm font-bold text-gray-900">
@@ -76,12 +76,13 @@ export default function FeaturedProjects({ projects }: { projects: Project[] }) 
   if (!projects || projects.length === 0) return null;
 
   const main = projects[0];
-  const curated = projects.slice(1, 5);
+  const sideProjects = projects.slice(1, 3);
+  const bottomProjects = projects.slice(3);
   const mainLocation = [main.city, main.neighborhood].filter(Boolean).join(" • ");
 
   return (
     <section className="py-20 md:py-32 bg-[#F9F9F7]">
-      <div className="max-w-[1400px] mx-auto px-5 md:px-8">
+      <div className="max-w-7xl mx-auto px-5 md:px-8">
         <div className="flex flex-col md:flex-row md:items-end justify-between gap-6 mb-12 md:mb-16">
           <div>
             <p className="text-xs text-brand-cafe font-bold tracking-[0.2em] uppercase mb-3">
@@ -102,12 +103,12 @@ export default function FeaturedProjects({ projects }: { projects: Project[] }) 
           </Link>
         </div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-5 gap-4 sm:gap-6">
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
           <Link
             href={`/projects/${main.slug}`}
-            className="group lg:col-span-3 flex flex-col bg-white rounded-2xl md:rounded-3xl border border-gray-100 overflow-hidden hover:shadow-xl hover:-translate-y-1 transition-all duration-500"
+            className="group lg:col-span-8 flex flex-col bg-white rounded-3xl border border-gray-100 overflow-hidden hover:shadow-xl hover:-translate-y-1 transition-all duration-500"
           >
-            <div className="relative h-[250px] sm:h-[350px] md:h-[450px] lg:h-full overflow-hidden bg-gray-50 shrink-0 lg:shrink">
+            <div className="relative h-[250px] sm:h-[350px] md:h-[450px] lg:h-[420px] overflow-hidden bg-gray-50 shrink-0">
               {main.mainImage ? (
                 <img
                   src={main.mainImage}
@@ -124,7 +125,7 @@ export default function FeaturedProjects({ projects }: { projects: Project[] }) 
               </span>
             </div>
 
-            <div className="p-5 sm:p-6 md:p-8 flex flex-col flex-1 shrink-0">
+            <div className="p-6 md:p-8 flex flex-col shrink-0">
               <p className="text-xs sm:text-sm text-brand-cafe font-bold tracking-widest uppercase mb-2">
                 {main.type}{mainLocation ? ` • ${mainLocation}` : ""}
               </p>
@@ -132,7 +133,7 @@ export default function FeaturedProjects({ projects }: { projects: Project[] }) 
                 {main.name}
               </h3>
 
-              <div className="mt-auto flex items-end justify-between border-t border-gray-100 pt-4 sm:pt-6">
+              <div className="mt-2 flex items-end justify-between border-t border-gray-100 pt-4 sm:pt-6">
                 <div className="flex flex-wrap items-center gap-4 sm:gap-6">
                   {fmt(main.price) && (
                     <div>
@@ -158,16 +159,22 @@ export default function FeaturedProjects({ projects }: { projects: Project[] }) 
             </div>
           </Link>
 
-          {curated.length > 0 && (
-            <div className="lg:col-span-2">
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-2 gap-4 sm:gap-6 h-full">
-                {curated.map((p) => (
-                  <SmallCard key={p.id} project={p} />
-                ))}
-              </div>
+          {sideProjects.length > 0 && (
+            <div className="lg:col-span-4 flex flex-col gap-6">
+              {sideProjects.map((p) => (
+                <SmallCard key={p.id} project={p} />
+              ))}
             </div>
           )}
         </div>
+
+        {bottomProjects.length > 0 && (
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 mt-6">
+            {bottomProjects.map((p) => (
+              <SmallCard key={p.id} project={p} />
+            ))}
+          </div>
+        )}
 
         <div className="mt-8 sm:mt-10 md:hidden">
           <Link
