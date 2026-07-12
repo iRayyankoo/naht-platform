@@ -372,6 +372,49 @@ async function main() {
     });
   }
 
+  console.log('Seeding task permissions...');
+  const taskPermissions = [
+    { module: 'TASKS', action: 'VIEW', code: 'tasks.view', description: 'عرض المهام' },
+    { module: 'TASKS', action: 'CREATE', code: 'tasks.create', description: 'إنشاء مهمة' },
+    { module: 'TASKS', action: 'EDIT', code: 'tasks.edit', description: 'تعديل المهام / تغيير الحالة' },
+    { module: 'TASKS', action: 'ASSIGN', code: 'tasks.assign', description: 'إسناد المهام لمستخدم' },
+    { module: 'TASKS', action: 'APPROVE', code: 'tasks.approve', description: 'اعتماد المهام ورفضها' },
+    { module: 'TASKS', action: 'DELETE', code: 'tasks.delete', description: 'حذف / إلغاء المهام' },
+  ];
+
+  const createdTaskPerms = [];
+  for (const perm of taskPermissions) {
+    const p = await prisma.permission.upsert({
+      where: { code: perm.code },
+      update: {},
+      create: perm,
+    });
+    createdTaskPerms.push(p);
+  }
+
+  const adminRole = await prisma.appRole.findUnique({
+    where: { code: 'ADMIN' },
+  });
+
+  if (adminRole) {
+    for (const p of createdTaskPerms) {
+      await prisma.rolePermission.upsert({
+        where: {
+          roleId_permissionId: {
+            roleId: adminRole.id,
+            permissionId: p.id,
+          },
+        },
+        update: {},
+        create: {
+          roleId: adminRole.id,
+          permissionId: p.id,
+        },
+      });
+    }
+    console.log('Task permissions seeded and assigned to ADMIN role successfully.');
+  }
+
   console.log('Staging UAT Seeding finished successfully.');
 
   // Validation
