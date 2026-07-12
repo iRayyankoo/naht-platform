@@ -64,6 +64,14 @@ model User {
   taskComments       TaskComment[]
   taskWatchers       TaskWatcher[]
   taskActivityLogs   TaskActivityLog[]
+
+  // Phase 16 Work Projects Relations
+  ownedWorkProjects              WorkProject[]            @relation("WorkProjectOwner")
+  workProjectMemberships         WorkProjectMember[]      @relation("WorkProjectMemberships")
+  workProjectActivityLogs        WorkProjectActivityLog[] @relation("WorkProjectActivityActor")
+  uploadedWorkProjectAttachments WorkProjectAttachment[]  @relation("WorkProjectAttachmentsUploaded")
+  uploadedTaskAttachments        TaskAttachment[]         @relation("TaskAttachmentsUploaded")
+  designatedForTasks             Task[]                   @relation("DesignatedTaskApprover")
 }
 
 model Account {
@@ -817,17 +825,25 @@ model Task {
   createdAt        DateTime  @default(now())
   updatedAt        DateTime  @updatedAt
 
-  assignedTo   User?             @relation("AssignedTasks", fields: [assignedToId], references: [id], onDelete: SetNull)
-  createdBy    User              @relation("CreatedTasks", fields: [createdById], references: [id], onDelete: Restrict)
-  approvals    TaskApproval[]
-  comments     TaskComment[]
-  watchers     TaskWatcher[]
-  activityLogs TaskActivityLog[]
+  workProjectId        String?
+  designatedApproverId String?
+
+  assignedTo         User?             @relation("AssignedTasks", fields: [assignedToId], references: [id], onDelete: SetNull)
+  createdBy          User              @relation("CreatedTasks", fields: [createdById], references: [id], onDelete: Restrict)
+  workProject        WorkProject?      @relation(fields: [workProjectId], references: [id], onDelete: SetNull)
+  designatedApprover User?             @relation("DesignatedTaskApprover", fields: [designatedApproverId], references: [id], onDelete: SetNull)
+  approvals          TaskApproval[]
+  comments           TaskComment[]
+  watchers           TaskWatcher[]
+  activityLogs       TaskActivityLog[]
+  attachments        TaskAttachment[]
 
   @@index([taskStatus])
   @@index([approvalStatus])
   @@index([assignedToId])
   @@index([dueDate])
+  @@index([workProjectId])
+  @@index([designatedApproverId])
 }
 
 model TaskApproval {
@@ -887,4 +903,129 @@ model TaskActivityLog {
 
   task  Task  @relation(fields: [taskId], references: [id], onDelete: Cascade)
   actor User? @relation(fields: [actorId], references: [id], onDelete: SetNull)
+}
+
+// -----------------------------------------------------
+// Phase 16 Work Projects
+// -----------------------------------------------------
+
+enum WorkProjectStatus {
+  PLANNING
+  ACTIVE
+  PAUSED
+  COMPLETED
+  CANCELLED
+}
+
+enum WorkProjectMemberRole {
+  OWNER
+  MANAGER
+  MEMBER
+  VIEWER
+}
+
+enum AttachmentStatus {
+  PENDING
+  READY
+  DELETING
+  FAILED
+}
+
+model WorkProject {
+  id          String            @id @default(cuid())
+  name        String
+  description String?           @db.Text
+  status      WorkProjectStatus @default(PLANNING)
+  startDate   DateTime?
+  endDate     DateTime?
+  ownerId     String
+  createdAt   DateTime          @default(now())
+  updatedAt   DateTime          @updatedAt
+
+  owner        User                     @relation("WorkProjectOwner", fields: [ownerId], references: [id])
+  members      WorkProjectMember[]
+  tasks        Task[]
+  attachments  WorkProjectAttachment[]
+  activityLogs WorkProjectActivityLog[]
+
+  @@index([ownerId])
+  @@index([status])
+  @@index([startDate])
+  @@index([endDate])
+}
+
+model WorkProjectMember {
+  id            String                @id @default(cuid())
+  workProjectId String
+  userId        String
+  role          WorkProjectMemberRole @default(MEMBER)
+  createdAt     DateTime              @default(now())
+
+  workProject WorkProject @relation(fields: [workProjectId], references: [id], onDelete: Cascade)
+  user        User        @relation("WorkProjectMemberships", fields: [userId], references: [id], onDelete: Restrict)
+
+  @@unique([workProjectId, userId])
+  @@index([userId])
+  @@index([workProjectId])
+}
+
+model WorkProjectActivityLog {
+  id            String   @id @default(cuid())
+  workProjectId String
+  actorId       String?
+  eventType     String
+  metadata      Json?
+  createdAt     DateTime @default(now())
+
+  workProject WorkProject @relation(fields: [workProjectId], references: [id], onDelete: Restrict)
+  actor       User?       @relation("WorkProjectActivityActor", fields: [actorId], references: [id], onDelete: SetNull)
+
+  @@index([workProjectId, createdAt])
+  @@index([actorId])
+}
+
+model WorkProjectAttachment {
+  id               String           @id @default(cuid())
+  workProjectId    String
+  originalFileName String
+  storageKey       String           @unique
+  bucketName       String
+  mimeType         String
+  fileSize         Int
+  checksum         String?
+  status           AttachmentStatus @default(PENDING)
+  uploadedById     String?
+  createdAt        DateTime         @default(now())
+  updatedAt        DateTime         @updatedAt
+  deletedAt        DateTime?
+
+  workProject WorkProject @relation(fields: [workProjectId], references: [id], onDelete: Restrict)
+  uploadedBy  User?       @relation("WorkProjectAttachmentsUploaded", fields: [uploadedById], references: [id], onDelete: SetNull)
+
+  @@index([workProjectId, createdAt])
+  @@index([status])
+  @@index([uploadedById])
+}
+
+model TaskAttachment {
+  id               String           @id @default(cuid())
+  taskId           String
+  originalFileName String
+  storageKey       String           @unique
+  bucketName       String
+  mimeType         String
+  fileSize         Int
+  checksum         String?
+  status           AttachmentStatus @default(PENDING)
+  uploadedById     String?
+  createdAt        DateTime         @default(now())
+  updatedAt        DateTime         @updatedAt
+  deletedAt        DateTime?
+
+  task       Task  @relation(fields: [taskId], references: [id], onDelete: Restrict)
+  uploadedBy User? @relation("TaskAttachmentsUploaded", fields: [uploadedById], references: [id], onDelete: SetNull)
+
+  @@index([taskId, createdAt])
+  @@index([status])
+  @@index([uploadedById])
 }
