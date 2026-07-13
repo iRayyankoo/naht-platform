@@ -380,6 +380,20 @@ async function main() {
     { module: 'TASKS', action: 'ASSIGN', code: 'tasks.assign', description: 'إسناد المهام لمستخدم' },
     { module: 'TASKS', action: 'APPROVE', code: 'tasks.approve', description: 'اعتماد المهام ورفضها' },
     { module: 'TASKS', action: 'DELETE', code: 'tasks.delete', description: 'حذف / إلغاء المهام' },
+    { module: 'TASKS', action: 'UPLOAD_ATTACHMENT', code: 'tasks.attachments.upload', description: 'رفع مرفقات المهام' },
+    { module: 'TASKS', action: 'VIEW_ATTACHMENT', code: 'tasks.attachments.view', description: 'عرض المرفقات للمهام' },
+    { module: 'TASKS', action: 'DELETE_ATTACHMENT', code: 'tasks.attachments.delete', description: 'حذف مرفقات المهام' },
+
+    // Work Projects
+    { module: 'WORK_PROJECTS', action: 'VIEW', code: 'work_projects.view', description: 'عرض مشاريع العمل' },
+    { module: 'WORK_PROJECTS', action: 'CREATE', code: 'work_projects.create', description: 'إنشاء مشروع عمل' },
+    { module: 'WORK_PROJECTS', action: 'EDIT', code: 'work_projects.edit', description: 'تعديل مشروع عمل' },
+    { module: 'WORK_PROJECTS', action: 'MANAGE_MEMBERS', code: 'work_projects.manage_members', description: 'إدارة أعضاء مشاريع العمل' },
+    { module: 'WORK_PROJECTS', action: 'TRANSFER_OWNERSHIP', code: 'work_projects.transfer_ownership', description: 'نقل ملكية مشروع العمل' },
+    { module: 'WORK_PROJECTS', action: 'ARCHIVE', code: 'work_projects.archive', description: 'أرشفة مشروع العمل' },
+    { module: 'WORK_PROJECTS', action: 'UPLOAD_ATTACHMENT', code: 'work_projects.attachments.upload', description: 'رفع مرفقات مشاريع العمل' },
+    { module: 'WORK_PROJECTS', action: 'VIEW_ATTACHMENT', code: 'work_projects.attachments.view', description: 'عرض مرفقات مشاريع العمل' },
+    { module: 'WORK_PROJECTS', action: 'DELETE_ATTACHMENT', code: 'work_projects.attachments.delete', description: 'حذف مرفقات مشاريع العمل' },
   ];
 
   const createdTaskPerms = [];
@@ -412,7 +426,30 @@ async function main() {
         },
       });
     }
-    console.log('Task permissions seeded and assigned to ADMIN role successfully.');
+    console.log('Task and WorkProject permissions seeded and assigned to ADMIN role successfully.');
+  }
+
+  const superAdminRole = await prisma.appRole.findUnique({
+    where: { code: 'SUPER_ADMIN' },
+  });
+
+  if (superAdminRole) {
+    for (const p of createdTaskPerms) {
+      await prisma.rolePermission.upsert({
+        where: {
+          roleId_permissionId: {
+            roleId: superAdminRole.id,
+            permissionId: p.id,
+          },
+        },
+        update: {},
+        create: {
+          roleId: superAdminRole.id,
+          permissionId: p.id,
+        },
+      });
+    }
+    console.log('Task and WorkProject permissions assigned to SUPER_ADMIN role successfully.');
   }
 
   console.log('Staging UAT Seeding finished successfully.');
@@ -421,7 +458,7 @@ async function main() {
   const projectCount = await prisma.project.count();
   const firstProject = await prisma.project.findFirst({ select: { name: true, mainImage: true }});
   const homePageCheck = await prisma.homePageContent.findUnique({ where: { id: 'global' }, select: { heroBackgroundImage: true }});
-  
+
   console.log('--- DB Validation After Seed ---');
   console.log(`Total Projects: ${projectCount}`);
   console.log(`First Project: ${firstProject?.name} | mainImage: ${firstProject?.mainImage}`);

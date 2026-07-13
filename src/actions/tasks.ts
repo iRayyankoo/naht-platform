@@ -2,7 +2,8 @@
 
 import { prisma } from "@/lib/prisma";
 import { getCurrentUser } from "@/lib/auth-helpers";
-import { requirePermission } from "@/lib/rbac-helpers";
+import { requirePermission, isSuperAdmin } from "@/lib/rbac-helpers";
+import { canApproveOrRejectTask, canAssignTaskToSelfAsApprover } from "@/lib/logic-rules";
 import { revalidatePath } from "next/cache";
 import { z } from "zod";
 
@@ -16,12 +17,14 @@ const taskBaseSchema = z.object({
   dueDate: z.date().nullable().optional(),
   relatedType: z.string().nullable().optional(),
   relatedId: z.string().nullable().optional(),
+  workProjectId: z.string().nullable().optional(),
+  designatedApproverId: z.string().nullable().optional(),
 });
 
 export async function createTask(data: z.infer<typeof taskBaseSchema>) {
   const user = await getCurrentUser();
   if (!user) throw new Error("Unauthorized");
-  
+
   const hasPerm = await requirePermission("tasks.create", { mode: "enforce", context: "Create Task" });
   if (!hasPerm) throw new Error("ليس لديك صلاحية لإنشاء مهمة");
 
@@ -32,6 +35,52 @@ export async function createTask(data: z.infer<typeof taskBaseSchema>) {
     const assignee = await prisma.user.findUnique({ where: { id: validatedData.assignedToId } });
     if (!assignee || !assignee.isActive) {
       throw new Error("المستخدم المسند إليه غير صالح أو غير فعال");
+    }
+
+    if (validatedData.workProjectId) {
+      const isMember = await prisma.workProjectMember.findUnique({
+        where: { workProjectId_userId: { workProjectId: validatedData.workProjectId, userId: validatedData.assignedToId } }
+      });
+      if (!isMember) {
+        throw new Error("المستخدم المسند إليه يجب أن يكون عضواً في مشروع العمل");
+      }
+    }
+  }
+
+  if (validatedData.requiresApproval) {
+    if (!validatedData.designatedApproverId) {
+      throw new Error("يجب تحديد معتمد للمهمة إذا كانت تتطلب اعتماداً");
+    }
+    const approver = await prisma.user.findUnique({ where: { id: validatedData.designatedApproverId } });
+    if (!approver || !approver.isActive) {
+      throw new Error("المعتمد المحدد غير صالح أو غير فعال");
+    }
+
+    if (validatedData.workProjectId) {
+      const isMember = await prisma.workProjectMember.findUnique({
+        where: { workProjectId_userId: { workProjectId: validatedData.workProjectId, userId: validatedData.designatedApproverId } }
+      });
+      if (!isMember) {
+        throw new Error("المعتمد المحدد يجب أن يكون عضواً في مشروع العمل");
+      }
+    }
+
+    if (validatedData.assignedToId === validatedData.designatedApproverId) {
+      const isSuperAdminUser = await isSuperAdmin(user.id);
+      if (!canAssignTaskToSelfAsApprover(isSuperAdminUser, validatedData.assignedToId, validatedData.designatedApproverId)) {
+        throw new Error("لا يمكن أن يكون منفذ المهمة هو نفسه المعتمد");
+      }
+    }
+  } else {
+    validatedData.designatedApproverId = null; // Clear if not required
+  }
+
+  if (validatedData.workProjectId) {
+    // Check if project is cancelled or completed
+    const project = await prisma.workProject.findUnique({ where: { id: validatedData.workProjectId } });
+    if (!project) throw new Error("مشروع العمل غير موجود");
+    if (project.status === "CANCELLED" || project.status === "COMPLETED") {
+      throw new Error("لا يمكن إضافة مهام لمشروع ملغى أو مكتمل");
     }
   }
 
@@ -83,19 +132,80 @@ export async function updateTask(taskId: string, data: Partial<z.infer<typeof ta
   if (data.assignedToId && data.assignedToId !== task.assignedToId) {
     const hasAssignPerm = await requirePermission("tasks.assign", { mode: "enforce", context: "Assign Task" });
     if (!hasAssignPerm) throw new Error("ليس لديك صلاحية لتغيير إسناد المهمة");
-    
+
     const assignee = await prisma.user.findUnique({ where: { id: data.assignedToId } });
     if (!assignee || !assignee.isActive) throw new Error("المستخدم المسند إليه غير صالح أو غير فعال");
   }
 
-  // Strip restricted fields just in case
   const updateData = {
     title: data.title,
     description: data.description,
     priority: data.priority,
     dueDate: data.dueDate,
     assignedToId: data.assignedToId,
+    workProjectId: data.workProjectId,
+    requiresApproval: data.requiresApproval,
+    designatedApproverId: data.designatedApproverId,
   };
+
+  // Validation for requiresApproval & designatedApproverId
+  if (updateData.requiresApproval) {
+    if (!updateData.designatedApproverId) {
+      throw new Error("يجب تحديد معتمد للمهمة إذا كانت تتطلب اعتماداً");
+    }
+    const approver = await prisma.user.findUnique({ where: { id: updateData.designatedApproverId } });
+    if (!approver || !approver.isActive) {
+      throw new Error("المعتمد المحدد غير صالح أو غير فعال");
+    }
+    if (updateData.assignedToId === updateData.designatedApproverId || (task.assignedToId === updateData.designatedApproverId && !updateData.assignedToId)) {
+       const isSuperAdminUser = await isSuperAdmin(user.id);
+       const finalAssignee = updateData.assignedToId || task.assignedToId || "";
+       if (!canAssignTaskToSelfAsApprover(isSuperAdminUser, finalAssignee, updateData.designatedApproverId)) {
+         throw new Error("لا يمكن أن يكون منفذ المهمة هو نفسه المعتمد");
+       }
+    }
+  } else if (updateData.requiresApproval === false) {
+    updateData.designatedApproverId = null;
+  }
+
+  // Work Project validation
+  const finalWorkProjectId = updateData.workProjectId !== undefined ? updateData.workProjectId : task.workProjectId;
+  if (finalWorkProjectId) {
+    const project = await prisma.workProject.findUnique({ where: { id: finalWorkProjectId } });
+    if (!project) throw new Error("مشروع العمل غير موجود");
+    if (project.status === "CANCELLED" || project.status === "COMPLETED") {
+      throw new Error("لا يمكن نقل/إضافة مهمة لمشروع ملغى أو مكتمل");
+    }
+
+    // Check members
+    const finalAssigneeId = updateData.assignedToId !== undefined ? updateData.assignedToId : task.assignedToId;
+    if (finalAssigneeId) {
+      const isMember = await prisma.workProjectMember.findUnique({
+        where: { workProjectId_userId: { workProjectId: finalWorkProjectId, userId: finalAssigneeId } }
+      });
+      if (!isMember) throw new Error("المستخدم المسند إليه يجب أن يكون عضواً في المشروع الجديد");
+    }
+
+    const finalApproverId = updateData.designatedApproverId !== undefined ? updateData.designatedApproverId : task.designatedApproverId;
+    if (finalApproverId && (updateData.requiresApproval || task.requiresApproval)) {
+      const isMember = await prisma.workProjectMember.findUnique({
+        where: { workProjectId_userId: { workProjectId: finalWorkProjectId, userId: finalApproverId } }
+      });
+      if (!isMember) throw new Error("المعتمد المحدد يجب أن يكون عضواً في المشروع الجديد");
+    }
+  }
+
+  if (task.approvalStatus === "PENDING") {
+    if (updateData.workProjectId !== undefined && updateData.workProjectId !== task.workProjectId) {
+      throw new Error("لا يمكن تغيير مشروع العمل لمهمة بانتظار الاعتماد");
+    }
+    if (updateData.assignedToId !== undefined && updateData.assignedToId !== task.assignedToId) {
+      throw new Error("لا يمكن تغيير منفذ مهمة بانتظار الاعتماد");
+    }
+    if (updateData.designatedApproverId !== undefined && updateData.designatedApproverId !== task.designatedApproverId) {
+      throw new Error("لا يمكن تغيير المعتمد المحدد لمهمة بانتظار الاعتماد");
+    }
+  }
 
   await prisma.$transaction(async (tx) => {
     await tx.task.update({
@@ -103,12 +213,23 @@ export async function updateTask(taskId: string, data: Partial<z.infer<typeof ta
       data: updateData,
     });
 
+    const changes: Record<string, unknown> = {};
+    if (updateData.workProjectId !== undefined && updateData.workProjectId !== task.workProjectId) {
+      changes.workProjectId = { old: task.workProjectId, new: updateData.workProjectId };
+    }
+    if (updateData.assignedToId !== undefined && updateData.assignedToId !== task.assignedToId) {
+      changes.assignedToId = { old: task.assignedToId, new: updateData.assignedToId };
+    }
+    if (updateData.designatedApproverId !== undefined && updateData.designatedApproverId !== task.designatedApproverId) {
+      changes.designatedApproverId = { old: task.designatedApproverId, new: updateData.designatedApproverId };
+    }
+
     await tx.taskActivityLog.create({
       data: {
         taskId,
         actorId: user.id,
         eventType: "UPDATED",
-        metadata: { updatedFields: Object.keys(updateData) },
+        metadata: { updatedFields: Object.keys(updateData), ...changes },
       },
     });
 
@@ -130,7 +251,7 @@ export async function updateTask(taskId: string, data: Partial<z.infer<typeof ta
 export async function startTask(taskId: string) {
   const user = await getCurrentUser();
   if (!user) throw new Error("Unauthorized");
-  
+
   const hasPerm = await requirePermission("tasks.edit", { mode: "enforce", context: "Start Task" });
   if (!hasPerm) throw new Error("ليس لديك صلاحية لتعديل المهام");
 
@@ -162,7 +283,7 @@ export async function startTask(taskId: string) {
 export async function submitForApproval(taskId: string) {
   const user = await getCurrentUser();
   if (!user) throw new Error("Unauthorized");
-  
+
   const hasPerm = await requirePermission("tasks.edit", { mode: "enforce", context: "Submit for Approval" });
   if (!hasPerm) throw new Error("ليس لديك صلاحية");
 
@@ -170,6 +291,7 @@ export async function submitForApproval(taskId: string) {
     const task = await tx.task.findUnique({ where: { id: taskId } });
     if (!task) throw new Error("المهمة غير موجودة");
     if (!task.requiresApproval) throw new Error("المهمة لا تتطلب اعتماداً");
+    if (!task.designatedApproverId) throw new Error("يجب تحديد معتمد للمهمة قبل إرسالها للاعتماد");
     if (task.taskStatus !== "IN_PROGRESS") throw new Error("يجب البدء في المهمة أولاً (IN_PROGRESS) قبل إرسالها للاعتماد");
     if (task.approvalStatus === "PENDING") throw new Error("المهمة مرسلة للاعتماد بالفعل");
 
@@ -218,7 +340,7 @@ export async function submitForApproval(taskId: string) {
 export async function approveTask(taskId: string) {
   const user = await getCurrentUser();
   if (!user) throw new Error("Unauthorized");
-  
+
   const hasPerm = await requirePermission("tasks.approve", { mode: "enforce", context: "Approve Task" });
   if (!hasPerm) throw new Error("ليس لديك صلاحية للاعتماد");
 
@@ -226,6 +348,16 @@ export async function approveTask(taskId: string) {
     const task = await tx.task.findUnique({ where: { id: taskId } });
     if (!task) throw new Error("المهمة غير موجودة");
     if (task.approvalStatus !== "PENDING") throw new Error("المهمة ليست بانتظار الاعتماد");
+
+    // Only designated approver or SUPER_ADMIN can approve
+    let isOverride = false;
+    if (task.designatedApproverId && task.designatedApproverId !== user.id) {
+       const isSuperAdminUser = await isSuperAdmin(user.id);
+       if (!canApproveOrRejectTask(isSuperAdminUser, task.designatedApproverId, user.id)) {
+         throw new Error("فقط المعتمد المحدد يمكنه الاعتماد");
+       }
+       isOverride = true;
+    }
 
     const updatedTask = await tx.task.updateMany({
       where: {
@@ -258,6 +390,11 @@ export async function approveTask(taskId: string) {
         eventType: "APPROVED",
         fromStatus: "PENDING",
         toStatus: "APPROVED",
+        metadata: {
+          approverId: user.id,
+          designatedApproverId: task.designatedApproverId,
+          isSuperAdminOverride: isOverride,
+        }
       },
     });
   });
@@ -269,7 +406,7 @@ export async function approveTask(taskId: string) {
 export async function rejectTask(taskId: string, reason: string) {
   const user = await getCurrentUser();
   if (!user) throw new Error("Unauthorized");
-  
+
   const hasPerm = await requirePermission("tasks.approve", { mode: "enforce", context: "Reject Task" });
   if (!hasPerm) throw new Error("ليس لديك صلاحية للاعتماد");
 
@@ -280,6 +417,15 @@ export async function rejectTask(taskId: string, reason: string) {
     const task = await tx.task.findUnique({ where: { id: taskId } });
     if (!task) throw new Error("المهمة غير موجودة");
     if (task.approvalStatus !== "PENDING") throw new Error("المهمة ليست بانتظار الاعتماد");
+
+    let isOverride = false;
+    if (task.designatedApproverId && task.designatedApproverId !== user.id) {
+       const isSuperAdminUser = await isSuperAdmin(user.id);
+       if (!canApproveOrRejectTask(isSuperAdminUser, task.designatedApproverId, user.id)) {
+         throw new Error("فقط المعتمد المحدد يمكنه الرفض");
+       }
+       isOverride = true;
+    }
 
     const updatedTask = await tx.task.updateMany({
       where: {
@@ -312,7 +458,12 @@ export async function rejectTask(taskId: string, reason: string) {
         eventType: "REJECTED",
         fromStatus: "PENDING",
         toStatus: "REJECTED",
-        metadata: { reason: cleanReason },
+        metadata: {
+          reason: cleanReason,
+          approverId: user.id,
+          designatedApproverId: task.designatedApproverId,
+          isSuperAdminOverride: isOverride,
+        },
       },
     });
   });
@@ -324,7 +475,7 @@ export async function rejectTask(taskId: string, reason: string) {
 export async function completeTask(taskId: string) {
   const user = await getCurrentUser();
   if (!user) throw new Error("Unauthorized");
-  
+
   const hasPerm = await requirePermission("tasks.edit", { mode: "enforce", context: "Complete Task" });
   if (!hasPerm) throw new Error("ليس لديك صلاحية");
 
@@ -360,7 +511,7 @@ export async function completeTask(taskId: string) {
 export async function cancelTask(taskId: string) {
   const user = await getCurrentUser();
   if (!user) throw new Error("Unauthorized");
-  
+
   const hasPerm = await requirePermission("tasks.delete", { mode: "enforce", context: "Cancel Task" });
   if (!hasPerm) throw new Error("ليس لديك صلاحية لإلغاء المهمة");
 
@@ -394,7 +545,7 @@ export async function cancelTask(taskId: string) {
 export async function addComment(taskId: string, commentText: string) {
   const user = await getCurrentUser();
   if (!user) throw new Error("Unauthorized");
-  
+
   const clean = commentText.trim();
   if (!clean) throw new Error("التعليق فارغ");
 
