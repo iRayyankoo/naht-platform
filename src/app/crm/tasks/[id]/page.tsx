@@ -6,6 +6,8 @@ import { authOptions } from "@/lib/auth";
 import TaskDetailsClient from "./TaskDetailsClient";
 import { checkPermission } from "@/lib/rbac-helpers";
 
+export const dynamic = "force-dynamic";
+
 const getTaskStatusLabel = (status: string) => {
   const map: Record<string, string> = {
     TODO: "بانتظار البدء",
@@ -57,7 +59,7 @@ export default async function TaskDetailsPage({ params }: { params: { id: string
     include: {
       assignedTo: { select: { id: true, name: true } },
       createdBy: { select: { id: true, name: true } },
-      comments: { 
+      comments: {
         orderBy: { createdAt: 'asc' },
         include: { user: { select: { id: true, name: true } } }
       },
@@ -91,7 +93,7 @@ export default async function TaskDetailsPage({ params }: { params: { id: string
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        
+
         {/* Main Details */}
         <div className="lg:col-span-2 space-y-6">
           <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6">
@@ -131,7 +133,7 @@ export default async function TaskDetailsPage({ params }: { params: { id: string
 
         {/* Sidebar */}
         <div className="space-y-6">
-          
+
           {/* Approvals History */}
           {task.requiresApproval && task.approvals.length > 0 && (
             <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-5">
@@ -140,7 +142,7 @@ export default async function TaskDetailsPage({ params }: { params: { id: string
                 تاريخ الاعتمادات
               </h3>
               <div className="space-y-4">
-                {task.approvals.map((app: any) => (
+                {task.approvals.map((app: { id: string; status: string; approvalRound: number; approver?: { name: string | null } | null; decisionComment?: string | null }) => (
                   <div key={app.id} className={`p-3 rounded-xl border ${
                     app.status === 'APPROVED' ? 'bg-green-50 border-green-100' :
                     app.status === 'REJECTED' ? 'bg-red-50 border-red-100' :
@@ -171,11 +173,11 @@ export default async function TaskDetailsPage({ params }: { params: { id: string
               سجل النشاط
             </h3>
             <div className="space-y-4 relative before:absolute before:inset-0 before:ml-2 before:-translate-x-px md:before:mx-auto md:before:translate-x-0 before:h-full before:w-0.5 before:bg-gradient-to-b before:from-transparent before:via-gray-200 before:to-transparent pr-4 border-r-2 border-gray-100 max-h-[500px] overflow-y-auto">
-              {task.activityLogs.map((log: any) => (
+              {task.activityLogs.map((log: { id: string; eventType: string; actor?: { name: string | null } | null; createdAt: string | Date }) => (
                 <div key={log.id} className="relative pl-4">
                   <div className="absolute right-[-21px] top-1.5 w-2 h-2 rounded-full bg-primary ring-4 ring-white"></div>
                   <p className="text-xs font-bold text-gray-900">{getEventLabel(log.eventType)}</p>
-                  <p className="text-[10px] text-gray-500">{log.actor.name} - {new Date(log.createdAt).toLocaleString("ar-SA")}</p>
+                  <p className="text-[10px] text-gray-500">{log.actor?.name || 'غير معروف'} - {new Date(log.createdAt).toLocaleString("ar-SA")}</p>
                 </div>
               ))}
             </div>

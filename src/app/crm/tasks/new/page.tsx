@@ -6,6 +6,8 @@ import Link from "next/link";
 import toast from "react-hot-toast";
 import { createTask } from "@/actions/tasks";
 
+export const dynamic = "force-dynamic";
+
 export default function NewTaskPage() {
   const router = useRouter();
   const [loading, setLoading] = useState(false);
@@ -36,8 +38,8 @@ export default function NewTaskPage() {
       await createTask(data);
       toast.success("تم إنشاء المهمة بنجاح");
       router.push("/crm/tasks");
-    } catch (error: any) {
-      toast.error(error.message || "حدث خطأ أثناء إنشاء المهمة");
+    } catch (error: unknown) {
+      toast.error(error instanceof Error ? error.message : "حدث خطأ أثناء إنشاء المهمة");
     } finally {
       setLoading(false);
     }
@@ -57,13 +59,13 @@ export default function NewTaskPage() {
 
       <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6 sm:p-8">
         <form onSubmit={handleSubmit} className="space-y-6">
-          
+
           <div className="space-y-1.5">
             <label className="block text-sm font-bold text-gray-700">عنوان المهمة <span className="text-red-500">*</span></label>
-            <input 
-              type="text" 
-              name="title" 
-              required 
+            <input
+              type="text"
+              name="title"
+              required
               minLength={3}
               placeholder="مثال: مراجعة العقد النهائي لمشروع النخيل"
               className="w-full border-gray-200 rounded-xl focus:border-primary focus:ring-primary sm:text-sm"
@@ -72,8 +74,8 @@ export default function NewTaskPage() {
 
           <div className="space-y-1.5">
             <label className="block text-sm font-bold text-gray-700">التفاصيل</label>
-            <textarea 
-              name="description" 
+            <textarea
+              name="description"
               rows={4}
               placeholder="تفاصيل إضافية عن المهمة والمطلوب..."
               className="w-full border-gray-200 rounded-xl focus:border-primary focus:ring-primary sm:text-sm resize-none"
@@ -103,10 +105,10 @@ export default function NewTaskPage() {
 
           <div className="bg-amber-50/50 border border-amber-100 rounded-xl p-4 flex items-start gap-3">
             <div className="flex items-center h-5">
-              <input 
-                id="requiresApproval" 
-                name="requiresApproval" 
-                type="checkbox" 
+              <input
+                id="requiresApproval"
+                name="requiresApproval"
+                type="checkbox"
                 className="w-4 h-4 text-primary border-gray-300 rounded focus:ring-primary"
               />
             </div>
@@ -117,8 +119,8 @@ export default function NewTaskPage() {
           </div>
 
           <div className="pt-4 border-t border-gray-100 flex justify-end">
-            <button 
-              type="submit" 
+            <button
+              type="submit"
               disabled={loading}
               className="px-6 py-3 bg-primary text-white font-bold rounded-xl hover:bg-primary-dark transition-colors disabled:opacity-70 disabled:cursor-not-allowed flex items-center gap-2"
             >

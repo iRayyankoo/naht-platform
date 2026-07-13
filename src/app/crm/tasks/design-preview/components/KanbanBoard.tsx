@@ -16,14 +16,14 @@ interface KanbanBoardProps {
   onClick?: (task: MockTask) => void;
 }
 
-export function KanbanBoard({ 
-  filteredTasks, 
-  draggedTaskId, 
-  dragOverCol, 
-  onDragStart, 
-  onDragEnd, 
-  onDragOver, 
-  onDragLeave, 
+export function KanbanBoard({
+  filteredTasks,
+  draggedTaskId,
+  dragOverCol,
+  onDragStart,
+  onDragEnd,
+  onDragOver,
+  onDragLeave,
   onDrop,
   onMoveTask,
   onClick
@@ -35,10 +35,10 @@ export function KanbanBoard({
       {kanbanColumns.map(colStatus => {
         const colTasks = filteredTasks.filter(t => t.taskStatus === colStatus);
         const isDragOver = dragOverCol === colStatus;
-        
+
         return (
-          <div 
-            key={colStatus} 
+          <div
+            key={colStatus}
             className={`flex flex-col flex-shrink-0 w-[85vw] sm:w-80 lg:w-96 snap-center bg-gray-100/50 rounded-2xl border ${isDragOver ? 'border-primary shadow-inner bg-primary/5' : 'border-gray-200'} transition-all`}
             onDragOver={(e) => onDragOver?.(e, colStatus)}
             onDragLeave={onDragLeave}
@@ -63,7 +63,7 @@ export function KanbanBoard({
                  const assignee = MOCK_USERS.find(u => u.id === task.assigneeId);
                  const workProject = task.workProjectId ? MOCK_WORK_PROJECTS.find(p => p.id === task.workProjectId) : null;
                  return (
-                   <div 
+                   <div
                      key={task.id}
                      draggable
                      onDragStart={(e) => onDragStart?.(e, task.id)}
@@ -94,7 +94,7 @@ export function KanbanBoard({
                            مهمة عامة
                         </div>
                      )}
-                     
+
                      <div className="flex justify-between items-start mb-2 gap-2">
                        <h4 className="font-bold text-sm text-gray-900 leading-tight line-clamp-2">{task.title}</h4>
                        <div className="flex gap-1 flex-shrink-0">
@@ -103,7 +103,7 @@ export function KanbanBoard({
                          )}
                        </div>
                      </div>
-                     
+
                      <div className="text-xs text-gray-500 line-clamp-2 mb-4 leading-relaxed">
                        {task.description || 'لا يوجد وصف'}
                      </div>
@@ -145,10 +145,10 @@ export function KanbanBoard({
                             )}
                          </div>
                        </div>
-                       
+
                        {/* Mobile Quick Move */}
                        <div className="sm:hidden">
-                         <select 
+                         <select
                            className="text-xs bg-gray-50 border border-gray-200 rounded p-1 outline-none focus:ring-1 focus:ring-primary"
                            value={task.taskStatus}
                            onChange={(e) => onMoveTask(task.id, e.target.value as TaskStatus)}

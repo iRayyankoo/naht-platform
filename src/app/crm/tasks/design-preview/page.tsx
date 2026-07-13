@@ -17,14 +17,14 @@ type MainTab = 'TASKS' | 'WORK_PROJECTS';
 export default function DesignPreviewPage() {
   const [tasks, setTasks] = useState<MockTask[]>(INITIAL_TASKS);
   const [projects, setProjects] = useState<MockWorkProject[]>(MOCK_WORK_PROJECTS);
-  
+
   const [viewMode, setViewMode] = useState<'kanban' | 'list'>('kanban');
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedProjectId, setSelectedProjectId] = useState<string>('ALL'); // ALL, GENERAL, or projId
-  
+
   const [selectedTask, setSelectedTask] = useState<MockTask | null>(null);
   const [selectedWorkProject, setSelectedWorkProject] = useState<MockWorkProject | null>(null);
-  
+
   const [isTaskModalOpen, setIsTaskModalOpen] = useState(false);
   const [isProjectModalOpen, setIsProjectModalOpen] = useState(false);
   const [role, setRole] = useState<Role>('ADMIN');
@@ -48,19 +48,19 @@ export default function DesignPreviewPage() {
   // Filter Tasks
   const filteredTasks = tasks.filter(t => {
     const matchesSearch = t.title.includes(searchQuery) || (t.description || '').includes(searchQuery);
-    const matchesProject = selectedProjectId === 'ALL' 
-      ? true 
-      : selectedProjectId === 'GENERAL' 
+    const matchesProject = selectedProjectId === 'ALL'
+      ? true
+      : selectedProjectId === 'GENERAL'
         ? t.workProjectId === null
         : t.workProjectId === selectedProjectId;
-    
+
     return matchesSearch && matchesProject;
   });
 
   return (
     <div className="min-h-screen bg-gray-50 flex flex-col font-sans" dir="rtl">
       <Toaster position="top-center" />
-      
+
       {/* Header */}
       <header className="bg-white border-b border-gray-200 sticky top-0 z-40">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -72,7 +72,7 @@ export default function DesignPreviewPage() {
               </div>
               <p className="text-sm text-gray-500 mt-1">واجهة محاكاة (بدون اتصال بالخادم) - فصل كامل لمشاريع العمل</p>
             </div>
-            
+
             <div className="flex items-center gap-3">
               {/* Role Toggle */}
               <div className="flex items-center bg-gray-100 rounded-lg p-1 border border-gray-200">
@@ -103,7 +103,7 @@ export default function DesignPreviewPage() {
               </div>
 
               {mainTab === 'TASKS' ? (
-                <button 
+                <button
                   onClick={() => setIsTaskModalOpen(true)}
                   className="bg-primary text-white px-5 py-2 rounded-xl text-sm font-bold shadow-md hover:bg-primary-dark transition-colors flex items-center gap-2"
                 >
@@ -111,7 +111,7 @@ export default function DesignPreviewPage() {
                   مهمة جديدة
                 </button>
               ) : (
-                <button 
+                <button
                   onClick={() => setIsProjectModalOpen(true)}
                   className="bg-primary text-white px-5 py-2 rounded-xl text-sm font-bold shadow-md hover:bg-primary-dark transition-colors flex items-center gap-2"
                 >
@@ -121,7 +121,7 @@ export default function DesignPreviewPage() {
               )}
             </div>
           </div>
-          
+
           {/* Main Tabs */}
           <div className="flex gap-6 border-t border-gray-100 pt-4 pb-0">
              <button
@@ -146,12 +146,12 @@ export default function DesignPreviewPage() {
 
       {/* Main Content Area */}
       <main className="flex-1 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 w-full flex flex-col">
-        
+
         {mainTab === 'TASKS' && (
           <>
             {/* Task Filters & Tools */}
             <div className="flex flex-col md:flex-row justify-between items-center gap-4 mb-6 bg-white p-3 rounded-2xl border border-gray-200 shadow-sm">
-              
+
               <div className="flex items-center gap-3 w-full md:w-auto">
                 {/* Project Filter */}
                 <select
@@ -222,10 +222,10 @@ export default function DesignPreviewPage() {
                    <p className="text-xs text-gray-500 mt-1">تتبع وإدارة مشاريع العمل المستقلة</p>
                 </div>
              </div>
-             
-             <WorkProjectsList 
-               projects={projects} 
-               onClick={setSelectedWorkProject} 
+
+             <WorkProjectsList
+               projects={projects}
+               onClick={setSelectedWorkProject}
              />
           </div>
         )}
@@ -233,9 +233,9 @@ export default function DesignPreviewPage() {
 
       {/* Drawers & Modals */}
       {selectedTask && (
-        <TaskDetailsDrawer 
-          task={selectedTask} 
-          isOpen={true} 
+        <TaskDetailsDrawer
+          task={selectedTask}
+          isOpen={true}
           onClose={() => setSelectedTask(null)}
           onUpdateTask={(updated) => {
              setTasks(prev => prev.map(t => t.id === updated.id ? updated : t));
@@ -246,7 +246,7 @@ export default function DesignPreviewPage() {
       )}
 
       {selectedWorkProject && (
-        <WorkProjectDetailsDrawer 
+        <WorkProjectDetailsDrawer
           project={selectedWorkProject}
           isOpen={true}
           onClose={() => setSelectedWorkProject(null)}
@@ -258,9 +258,9 @@ export default function DesignPreviewPage() {
         />
       )}
 
-      <CreateTaskModal 
-        isOpen={isTaskModalOpen} 
-        onClose={() => setIsTaskModalOpen(false)} 
+      <CreateTaskModal
+        isOpen={isTaskModalOpen}
+        onClose={() => setIsTaskModalOpen(false)}
         role={role}
         initialProjectId={selectedProjectId !== 'ALL' ? selectedProjectId : null}
       />
@@ -268,12 +268,11 @@ export default function DesignPreviewPage() {
       <CreateWorkProjectModal
         isOpen={isProjectModalOpen}
         onClose={() => setIsProjectModalOpen(false)}
-        role={role}
         onProjectCreated={(newProj) => {
            setProjects(prev => [...prev, newProj]);
         }}
       />
-      
+
     </div>
   );
 }

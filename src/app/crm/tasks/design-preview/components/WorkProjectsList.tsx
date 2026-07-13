@@ -32,9 +32,9 @@ export function WorkProjectsList({ projects, onClick }: WorkProjectsListProps) {
         const members = MOCK_WORK_PROJECT_MEMBERS.filter(m => m.projectId === project.id);
         const progress = getProgress(project.id);
         const stats = getStats(project.id);
-        
+
         return (
-          <div 
+          <div
             key={project.id}
             onClick={() => onClick(project)}
             className="bg-white border border-gray-200 rounded-2xl p-5 hover:shadow-lg transition-all cursor-pointer group flex flex-col h-full focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent"
@@ -57,7 +57,7 @@ export function WorkProjectsList({ projects, onClick }: WorkProjectsListProps) {
                 {WORK_PROJECT_STATUS_LABELS[project.status]}
               </span>
             </div>
-            
+
             <p className="text-sm text-gray-500 line-clamp-2 mb-5 flex-1">
               {project.description || 'لا يوجد وصف للمشروع.'}
             </p>

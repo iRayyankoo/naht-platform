@@ -1,179 +1,192 @@
 import { prisma } from "@/lib/prisma";
-import Link from "next/link";
-import { getServerSession } from "next-auth";
-import { authOptions } from "@/lib/auth";
-import FilterBar from "@/components/crm/FilterBar";
-import { checkPermission } from "@/lib/rbac-helpers";
+import { getCurrentUser } from "@/lib/auth-helpers";
+import { checkPermission, isSuperAdmin } from "@/lib/rbac-helpers";
+import { TasksClientWrapper } from "./TasksClientWrapper";
+import { TaskDTO, WorkProjectDTO, ClientPermissions, TaskStatus, TaskPriority, ApprovalStatus, WorkProjectStatus, WorkProjectMemberRole, UserDTO } from "./types";
 
-// Helper for Arabic translation
-const getTaskStatusLabel = (status: string) => {
-  const map: Record<string, string> = {
-    TODO: "بانتظار البدء",
-    IN_PROGRESS: "قيد التنفيذ",
-    DONE: "مكتملة",
-    CANCELLED: "ملغاة",
-  };
-  return map[status] || status;
-};
+export const dynamic = "force-dynamic";
 
-const getPriorityLabel = (priority: string) => {
-  const map: Record<string, string> = {
-    LOW: "عادية",
-    MEDIUM: "متوسطة",
-    HIGH: "عالية",
-  };
-  return map[priority] || priority;
-};
+export default async function TasksPage() {
+  const user = await getCurrentUser();
+  if (!user) {
+     return <div className="p-8 text-center">الرجاء تسجيل الدخول</div>;
+  }
 
-export default async function TasksPage({ searchParams }: { searchParams: { status?: string, priority?: string, assignee?: string } }) {
-  const session = await getServerSession(authOptions);
-  if (!session?.user) return null;
+  // 1. Check Permissions
+  const canViewTasks = await checkPermission("tasks.view", "View Tasks");
+  const canViewProjects = await checkPermission("work_projects.view", "View Work Projects");
 
-  const canView = await checkPermission("tasks.view", "View Tasks List");
-  if (!canView) {
+  if (!canViewTasks && !canViewProjects) {
     return (
       <div className="flex flex-col items-center justify-center py-20 px-4 text-center bg-white rounded-2xl shadow-sm border border-gray-100">
-         <h3 className="text-lg font-bold text-red-600 mb-2">ليس لديك صلاحية لعرض المهام</h3>
+         <h3 className="text-lg font-bold text-red-600 mb-2">ليس لديك صلاحية لعرض المهام ومشاريع العمل</h3>
       </div>
     );
   }
 
-  const params = await Promise.resolve(searchParams);
-  const statusFilter = typeof params.status === 'string' ? params.status : (Array.isArray(params.status) ? params.status[0] : undefined);
-  const priorityFilter = typeof params.priority === 'string' ? params.priority : (Array.isArray(params.priority) ? params.priority[0] : undefined);
-  const assigneeFilter = typeof params.assignee === 'string' ? params.assignee : (Array.isArray(params.assignee) ? params.assignee[0] : undefined);
+  const [
+    canCreateTasks,
+    canEditTasks,
+    canApproveTasks,
+    canCreateWorkProjects,
+    canEditWorkProjects,
+    canDeleteTasks,
+    canDeleteWorkProjects,
+    isSuper
+  ] = await Promise.all([
+    checkPermission("tasks.create"),
+    checkPermission("tasks.edit"),
+    checkPermission("tasks.approve"),
+    checkPermission("work_projects.create"),
+    checkPermission("work_projects.edit"),
+    checkPermission("tasks.delete"),
+    checkPermission("work_projects.delete"),
+    isSuperAdmin(user.id)
+  ]);
 
-  const tasks = await prisma.task.findMany({
-    where: {
-      ...(statusFilter && { taskStatus: statusFilter }),
-      ...(priorityFilter && { priority: priorityFilter }),
-      ...(assigneeFilter && { assignedToId: assigneeFilter }),
-    },
+  const permissions: ClientPermissions = {
+    canViewTasks,
+    canCreateTasks,
+    canEditTasks,
+    canDeleteTasks,
+    canApproveTasks,
+    canViewWorkProjects: canViewProjects,
+    canCreateWorkProjects,
+    canEditWorkProjects,
+    canDeleteWorkProjects,
+    isSuperAdmin: isSuper
+  };
+
+  // 2. Fetch Tasks Data
+  const rawTasks = canViewTasks ? await prisma.task.findMany({
     orderBy: { createdAt: "desc" },
     include: {
-      assignedTo: { select: { id: true, name: true } },
-      createdBy: { select: { id: true, name: true } },
-      _count: { select: { comments: true } }
-    },
-  });
-
-  const allUsersForFilter = await prisma.user.findMany({
-    where: { isActive: true },
-    select: { id: true, name: true }
-  });
-
-  const filterFields = [
-    {
-      key: "status",
-      label: "الحالة",
-      options: [
-        { value: "TODO", label: "بانتظار البدء" },
-        { value: "IN_PROGRESS", label: "قيد التنفيذ" },
-        { value: "DONE", label: "مكتملة" },
-        { value: "CANCELLED", label: "ملغاة" },
-      ]
-    },
-    {
-      key: "priority",
-      label: "الأولوية",
-      options: [
-        { value: "HIGH", label: "عالية" },
-        { value: "MEDIUM", label: "متوسطة" },
-        { value: "LOW", label: "عادية" }
-      ]
-    },
-    {
-      key: "assignee",
-      label: "المسؤول",
-      options: allUsersForFilter.filter(u => u.name).map(u => ({ value: u.id, label: u.name || "غير معروف" }))
+      assignedTo: { select: { id: true, name: true, email: true } },
+      createdBy: { select: { id: true, name: true, email: true } },
+      designatedApprover: { select: { id: true, name: true, email: true } },
+      comments: {
+        include: { user: { select: { id: true, name: true } } },
+        orderBy: { createdAt: "desc" }
+      },
+      activityLogs: {
+        include: { actor: { select: { id: true, name: true } } },
+        orderBy: { createdAt: "desc" }
+      },
+      approvals: {
+        include: { approver: { select: { id: true, name: true } } },
+        orderBy: { createdAt: "desc" }
+      },
+      attachments: true
     }
-  ];
+  }) : [];
+
+  function mapUser(u: { id: string, name?: string | null, image?: string | null } | null | undefined): UserDTO | null {
+    if (!u) return null;
+    return {
+      id: u.id,
+      name: u.name || "مستخدم غير معروف",
+      image: u.image || undefined
+    };
+  }
+
+  // Map Tasks to DTO
+  const initialTasks: TaskDTO[] = rawTasks.map(t => ({
+    id: t.id,
+    title: t.title,
+    description: t.description || null,
+    taskStatus: t.taskStatus as TaskStatus,
+    priority: t.priority as TaskPriority,
+    dueDate: t.dueDate?.toISOString() || null,
+    createdAt: t.createdAt.toISOString(),
+    updatedAt: t.updatedAt.toISOString(),
+    workProjectId: t.workProjectId,
+    assignedToId: t.assignedToId,
+    assignedTo: mapUser(t.assignedTo),
+    createdBy: mapUser(t.createdBy) as UserDTO,
+    requiresApproval: t.requiresApproval,
+    approvalStatus: t.approvalStatus as ApprovalStatus,
+    approvalRound: t.approvalRound,
+    designatedApproverId: t.designatedApproverId,
+    designatedApprover: mapUser(t.designatedApprover),
+    comments: t.comments.map(c => ({
+      id: c.id,
+      content: c.comment,
+      createdAt: c.createdAt.toISOString(),
+      author: mapUser(c.user) as UserDTO
+    })),
+    activityLogs: t.activityLogs.map(l => ({
+      id: l.id,
+      action: l.eventType,
+      details: l.metadata ? JSON.stringify(l.metadata) : null,
+      createdAt: l.createdAt.toISOString(),
+      actor: mapUser(l.actor) as UserDTO
+    })),
+    approvals: t.approvals.map(a => ({
+      id: a.id,
+      approverId: a.approverId || "",
+      status: a.status as ApprovalStatus,
+      comment: a.decisionComment || null,
+      createdAt: a.createdAt.toISOString(),
+      round: a.approvalRound,
+      approver: mapUser(a.approver) as UserDTO
+    }))
+  }));
+
+  // 3. Fetch Work Projects Data
+  const rawProjects = canViewProjects ? await prisma.workProject.findMany({
+    orderBy: { createdAt: "desc" },
+    include: {
+      members: {
+        include: { user: { select: { id: true, name: true, email: true } } }
+      },
+      _count: { select: { tasks: true } },
+      tasks: {
+        select: { taskStatus: true }
+      }
+    }
+  }) : [];
+
+  // Map Projects to DTO
+  const initialProjects: WorkProjectDTO[] = rawProjects.map(p => {
+    const totalTasks = p._count.tasks;
+    const completedTasks = p.tasks.filter(t => t.taskStatus === 'DONE').length;
+    const cancelledTasks = p.tasks.filter(t => t.taskStatus === 'CANCELLED').length;
+
+    // Cancelled tasks do not count towards progress
+    const validTasks = totalTasks - cancelledTasks;
+    const progress = validTasks > 0 ? Math.round((completedTasks / validTasks) * 100) : 0;
+
+    return {
+      id: p.id,
+      name: p.name,
+      description: p.description || null,
+      status: p.status as WorkProjectStatus,
+      startDate: p.startDate?.toISOString() || null,
+      endDate: p.endDate?.toISOString() || null,
+      createdAt: p.createdAt.toISOString(),
+      members: p.members.map(m => ({
+        id: m.id,
+        role: m.role as WorkProjectMemberRole,
+        user: mapUser(m.user) as UserDTO
+      })),
+      totalTasks,
+      completedTasks,
+      progress
+    };
+  });
+
+  // Fetch all active users for dropdowns
+  const allUsers = await prisma.user.findMany({
+    where: { isActive: true },
+    select: { id: true, name: true, email: true }
+  });
 
   return (
-    <div className="space-y-4 xl:space-y-6 max-w-[1400px] mx-auto w-full pb-6">
-      
-      {/* Header Area */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-        <div>
-          <h1 className="text-2xl font-bold text-gray-900 tracking-tight">إدارة المهام</h1>
-          <p className="text-sm text-gray-500 mt-1">تتبع المهام ومسؤوليات فريق العمل والاعتمادات</p>
-        </div>
-        <Link
-          href="/crm/tasks/new"
-          className="inline-flex items-center px-5 py-2.5 text-sm font-bold rounded-xl text-white bg-primary hover:bg-primary-dark transition-colors shadow-sm"
-        >
-          إنشاء مهمة جديدة
-        </Link>
-      </div>
-
-      {/* Filter Bar */}
-      <FilterBar fields={filterFields} />
-
-      {/* Tasks Grid */}
-      {tasks.length === 0 ? (
-        <div className="flex flex-col items-center justify-center py-20 px-4 text-center bg-white rounded-2xl shadow-sm border border-gray-100">
-           <div className="text-gray-300 text-6xl mb-4">📋</div>
-           <h3 className="text-lg font-bold text-gray-900 mb-2">لا توجد مهام مطابقة</h3>
-           <p className="text-gray-500 text-sm max-w-md">جرّب تغيير الفلاتر المحددة أعلاه، أو قم بإنشاء مهمة جديدة.</p>
-        </div>
-      ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
-          {tasks.map((task) => (
-             <div key={task.id} className="bg-white rounded-2xl shadow-sm border border-gray-100 p-5 flex flex-col hover:shadow-md transition-all group">
-                <div className="flex justify-between items-start mb-3 gap-3">
-                   <Link href={`/crm/tasks/${task.id}`} className="text-lg font-bold text-gray-900 hover:text-primary transition-colors line-clamp-2 leading-tight">
-                     {task.title}
-                   </Link>
-                   <span className={`px-2.5 py-1 text-[10px] font-bold rounded-full shrink-0 ${
-                      task.priority === "HIGH" ? "bg-red-50 text-red-600 border border-red-100" :
-                      task.priority === "MEDIUM" ? "bg-orange-50 text-orange-600 border border-orange-100" :
-                      "bg-blue-50 text-blue-600 border border-blue-100"
-                   }`}>
-                     {getPriorityLabel(task.priority)}
-                   </span>
-                </div>
-                
-                {task.description && (
-                  <p className="text-sm text-gray-500 line-clamp-2 mb-4">{task.description}</p>
-                )}
-                
-                <div className="grid grid-cols-2 gap-3 mb-5 mt-auto pt-4 border-t border-gray-50">
-                   <div>
-                      <span className="block text-[10px] text-gray-400 font-bold mb-1 uppercase">الحالة</span>
-                      <span className={`inline-flex items-center gap-1.5 text-xs font-bold ${
-                         task.taskStatus === "DONE" ? "text-green-600" :
-                         task.taskStatus === "IN_PROGRESS" ? "text-blue-600" :
-                         task.taskStatus === "CANCELLED" ? "text-gray-500" : "text-gray-700"
-                      }`}>
-                         <span className={`w-1.5 h-1.5 rounded-full ${
-                           task.taskStatus === "DONE" ? "bg-green-500" :
-                           task.taskStatus === "IN_PROGRESS" ? "bg-blue-500" :
-                           task.taskStatus === "CANCELLED" ? "bg-gray-400" : "bg-gray-400"
-                         }`}></span>
-                         {getTaskStatusLabel(task.taskStatus)}
-                      </span>
-                   </div>
-                   <div>
-                      <span className="block text-[10px] text-gray-400 font-bold mb-1 uppercase">المسؤول</span>
-                      <span className="block text-xs font-bold text-gray-700 truncate">
-                         {task.assignedTo?.name || "غير مسند"}
-                      </span>
-                   </div>
-                </div>
-
-                <div className="flex items-center justify-between text-xs text-gray-400 bg-gray-50/50 p-2.5 rounded-lg">
-                   <div className="flex items-center gap-1.5">
-                      <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path></svg>
-                      {task._count.comments} تعليق
-                   </div>
-                   <Link href={`/crm/tasks/${task.id}`} className="text-primary font-bold hover:underline">
-                      عرض التفاصيل
-                   </Link>
-                </div>
-             </div>
-          ))}
-        </div>
-      )}
-    </div>
+    <TasksClientWrapper
+      initialTasks={initialTasks}
+      initialProjects={initialProjects}
+      permissions={permissions}
+      users={allUsers.map(u => ({ id: u.id, name: u.name || "مستخدم غير معروف" }))}
+    />
   );
 }

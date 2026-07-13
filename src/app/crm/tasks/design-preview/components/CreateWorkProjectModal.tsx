@@ -10,7 +10,7 @@ interface CreateWorkProjectModalProps {
   onProjectCreated: (project: MockWorkProject) => void;
 }
 
-export function CreateWorkProjectModal({ isOpen, onClose, role, onProjectCreated }: CreateWorkProjectModalProps) {
+export function CreateWorkProjectModal({ isOpen, onClose, onProjectCreated }: Omit<CreateWorkProjectModalProps, 'role'>) {
   const [name, setName] = useState('');
   const [description, setDescription] = useState('');
   const [ownerId, setOwnerId] = useState('');
@@ -91,12 +91,12 @@ export function CreateWorkProjectModal({ isOpen, onClose, role, onProjectCreated
 
         <form onSubmit={handleSubmit} className="p-6 space-y-6">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            
+
             {/* Title */}
             <div className="col-span-1 md:col-span-2">
               <label className="block text-sm font-bold text-gray-700 mb-2">اسم مشروع العمل *</label>
-              <input 
-                required 
+              <input
+                required
                 type="text"
                 value={name}
                 onChange={e => setName(e.target.value)}
@@ -108,7 +108,7 @@ export function CreateWorkProjectModal({ isOpen, onClose, role, onProjectCreated
             {/* Description */}
             <div className="col-span-1 md:col-span-2">
               <label className="block text-sm font-bold text-gray-700 mb-2">الوصف</label>
-              <textarea 
+              <textarea
                 rows={3}
                 value={description}
                 onChange={e => setDescription(e.target.value)}
@@ -120,7 +120,7 @@ export function CreateWorkProjectModal({ isOpen, onClose, role, onProjectCreated
             {/* Owner */}
             <div>
               <label className="block text-sm font-bold text-gray-700 mb-2">مالك المشروع *</label>
-              <select 
+              <select
                 required
                 value={ownerId}
                 onChange={e => setOwnerId(e.target.value)}
@@ -136,7 +136,7 @@ export function CreateWorkProjectModal({ isOpen, onClose, role, onProjectCreated
             {/* Status */}
             <div>
               <label className="block text-sm font-bold text-gray-700 mb-2">الحالة</label>
-              <select 
+              <select
                 value={status}
                 onChange={e => setStatus(e.target.value as WorkProjectStatus)}
                 className="w-full bg-gray-50 border border-gray-200 rounded-xl p-3 focus:ring-2 focus:ring-primary focus:border-primary outline-none transition-colors"
@@ -150,9 +150,9 @@ export function CreateWorkProjectModal({ isOpen, onClose, role, onProjectCreated
             {/* Dates */}
             <div>
               <label className="block text-sm font-bold text-gray-700 mb-2">تاريخ البداية *</label>
-              <input 
+              <input
                 required
-                type="date" 
+                type="date"
                 value={startDate}
                 onChange={e => setStartDate(e.target.value)}
                 className="w-full bg-gray-50 border border-gray-200 rounded-xl p-3 focus:ring-2 focus:ring-primary focus:border-primary outline-none transition-colors text-right"
@@ -160,9 +160,9 @@ export function CreateWorkProjectModal({ isOpen, onClose, role, onProjectCreated
             </div>
             <div>
               <label className="block text-sm font-bold text-gray-700 mb-2">تاريخ النهاية المتوقع *</label>
-              <input 
+              <input
                 required
-                type="date" 
+                type="date"
                 value={endDate}
                 onChange={e => setEndDate(e.target.value)}
                 className="w-full bg-gray-50 border border-gray-200 rounded-xl p-3 focus:ring-2 focus:ring-primary focus:border-primary outline-none transition-colors text-right"
@@ -172,8 +172,8 @@ export function CreateWorkProjectModal({ isOpen, onClose, role, onProjectCreated
             {/* Members */}
             <div className="col-span-1 md:col-span-2">
               <label className="block text-sm font-bold text-gray-700 mb-2">أعضاء المشروع</label>
-              <select 
-                multiple 
+              <select
+                multiple
                 value={selectedMembers}
                 onChange={e => {
                   const options = Array.from(e.target.selectedOptions);
@@ -191,7 +191,7 @@ export function CreateWorkProjectModal({ isOpen, onClose, role, onProjectCreated
             {/* Files Dropzone */}
             <div className="col-span-1 md:col-span-2">
                <label className="block text-sm font-bold text-gray-700 mb-2">مرفقات أولية (اختياري)</label>
-               <div 
+               <div
                  onDragOver={handleDragOver}
                  onDrop={handleDrop}
                  onClick={() => fileInputRef.current?.click()}
@@ -219,15 +219,15 @@ export function CreateWorkProjectModal({ isOpen, onClose, role, onProjectCreated
           </div>
 
           <div className="border-t border-gray-100 pt-6 flex justify-end gap-3 mt-8">
-            <button 
-              type="button" 
+            <button
+              type="button"
               onClick={onClose}
               className="px-6 py-2.5 rounded-xl text-sm font-bold text-gray-700 hover:bg-gray-100 transition-colors"
             >
               إلغاء
             </button>
-            <button 
-              type="submit" 
+            <button
+              type="submit"
               className="px-6 py-2.5 rounded-xl text-sm font-bold text-white bg-primary hover:bg-primary-dark transition-colors shadow-md"
             >
               حفظ وإنشاء

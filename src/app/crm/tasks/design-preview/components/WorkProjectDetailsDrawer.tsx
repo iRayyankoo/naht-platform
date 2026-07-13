@@ -39,7 +39,7 @@ export function WorkProjectDetailsDrawer({ project, isOpen, onClose, role, onOpe
 
   return (
     <div className="fixed inset-0 z-50 flex justify-end bg-gray-900/20 backdrop-blur-sm" dir="rtl">
-      <div 
+      <div
         className="w-full sm:w-[600px] bg-white shadow-2xl h-full flex flex-col overflow-y-auto"
         role="dialog"
       >
@@ -62,7 +62,7 @@ export function WorkProjectDetailsDrawer({ project, isOpen, onClose, role, onOpe
 
         {/* Content */}
         <div className="p-6 space-y-6 flex-1 flex flex-col">
-          
+
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
              <div className="bg-gray-50 rounded-xl p-3 border border-gray-100">
                 <span className="block text-xs font-bold text-gray-500 mb-1">المهام المفتوحة</span>
@@ -84,7 +84,7 @@ export function WorkProjectDetailsDrawer({ project, isOpen, onClose, role, onOpe
 
           <div className="flex justify-between items-center bg-gray-50 p-4 rounded-xl border border-gray-100 mt-4">
              <span className="text-sm font-bold text-gray-700">إجراءات سريعة:</span>
-             <button 
+             <button
                onClick={() => { onClose(); onOpenCreateTask(project.id); }}
                className="bg-primary text-white text-xs font-bold px-4 py-2 rounded-lg hover:bg-primary-dark transition-colors shadow-sm"
                disabled={isReadOnly}

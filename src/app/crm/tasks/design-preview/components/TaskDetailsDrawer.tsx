@@ -1,5 +1,6 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { MockTask, STATUS_LABELS, PRIORITY_LABELS, APPROVAL_LABELS, MOCK_USERS, MOCK_WORK_PROJECTS, MockAttachment } from './data';
+import Image from 'next/image';
 import toast from 'react-hot-toast';
 
 interface TaskDetailsDrawerProps {
@@ -12,12 +13,12 @@ interface TaskDetailsDrawerProps {
 
 type TabType = 'DETAILS' | 'COMMENTS' | 'ACTIVITY' | 'APPROVAL' | 'ATTACHMENTS';
 
-export function TaskDetailsDrawer({ task, isOpen, onClose, onUpdateTask, role }: TaskDetailsDrawerProps) {
+export function TaskDetailsDrawer({ task, isOpen, onClose, role }: Omit<TaskDetailsDrawerProps, 'onUpdateTask'> & { onUpdateTask?: (task: MockTask) => void }) {
   const [activeTab, setActiveTab] = useState<TabType>('DETAILS');
   const [newComment, setNewComment] = useState('');
   const drawerRef = useRef<HTMLDivElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
-  
+
   const [attachments, setAttachments] = useState<MockAttachment[]>(task.attachments || []);
 
   const assignee = MOCK_USERS.find(u => u.id === task.assigneeId);
@@ -56,7 +57,7 @@ export function TaskDetailsDrawer({ task, isOpen, onClose, onUpdateTask, role }:
     if (e.target.files) {
       const newFiles = Array.from(e.target.files);
       const validFiles = newFiles.filter(f => f.size <= 5 * 1024 * 1024); // 5MB limit
-      
+
       if (newFiles.length !== validFiles.length) {
         toast.error('تم استبعاد بعض الملفات لتجاوزها الحجم المسموح (5MB).');
       }
@@ -109,7 +110,7 @@ export function TaskDetailsDrawer({ task, isOpen, onClose, onUpdateTask, role }:
     <div className="fixed inset-0 z-50 flex justify-end bg-gray-900/20 backdrop-blur-sm" dir="rtl" onClick={(e) => {
       if (e.target === e.currentTarget) onClose();
     }}>
-      <div 
+      <div
         ref={drawerRef}
         tabIndex={-1}
         className="w-full sm:w-[500px] md:w-[600px] bg-white shadow-2xl h-full flex flex-col focus:outline-none"
@@ -151,8 +152,8 @@ export function TaskDetailsDrawer({ task, isOpen, onClose, onUpdateTask, role }:
               )}
             </div>
           </div>
-          <button 
-            onClick={onClose} 
+          <button
+            onClick={onClose}
             className="p-2 text-gray-400 hover:text-gray-700 hover:bg-gray-200 rounded-full transition-colors flex-shrink-0"
             aria-label="إغلاق التفاصيل"
           >
@@ -170,8 +171,8 @@ export function TaskDetailsDrawer({ task, isOpen, onClose, onUpdateTask, role }:
                 activeTab === tab ? 'border-primary text-primary' : 'border-transparent text-gray-500 hover:text-gray-700 hover:bg-gray-50'
               }`}
             >
-              {tab === 'DETAILS' ? 'التفاصيل' : 
-               tab === 'COMMENTS' ? 'التعليقات' : 
+              {tab === 'DETAILS' ? 'التفاصيل' :
+               tab === 'COMMENTS' ? 'التعليقات' :
                tab === 'ACTIVITY' ? 'سجل النشاط' : 'المرفقات'}
             </button>
           ))}
@@ -189,7 +190,7 @@ export function TaskDetailsDrawer({ task, isOpen, onClose, onUpdateTask, role }:
 
         {/* Content Area */}
         <div className="flex-1 overflow-y-auto p-6 bg-white">
-          
+
           {/* Details Tab */}
           {activeTab === 'DETAILS' && (
             <div className="space-y-6">
@@ -244,10 +245,10 @@ export function TaskDetailsDrawer({ task, isOpen, onClose, onUpdateTask, role }:
           {activeTab === 'ATTACHMENTS' && (
             <div className="space-y-6">
               {!isReadOnly && (
-                <div 
+                <div
                   onDragOver={handleDragOver}
                   onDrop={handleDrop}
-                  className="border-2 border-dashed border-gray-300 rounded-2xl p-8 flex flex-col items-center justify-center bg-gray-50 hover:bg-gray-100 transition-colors cursor-pointer group" 
+                  className="border-2 border-dashed border-gray-300 rounded-2xl p-8 flex flex-col items-center justify-center bg-gray-50 hover:bg-gray-100 transition-colors cursor-pointer group"
                   onClick={() => fileInputRef.current?.click()}
                 >
                   <input type="file" multiple className="hidden" ref={fileInputRef} onChange={handleFileChange} />
@@ -270,8 +271,8 @@ export function TaskDetailsDrawer({ task, isOpen, onClose, onUpdateTask, role }:
                        {attachments.map((file) => (
                          <div key={file.id} className="group relative bg-white border border-gray-200 p-3 rounded-xl hover:shadow-md transition-all">
                            {file.url ? (
-                              <div className="h-24 bg-gray-100 rounded-lg mb-3 overflow-hidden">
-                                 <img src={file.url} alt={file.fileName} className="w-full h-full object-cover" />
+                              <div className="relative h-24 bg-gray-100 rounded-lg mb-3 overflow-hidden">
+                                 <Image src={file.url} alt={file.fileName} fill className="object-cover" unoptimized />
                               </div>
                            ) : (
                               <div className="h-24 bg-gray-50 rounded-lg mb-3 flex items-center justify-center">
@@ -285,9 +286,9 @@ export function TaskDetailsDrawer({ task, isOpen, onClose, onUpdateTask, role }:
                               <span>{(file.fileSize / 1024 / 1024).toFixed(2)} MB</span>
                               <span>{file.uploadedBy}</span>
                            </div>
-                           
+
                            {!isReadOnly && (
-                             <button 
+                             <button
                                onClick={() => handleRemoveFile(file.id)}
                                className="absolute top-2 left-2 p-1.5 bg-white/90 backdrop-blur rounded-lg shadow-sm opacity-0 group-hover:opacity-100 text-red-500 hover:bg-red-50 hover:text-red-700 transition-all"
                                title="حذف الملف"
@@ -321,13 +322,13 @@ export function TaskDetailsDrawer({ task, isOpen, onClose, onUpdateTask, role }:
                   ))
                 )}
               </div>
-              
+
               {!isReadOnly && (
                 <form onSubmit={handleAddComment} className="mt-auto border-t border-gray-100 pt-4 bg-white">
                   <label className="sr-only">إضافة تعليق</label>
                   <div className="flex gap-2">
-                    <input 
-                      type="text" 
+                    <input
+                      type="text"
                       value={newComment}
                       onChange={(e) => setNewComment(e.target.value)}
                       placeholder="أضف تعليقاً..."

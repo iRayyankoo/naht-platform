@@ -26,10 +26,10 @@ export function ListView({ filteredTasks, onClick }: ListViewProps) {
             {filteredTasks.length > 0 ? filteredTasks.map(task => {
               const assignee = MOCK_USERS.find(u => u.id === task.assigneeId);
               const workProject = task.workProjectId ? MOCK_WORK_PROJECTS.find(p => p.id === task.workProjectId) : null;
-              
+
               return (
-                <tr 
-                  key={task.id} 
+                <tr
+                  key={task.id}
                   className="hover:bg-primary/5 transition-colors group cursor-pointer"
                   onClick={(e) => {
                     if ((e.target as HTMLElement).closest('button') || (e.target as HTMLElement).closest('input')) return;

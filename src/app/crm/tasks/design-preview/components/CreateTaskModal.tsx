@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { MOCK_WORK_PROJECTS, MOCK_USERS, Priority, MOCK_WORK_PROJECT_MEMBERS } from './data';
+import { MOCK_WORK_PROJECTS, MOCK_USERS, MOCK_WORK_PROJECT_MEMBERS } from './data';
 import { Role } from '../page';
 import toast from 'react-hot-toast';
 
@@ -29,13 +29,13 @@ export function CreateTaskModal({ isOpen, onClose, role, initialProjectId }: Cre
   if (!isOpen) return null;
 
   const currentProject = projectId !== 'GENERAL' ? MOCK_WORK_PROJECTS.find(p => p.id === projectId) : null;
-  const projectMemberIds = currentProject 
+  const projectMemberIds = currentProject
     ? MOCK_WORK_PROJECT_MEMBERS.filter(m => m.projectId === currentProject.id).map(m => m.userId)
     : [];
 
   const handleAssigneeChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
     const newAssigneeId = e.target.value;
-    
+
     if (requiresApproval && newAssigneeId === approverId && newAssigneeId !== '') {
       toast.error('لا يمكن أن يكون منفذ المهمة هو نفس المعتمد.');
       return;
@@ -62,7 +62,7 @@ export function CreateTaskModal({ isOpen, onClose, role, initialProjectId }: Cre
 
   const handleApproverChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
     const newApproverId = e.target.value;
-    
+
     if (newApproverId === assigneeId && newApproverId !== '') {
       toast.error('لا يمكن أن يكون המعتمد هو نفس منفذ المهمة.');
       return;
@@ -108,11 +108,11 @@ export function CreateTaskModal({ isOpen, onClose, role, initialProjectId }: Cre
 
         <form onSubmit={handleSubmit} className="p-6 space-y-6">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            
+
             {/* Project */}
             <div className="col-span-1 md:col-span-2">
               <label className="block text-sm font-bold text-gray-700 mb-2">ارتباط المهمة بـ</label>
-              <select 
+              <select
                 value={projectId}
                 onChange={(e) => {
                   if (initialProjectId && e.target.value === 'GENERAL') {
@@ -139,9 +139,9 @@ export function CreateTaskModal({ isOpen, onClose, role, initialProjectId }: Cre
             {/* Title */}
             <div className="col-span-1 md:col-span-2">
               <label className="block text-sm font-bold text-gray-700 mb-2">عنوان المهمة *</label>
-              <input 
-                required 
-                type="text" 
+              <input
+                required
+                type="text"
                 placeholder="أدخل عنواناً واضحاً للمهمة"
                 className="w-full bg-gray-50 border border-gray-200 rounded-xl p-3 focus:ring-2 focus:ring-primary focus:border-primary outline-none transition-colors"
               />
@@ -150,7 +150,7 @@ export function CreateTaskModal({ isOpen, onClose, role, initialProjectId }: Cre
             {/* Description */}
             <div className="col-span-1 md:col-span-2">
               <label className="block text-sm font-bold text-gray-700 mb-2">الوصف</label>
-              <textarea 
+              <textarea
                 rows={3}
                 placeholder="تفاصيل المهمة ومتطلباتها..."
                 className="w-full bg-gray-50 border border-gray-200 rounded-xl p-3 focus:ring-2 focus:ring-primary focus:border-primary outline-none transition-colors resize-none"
@@ -160,7 +160,7 @@ export function CreateTaskModal({ isOpen, onClose, role, initialProjectId }: Cre
             {/* Assignee */}
             <div>
               <label className="block text-sm font-bold text-gray-700 mb-2">المسؤول عن التنفيذ</label>
-              <select 
+              <select
                 value={assigneeId}
                 onChange={handleAssigneeChange}
                 className="w-full bg-gray-50 border border-gray-200 rounded-xl p-3 focus:ring-2 focus:ring-primary focus:border-primary outline-none transition-colors"
@@ -168,7 +168,7 @@ export function CreateTaskModal({ isOpen, onClose, role, initialProjectId }: Cre
                 <option value="">-- غير مسند --</option>
                 {MOCK_USERS.map(u => {
                    const isMember = currentProject ? projectMemberIds.includes(u.id) : true;
-                   
+
                    // If not a member, hide it unless user is SUPER_ADMIN
                    if (!isMember && role !== 'SUPER_ADMIN') return null;
 
@@ -194,8 +194,8 @@ export function CreateTaskModal({ isOpen, onClose, role, initialProjectId }: Cre
             {/* Due Date */}
             <div>
               <label className="block text-sm font-bold text-gray-700 mb-2">تاريخ الاستحقاق</label>
-              <input 
-                type="date" 
+              <input
+                type="date"
                 className="w-full bg-gray-50 border border-gray-200 rounded-xl p-3 focus:ring-2 focus:ring-primary focus:border-primary outline-none transition-colors text-right"
               />
             </div>
@@ -211,8 +211,8 @@ export function CreateTaskModal({ isOpen, onClose, role, initialProjectId }: Cre
             {/* Approval Setup */}
             <div className="col-span-1 md:col-span-2 bg-purple-50/50 border border-purple-100 rounded-xl p-5 space-y-4 mt-2">
                <label className="flex items-center gap-3 cursor-pointer">
-                 <input 
-                   type="checkbox" 
+                 <input
+                   type="checkbox"
                    checked={requiresApproval}
                    onChange={(e) => {
                       setRequiresApproval(e.target.checked);
@@ -222,11 +222,11 @@ export function CreateTaskModal({ isOpen, onClose, role, initialProjectId }: Cre
                  />
                  <span className="font-bold text-purple-900">هذه المهمة تتطلب اعتماداً بعد الإنجاز</span>
                </label>
-               
+
                {requiresApproval && (
                  <div className="pl-8 border-r-2 border-purple-200 pr-4 rtl:pl-0 rtl:pr-8 rtl:border-r-0 rtl:border-l-2">
                     <label className="block text-sm font-bold text-purple-800 mb-2">اختر المعتمد *</label>
-                    <select 
+                    <select
                       required
                       value={approverId}
                       onChange={handleApproverChange}
@@ -235,7 +235,7 @@ export function CreateTaskModal({ isOpen, onClose, role, initialProjectId }: Cre
                       <option value="">-- اختر المعتمد --</option>
                       {MOCK_USERS.map(u => {
                          const isMember = currentProject ? projectMemberIds.includes(u.id) : true;
-                         
+
                          // If not a member, hide it unless user is SUPER_ADMIN
                          if (!isMember && role !== 'SUPER_ADMIN') return null;
 
@@ -256,15 +256,15 @@ export function CreateTaskModal({ isOpen, onClose, role, initialProjectId }: Cre
           </div>
 
           <div className="border-t border-gray-100 pt-6 flex justify-end gap-3 mt-8">
-            <button 
-              type="button" 
+            <button
+              type="button"
               onClick={onClose}
               className="px-6 py-2.5 rounded-xl text-sm font-bold text-gray-700 hover:bg-gray-100 transition-colors"
             >
               إلغاء
             </button>
-            <button 
-              type="submit" 
+            <button
+              type="submit"
               className="px-6 py-2.5 rounded-xl text-sm font-bold text-white bg-primary hover:bg-primary-dark transition-colors shadow-md"
             >
               إنشاء المهمة
