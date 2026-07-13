@@ -18,7 +18,9 @@ const taskBaseSchema = z.object({
   relatedType: z.string().nullable().optional(),
   relatedId: z.string().nullable().optional(),
   workProjectId: z.string().nullable().optional(),
+  workProjectSectionId: z.string().nullable().optional(),
   designatedApproverId: z.string().nullable().optional(),
+  plannedStartAt: z.date().nullable().optional(),
 });
 
 export async function createTask(data: z.infer<typeof taskBaseSchema>) {
@@ -29,6 +31,12 @@ export async function createTask(data: z.infer<typeof taskBaseSchema>) {
   if (!hasPerm) throw new Error("ليس لديك صلاحية لإنشاء مهمة");
 
   const validatedData = taskBaseSchema.parse(data);
+
+  if (validatedData.plannedStartAt && validatedData.dueDate) {
+    if (validatedData.plannedStartAt > validatedData.dueDate) {
+      throw new Error("تاريخ البداية المخطط لا يمكن أن يكون بعد تاريخ الاستحقاق");
+    }
+  }
 
   // If assigned, verify user is active
   if (validatedData.assignedToId) {
@@ -82,6 +90,22 @@ export async function createTask(data: z.infer<typeof taskBaseSchema>) {
     if (project.status === "CANCELLED" || project.status === "COMPLETED") {
       throw new Error("لا يمكن إضافة مهام لمشروع ملغى أو مكتمل");
     }
+
+    if (validatedData.workProjectSectionId) {
+      const section = await prisma.workProjectSection.findUnique({ where: { id: validatedData.workProjectSectionId } });
+      if (!section) throw new Error("القسم غير موجود");
+      if (section.workProjectId !== validatedData.workProjectId) throw new Error("القسم لا ينتمي لهذا المشروع");
+      if (section.status === "ARCHIVED") throw new Error("لا يمكن إضافة مهام لقسم مؤرشف");
+
+      if (validatedData.assignedToId) {
+        const isSectionMember = await prisma.workProjectSectionMember.findUnique({
+          where: { sectionId_userId: { sectionId: validatedData.workProjectSectionId, userId: validatedData.assignedToId } }
+        });
+        if (!isSectionMember) throw new Error("المستخدم المسند إليه يجب أن يكون عضواً في القسم المختار");
+      }
+    }
+  } else if (validatedData.workProjectSectionId) {
+    throw new Error("لا يمكن اختيار قسم بدون مشروع عمل");
   }
 
   const result = await prisma.$transaction(async (tx) => {
@@ -129,6 +153,15 @@ export async function updateTask(taskId: string, data: Partial<z.infer<typeof ta
   if (!task) throw new Error("المهمة غير موجودة");
   if (task.taskStatus === "DONE" || task.taskStatus === "CANCELLED") throw new Error("لا يمكن تعديل مهمة مكتملة أو ملغاة");
 
+  const finalPlannedStartAt = data.plannedStartAt !== undefined ? data.plannedStartAt : task.plannedStartAt;
+  const finalDueDate = data.dueDate !== undefined ? data.dueDate : task.dueDate;
+
+  if (finalPlannedStartAt && finalDueDate) {
+    if (finalPlannedStartAt > finalDueDate) {
+      throw new Error("تاريخ البداية المخطط لا يمكن أن يكون بعد تاريخ الاستحقاق");
+    }
+  }
+
   if (data.assignedToId && data.assignedToId !== task.assignedToId) {
     const hasAssignPerm = await requirePermission("tasks.assign", { mode: "enforce", context: "Assign Task" });
     if (!hasAssignPerm) throw new Error("ليس لديك صلاحية لتغيير إسناد المهمة");
@@ -144,8 +177,10 @@ export async function updateTask(taskId: string, data: Partial<z.infer<typeof ta
     dueDate: data.dueDate,
     assignedToId: data.assignedToId,
     workProjectId: data.workProjectId,
+    workProjectSectionId: data.workProjectSectionId,
     requiresApproval: data.requiresApproval,
     designatedApproverId: data.designatedApproverId,
+    plannedStartAt: data.plannedStartAt !== undefined ? data.plannedStartAt : undefined,
   };
 
   // Validation for requiresApproval & designatedApproverId
@@ -193,6 +228,35 @@ export async function updateTask(taskId: string, data: Partial<z.infer<typeof ta
       });
       if (!isMember) throw new Error("المعتمد المحدد يجب أن يكون عضواً في المشروع الجديد");
     }
+
+    let finalSectionId = updateData.workProjectSectionId !== undefined ? updateData.workProjectSectionId : task.workProjectSectionId;
+
+    if (updateData.workProjectId !== undefined && updateData.workProjectId !== task.workProjectId) {
+      if (updateData.workProjectSectionId === undefined) {
+        finalSectionId = null; // Clear section if project changed and no new section provided
+        updateData.workProjectSectionId = null;
+      }
+    }
+
+    if (finalSectionId) {
+      const section = await prisma.workProjectSection.findUnique({ where: { id: finalSectionId } });
+      if (!section) throw new Error("القسم غير موجود");
+      if (section.workProjectId !== finalWorkProjectId) throw new Error("القسم لا ينتمي لهذا المشروع");
+
+      // Check ACTIVE only if section changed
+      if (finalSectionId !== task.workProjectSectionId && section.status === "ARCHIVED") {
+        throw new Error("لا يمكن إسناد المهمة لقسم مؤرشف");
+      }
+
+      if (finalAssigneeId) {
+        const isSectionMember = await prisma.workProjectSectionMember.findUnique({
+          where: { sectionId_userId: { sectionId: finalSectionId, userId: finalAssigneeId } }
+        });
+        if (!isSectionMember) throw new Error("المستخدم المسند إليه يجب أن يكون عضواً في القسم المختار");
+      }
+    }
+  } else if (updateData.workProjectSectionId) {
+    throw new Error("لا يمكن اختيار قسم بدون مشروع عمل");
   }
 
   if (task.approvalStatus === "PENDING") {
@@ -217,11 +281,17 @@ export async function updateTask(taskId: string, data: Partial<z.infer<typeof ta
     if (updateData.workProjectId !== undefined && updateData.workProjectId !== task.workProjectId) {
       changes.workProjectId = { old: task.workProjectId, new: updateData.workProjectId };
     }
+    if (updateData.workProjectSectionId !== undefined && updateData.workProjectSectionId !== task.workProjectSectionId) {
+      changes.workProjectSectionId = { old: task.workProjectSectionId, new: updateData.workProjectSectionId };
+    }
     if (updateData.assignedToId !== undefined && updateData.assignedToId !== task.assignedToId) {
       changes.assignedToId = { old: task.assignedToId, new: updateData.assignedToId };
     }
     if (updateData.designatedApproverId !== undefined && updateData.designatedApproverId !== task.designatedApproverId) {
       changes.designatedApproverId = { old: task.designatedApproverId, new: updateData.designatedApproverId };
+    }
+    if (updateData.plannedStartAt !== undefined && updateData.plannedStartAt?.getTime() !== task.plannedStartAt?.getTime()) {
+      changes.plannedStartAt = { old: task.plannedStartAt, new: updateData.plannedStartAt };
     }
 
     await tx.taskActivityLog.create({

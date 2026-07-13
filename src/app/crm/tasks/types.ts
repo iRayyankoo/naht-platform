@@ -3,6 +3,8 @@ export type TaskPriority = 'LOW' | 'MEDIUM' | 'HIGH';
 export type ApprovalStatus = 'PENDING' | 'APPROVED' | 'REJECTED';
 export type WorkProjectStatus = 'PLANNING' | 'ACTIVE' | 'PAUSED' | 'COMPLETED' | 'CANCELLED';
 export type WorkProjectMemberRole = 'OWNER' | 'MANAGER' | 'MEMBER' | 'VIEWER';
+export type WorkProjectSectionStatus = 'ACTIVE' | 'ARCHIVED';
+export type ClientTaskViewMode = 'TABLE' | 'GANTT' | 'TIMELINE' | 'CALENDAR' | 'KANBAN' | 'CARDS';
 
 export interface UserDTO {
   id: string;
@@ -41,6 +43,29 @@ export interface WorkProjectMemberDTO {
   user: UserDTO;
 }
 
+export interface WorkProjectSectionMemberDTO {
+  id: string;
+  user: UserDTO;
+}
+
+export interface WorkProjectSectionDTO {
+  id: string;
+  name: string;
+  description: string | null;
+  color: string | null;
+  status: WorkProjectSectionStatus;
+
+  managerId: string | null;
+  manager: UserDTO | null;
+
+  members: WorkProjectSectionMemberDTO[];
+
+  tasksCount?: number;
+  completedTasksCount?: number;
+  cancelledTasksCount?: number;
+  progressPercentage?: number;
+}
+
 export interface TaskDTO {
   id: string;
   title: string;
@@ -48,8 +73,11 @@ export interface TaskDTO {
   taskStatus: TaskStatus;
   priority: TaskPriority;
   dueDate: string | null;
+  plannedStartAt: string | null;
   createdAt: string;
   workProjectId: string | null;
+  workProjectSectionId?: string | null;
+  workProjectSection?: WorkProjectSectionDTO | null;
 
   requiresApproval: boolean;
   approvalStatus: ApprovalStatus | null;
@@ -78,6 +106,8 @@ export interface WorkProjectDTO {
   completedTasks: number;
   progress: number;
 
+  activeSectionsCount: number;
+
   members: WorkProjectMemberDTO[];
 }
 
@@ -95,4 +125,13 @@ export interface ClientPermissions {
   canDeleteWorkProjects: boolean;
 
   isSuperAdmin: boolean;
+}
+
+export interface WorkProjectSectionsAdapter {
+  getSections: (projectId: string, includeArchived?: boolean) => Promise<WorkProjectSectionDTO[]>;
+  createSection: (projectId: string, data: { name: string; description?: string | null; color?: string; managerId?: string | null }) => Promise<WorkProjectSectionDTO>;
+  updateSection: (sectionId: string, data: { name?: string; description?: string | null; color?: string; managerId?: string | null }) => Promise<WorkProjectSectionDTO>;
+  archiveSection: (sectionId: string) => Promise<{ success: boolean }>;
+  addMember: (sectionId: string, userId: string) => Promise<{ success: boolean }>;
+  removeMember: (sectionId: string, userId: string) => Promise<{ success: boolean }>;
 }

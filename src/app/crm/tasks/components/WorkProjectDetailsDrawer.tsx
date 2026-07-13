@@ -1,7 +1,9 @@
 "use client";
 
 import React, { useState } from 'react';
-import { WorkProjectDTO, ClientPermissions } from '../types';
+import { WorkProjectDTO, ClientPermissions, WorkProjectSectionsAdapter, WorkProjectSectionDTO } from '../types';
+import { WorkProjectSectionsTab } from './WorkProjectSectionsTab';
+import { WorkProjectSectionModal } from './WorkProjectSectionModal';
 
 interface WorkProjectDetailsDrawerProps {
   project: WorkProjectDTO;
@@ -9,12 +11,17 @@ interface WorkProjectDetailsDrawerProps {
   onClose: () => void;
   permissions: ClientPermissions;
   onOpenCreateTask: (projectId: string) => void;
+  sectionsAdapter: WorkProjectSectionsAdapter;
+  onProjectUpdate?: (updatedProject: WorkProjectDTO) => void;
 }
 
-type TabType = 'TASKS' | 'MEMBERS' | 'FILES';
+type TabType = 'TASKS' | 'MEMBERS' | 'FILES' | 'SECTIONS';
 
-export function WorkProjectDetailsDrawer({ project, isOpen, onClose, permissions, onOpenCreateTask }: WorkProjectDetailsDrawerProps) {
+export function WorkProjectDetailsDrawer({ project, isOpen, onClose, permissions, onOpenCreateTask, sectionsAdapter, onProjectUpdate }: WorkProjectDetailsDrawerProps) {
   const [activeTab, setActiveTab] = useState<TabType>('TASKS');
+  const [isSectionModalOpen, setIsSectionModalOpen] = useState(false);
+  const [editingSection, setEditingSection] = useState<WorkProjectSectionDTO | undefined>(undefined);
+  const [sectionsRefreshTrigger, setSectionsRefreshTrigger] = useState(0);
 
   if (!isOpen) return null;
 
@@ -78,22 +85,28 @@ export function WorkProjectDetailsDrawer({ project, isOpen, onClose, permissions
           </div>
 
           {/* Tabs */}
-          <div className="flex border-b border-gray-200 mt-4">
+          <div className="flex border-b border-gray-200 mt-4 overflow-x-auto">
             <button
               onClick={() => setActiveTab('TASKS')}
-              className={`pb-3 px-4 text-sm font-bold transition-colors border-b-2 ${activeTab === 'TASKS' ? 'border-primary text-primary' : 'border-transparent text-gray-500 hover:text-gray-700'}`}
+              className={`pb-3 px-4 text-sm font-bold transition-colors border-b-2 whitespace-nowrap ${activeTab === 'TASKS' ? 'border-primary text-primary' : 'border-transparent text-gray-500 hover:text-gray-700'}`}
             >
               المهام (مرتبطة)
             </button>
             <button
+              onClick={() => setActiveTab('SECTIONS')}
+              className={`pb-3 px-4 text-sm font-bold transition-colors border-b-2 whitespace-nowrap ${activeTab === 'SECTIONS' ? 'border-primary text-primary' : 'border-transparent text-gray-500 hover:text-gray-700'}`}
+            >
+              أقسام المشروع {project.activeSectionsCount !== undefined ? `(${project.activeSectionsCount})` : ''}
+            </button>
+            <button
               onClick={() => setActiveTab('MEMBERS')}
-              className={`pb-3 px-4 text-sm font-bold transition-colors border-b-2 ${activeTab === 'MEMBERS' ? 'border-primary text-primary' : 'border-transparent text-gray-500 hover:text-gray-700'}`}
+              className={`pb-3 px-4 text-sm font-bold transition-colors border-b-2 whitespace-nowrap ${activeTab === 'MEMBERS' ? 'border-primary text-primary' : 'border-transparent text-gray-500 hover:text-gray-700'}`}
             >
               الأعضاء ({members.length})
             </button>
             <button
               onClick={() => setActiveTab('FILES')}
-              className={`pb-3 px-4 text-sm font-bold transition-colors border-b-2 ${activeTab === 'FILES' ? 'border-primary text-primary' : 'border-transparent text-gray-500 hover:text-gray-700'}`}
+              className={`pb-3 px-4 text-sm font-bold transition-colors border-b-2 whitespace-nowrap ${activeTab === 'FILES' ? 'border-primary text-primary' : 'border-transparent text-gray-500 hover:text-gray-700'}`}
             >
               ملفات المشروع
             </button>
@@ -135,9 +148,52 @@ export function WorkProjectDetailsDrawer({ project, isOpen, onClose, permissions
                  </div>
               </div>
             )}
+
+            {/* SECTIONS */}
+            {activeTab === 'SECTIONS' && (
+              <WorkProjectSectionsTab
+                project={project}
+                permissions={permissions}
+                adapter={sectionsAdapter}
+                refreshTrigger={sectionsRefreshTrigger}
+                onSectionChange={(action) => {
+                  if (onProjectUpdate && (action === 'CREATE' || action === 'ARCHIVE')) {
+                    const diff = action === 'CREATE' ? 1 : -1;
+                    onProjectUpdate({
+                      ...project,
+                      activeSectionsCount: (project.activeSectionsCount || 0) + diff
+                    });
+                  }
+                }}
+                onOpenCreateModal={() => setIsSectionModalOpen(true)}
+                onOpenEditModal={(section) => {
+                  setEditingSection(section);
+                  setIsSectionModalOpen(true);
+                }}
+              />
+            )}
           </div>
         </div>
       </div>
+
+      {isSectionModalOpen && (
+        <WorkProjectSectionModal
+          isOpen={isSectionModalOpen}
+          onClose={() => { setIsSectionModalOpen(false); setEditingSection(undefined); }}
+          project={project}
+          editingSection={editingSection}
+          adapter={sectionsAdapter}
+          onSuccess={() => {
+             setSectionsRefreshTrigger(prev => prev + 1);
+             if (!editingSection && onProjectUpdate) {
+                onProjectUpdate({
+                  ...project,
+                  activeSectionsCount: (project.activeSectionsCount || 0) + 1
+                });
+             }
+          }}
+        />
+      )}
     </div>
   );
 }

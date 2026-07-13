@@ -8,7 +8,13 @@ import { CreateTaskModal } from './components/CreateTaskModal';
 import { CreateWorkProjectModal } from './components/CreateWorkProjectModal';
 import { WorkProjectDetailsDrawer } from './components/WorkProjectDetailsDrawer';
 import { WorkProjectsList } from './components/WorkProjectsList';
-import { INITIAL_TASKS, MockTask, TaskStatus, MOCK_WORK_PROJECTS, MockWorkProject } from './components/data';
+import { TaskViewSwitcher } from '../components/TaskViewSwitcher';
+import { CardsView } from '../components/CardsView';
+import { CalendarView } from '../components/CalendarView';
+import { TimelineView } from '../components/TimelineView';
+import { GanttView } from '../components/GanttView';
+import { useTaskViewMode } from '../hooks/useTaskViewMode';
+import { INITIAL_TASKS, MockTask, TaskStatus, MOCK_WORK_PROJECTS, MockWorkProject, MOCK_USERS, MOCK_WORK_PROJECT_SECTIONS } from './components/data';
 import { Toaster } from 'react-hot-toast';
 
 export type Role = 'SUPER_ADMIN' | 'ADMIN' | 'EMPLOYEE';
@@ -18,7 +24,15 @@ export default function DesignPreviewPage() {
   const [tasks, setTasks] = useState<MockTask[]>(INITIAL_TASKS);
   const [projects, setProjects] = useState<MockWorkProject[]>(MOCK_WORK_PROJECTS);
 
-  const [viewMode, setViewMode] = useState<'kanban' | 'list'>('kanban');
+  const [mockSaveSuccess, setMockSaveSuccess] = useState(true);
+
+  const mockSaveAction = async () => {
+    await new Promise(resolve => setTimeout(resolve, 500));
+    if (mockSaveSuccess) return { success: true };
+    return { success: false, error: 'محاكاة فشل الحفظ' };
+  };
+
+  const { viewMode, changeViewMode } = useTaskViewMode('KANBAN', mockSaveAction);
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedProjectId, setSelectedProjectId] = useState<string>('ALL'); // ALL, GENERAL, or projId
 
@@ -57,6 +71,12 @@ export default function DesignPreviewPage() {
     return matchesSearch && matchesProject;
   });
 
+  const mappedFilteredTasks = filteredTasks.map(t => ({
+    ...t,
+    assignedTo: t.assigneeId ? MOCK_USERS.find(u => u.id === t.assigneeId) || null : null,
+    workProjectSection: t.workProjectSectionId ? MOCK_WORK_PROJECT_SECTIONS.find(s => s.id === t.workProjectSectionId) || null : null
+  }));
+
   return (
     <div className="min-h-screen bg-gray-50 flex flex-col font-sans" dir="rtl">
       <Toaster position="top-center" />
@@ -74,6 +94,13 @@ export default function DesignPreviewPage() {
             </div>
 
             <div className="flex items-center gap-3">
+              <div className="flex gap-2 border-l pl-4 border-gray-200 h-8 items-center">
+                <label className="text-xs text-gray-600 flex items-center gap-1 font-bold">
+                  <input type="checkbox" checked={mockSaveSuccess} onChange={(e) => setMockSaveSuccess(e.target.checked)} className="rounded" />
+                  حفظ العرض ناجح؟
+                </label>
+              </div>
+
               {/* Role Toggle */}
               <div className="flex items-center bg-gray-100 rounded-lg p-1 border border-gray-200">
                 <button
@@ -178,38 +205,40 @@ export default function DesignPreviewPage() {
                 </div>
               </div>
 
-              {/* View Toggle */}
-              <div className="flex bg-gray-100 p-1 rounded-xl border border-gray-200">
-                <button
-                  onClick={() => setViewMode('kanban')}
-                  className={`flex items-center justify-center p-2 rounded-lg transition-all w-10 h-10 ${
-                    viewMode === 'kanban' ? 'bg-white shadow-sm text-primary' : 'text-gray-500 hover:text-gray-900'
-                  }`}
-                  title="عرض اللوحة (Kanban)"
-                >
-                  <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 17V7m0 10a2 2 0 01-2 2H5a2 2 0 01-2-2V7a2 2 0 012-2h2a2 2 0 012 2m0 10a2 2 0 002 2h2a2 2 0 002-2M9 7a2 2 0 012-2h2a2 2 0 012 2m0 10V7m0 10a2 2 0 002 2h2a2 2 0 002-2V7a2 2 0 00-2-2h-2a2 2 0 00-2 2" /></svg>
-                </button>
-                <button
-                  onClick={() => setViewMode('list')}
-                  className={`flex items-center justify-center p-2 rounded-lg transition-all w-10 h-10 ${
-                    viewMode === 'list' ? 'bg-white shadow-sm text-primary' : 'text-gray-500 hover:text-gray-900'
-                  }`}
-                  title="عرض القائمة (List)"
-                >
-                  <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 6h16M4 10h16M4 14h16M4 18h16" /></svg>
-                </button>
+              <div className="w-full mt-4 md:mt-0">
+                <TaskViewSwitcher currentView={viewMode} onChangeView={changeViewMode} />
               </div>
             </div>
 
             {/* Board / List */}
             <div className="flex-1 overflow-hidden flex flex-col">
-              {viewMode === 'kanban' ? (
-                <KanbanBoard filteredTasks={filteredTasks} onMoveTask={handleMoveTask} onClick={setSelectedTask} />
-              ) : (
+              {viewMode === 'KANBAN' ? (
+                <KanbanBoard filteredTasks={mappedFilteredTasks} onMoveTask={handleMoveTask} onClick={setSelectedTask} />
+              ) : viewMode === 'TABLE' ? (
                 <div className="bg-white rounded-2xl border border-gray-200 shadow-sm overflow-hidden flex-1 overflow-y-auto">
-                  <ListView filteredTasks={filteredTasks} onClick={setSelectedTask} />
+                  <ListView filteredTasks={mappedFilteredTasks} onClick={setSelectedTask} />
                 </div>
-              )}
+              ) : viewMode === 'CARDS' ? (
+                <div className="flex-1 overflow-y-auto">
+                  {/* @ts-expect-error Ignore type mismatch between mock and real tasks for preview */}
+                  <CardsView filteredTasks={mappedFilteredTasks} onClick={setSelectedTask} />
+                </div>
+              ) : viewMode === 'CALENDAR' ? (
+                <div className="flex-1 min-h-0">
+                  {/* @ts-expect-error Ignore type mismatch */}
+                  <CalendarView filteredTasks={mappedFilteredTasks} onClick={setSelectedTask} />
+                </div>
+              ) : viewMode === 'TIMELINE' ? (
+                <div className="flex-1 min-h-0">
+                  {/* @ts-expect-error Ignore type mismatch */}
+                  <TimelineView filteredTasks={mappedFilteredTasks} onClick={setSelectedTask} />
+                </div>
+              ) : viewMode === 'GANTT' ? (
+                <div className="flex-1 min-h-0">
+                  {/* @ts-expect-error Ignore type mismatch */}
+                  <GanttView filteredTasks={mappedFilteredTasks} onClick={setSelectedTask} />
+                </div>
+              ) : null}
             </div>
           </>
         )}

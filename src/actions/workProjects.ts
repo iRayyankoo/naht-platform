@@ -232,6 +232,32 @@ export async function removeWorkProjectMember(projectId: string, memberIdToRemov
     throw new Error("لا يمكن إزالة عضو مسند إليه مهام غير مكتملة");
   }
 
+  // Check section manager
+  const managedSectionsCount = await prisma.workProjectSection.count({
+    where: {
+      workProjectId: projectId,
+      managerId: memberIdToRemove,
+    }
+  });
+
+  if (managedSectionsCount > 0) {
+    throw new Error("لا يمكن إزالة عضو وهو مدير لقسم، الرجاء تغيير مدير القسم أولاً");
+  }
+
+  // Check section membership
+  const activeSectionMembershipsCount = await prisma.workProjectSectionMember.count({
+    where: {
+      userId: memberIdToRemove,
+      section: {
+        workProjectId: projectId,
+      }
+    }
+  });
+
+  if (activeSectionMembershipsCount > 0) {
+    throw new Error("لا يمكن إزالة عضو من المشروع وهو ضمن أقسام (نشطة أو مؤرشفة)، الرجاء إزالته من الأقسام أولاً");
+  }
+
   // Check designated approver on non-complete tasks
   const approverTasksCount = await prisma.task.count({
     where: {
@@ -283,16 +309,34 @@ export async function getWorkProjects() {
   const isSuperAdminUser = await isSuperAdmin(user.id);
 
   if (isSuperAdminUser) {
-    return prisma.workProject.findMany({
-      include: { owner: true, members: { include: { user: true } } },
+    const projects = await prisma.workProject.findMany({
+      include: {
+        owner: true,
+        members: { include: { user: true } },
+        _count: {
+          select: {
+            sections: { where: { status: "ACTIVE" } }
+          }
+        }
+      },
       orderBy: { createdAt: 'desc' }
     });
+    return projects.map(p => ({ ...p, activeSectionsCount: p._count.sections }));
   } else {
-    return prisma.workProject.findMany({
+    const projects = await prisma.workProject.findMany({
       where: { members: { some: { userId: user.id } } },
-      include: { owner: true, members: { include: { user: true } } },
+      include: {
+        owner: true,
+        members: { include: { user: true } },
+        _count: {
+          select: {
+            sections: { where: { status: "ACTIVE" } }
+          }
+        }
+      },
       orderBy: { createdAt: 'desc' }
     });
+    return projects.map(p => ({ ...p, activeSectionsCount: p._count.sections }));
   }
 }
 
@@ -305,7 +349,15 @@ export async function getWorkProject(id: string) {
 
   const project = await prisma.workProject.findUnique({
     where: { id },
-    include: { owner: true, members: { include: { user: true } } }
+    include: {
+      owner: true,
+      members: { include: { user: true } },
+      _count: {
+        select: {
+          sections: { where: { status: "ACTIVE" } }
+        }
+      }
+    }
   });
   if (!project) throw new Error("المشروع غير موجود");
 
@@ -315,7 +367,7 @@ export async function getWorkProject(id: string) {
   if (!isSuperAdminUser && !isMember) {
     throw new Error("يجب أن تكون عضواً لعرض هذا المشروع");
   }
-  return project;
+  return { ...project, activeSectionsCount: project._count.sections };
 }
 
 export async function addWorkProjectMember(projectId: string, newMemberId: string, role: WorkProjectMemberRole) {

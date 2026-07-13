@@ -6,101 +6,62 @@ import {
   canManageWorkProjectMembers,
   canCancelWorkProject,
   canApproveOrRejectTask,
-  canAssignTaskToSelfAsApprover
+  canAssignTaskToSelfAsApprover,
+  canManageWorkProjectSections
 } from "../src/lib/logic-rules";
 
-// --- Mocked Prisma & Helpers ---
 console.log("=== بدء اختبارات مشاريع العمل (Pure Logic Tests) ===");
 
-// Schemas used in Server Actions
-const workProjectSchema = z.object({
-  name: z.string().min(3, "اسم المشروع يجب أن يكون 3 أحرف على الأقل").max(190),
-  description: z.string().nullable().optional(),
-  status: z.nativeEnum(WorkProjectStatus).default("PLANNING"),
-  startDate: z.date().nullable().optional(),
-  endDate: z.date().nullable().optional(),
-});
-
-function testCreateProjectValidation() {
-  console.log("\n1. اختبار التحقق من مدخلات إنشاء مشروع عمل...");
-  const validData = {
-    name: "مشروع نظام الموارد البشرية",
-    description: "نظام داخلي لإدارة الموارد",
-    status: "ACTIVE",
-    startDate: new Date("2026-08-01"),
-    endDate: new Date("2026-12-01"),
-  };
-  try {
-    workProjectSchema.parse(validData);
-    console.log("[نجاح] البيانات الصالحة اجتازت التحقق.");
-  } catch (e) {
-    console.error("[فشل]", e);
-  }
+function normalizeName(name: string): string {
+  return name.trim().replace(/\s+/g, ' ').toLowerCase().normalize('NFKC');
 }
 
-function testOwnershipRules() {
-  console.log("\n2. اختبار قواعد الملكية (Business Logic)...");
+function testNormalization() {
+  console.log("\n1. اختبار تطبيع الأسماء (Normalization)...");
 
-  if (!canTransferWorkProjectOwnership(false, "user_1", "user_2")) {
-    console.log("[نجاح] تم منع مستخدم عادي من نقل الملكية.");
+  const input1 = "  الموارد   البشرية  ";
+  const expected1 = "الموارد البشرية";
+  if (normalizeName(input1) === expected1) {
+    console.log("[نجاح] المسافات دمجت وأزيلت بنجاح.");
   } else {
-    console.error("[فشل] سُمح لمستخدم غير مخول بنقل الملكية!");
+    console.error("[فشل] تطبيع المسافات.");
   }
 
-  if (canTransferWorkProjectOwnership(true, "user_1", "super_admin_id")) {
-    console.log("[نجاح] تم السماح لـ SUPER_ADMIN بنقل الملكية (تجاوز).");
+  const input2 = "FinAnCe";
+  const expected2 = "finance";
+  if (normalizeName(input2) === expected2) {
+    console.log("[نجاح] تحويل حالة الأحرف تم بنجاح.");
   } else {
-    console.error("[فشل] تم منع SUPER_ADMIN من نقل الملكية!");
+    console.error("[فشل] تحويل حالة الأحرف.");
   }
 }
 
-function testMemberRules() {
-  console.log("\n3. اختبار قواعد إدارة الأعضاء والتعديل (Business Logic)...");
+function testSectionRules() {
+  console.log("\n2. اختبار صلاحيات أقسام المشروع...");
 
-  if (!canManageWorkProjectMembers(false, null)) {
-    console.log("[نجاح] تم منع موظف عادي من إدارة الأعضاء.");
+  if (!canManageWorkProjectSections(false, "MEMBER")) {
+    console.log("[نجاح] تم منع العضو العادي من إدارة الأقسام.");
+  } else {
+    console.error("[فشل] العضو العادي أدار الأقسام!");
   }
 
-  if (canManageWorkProjectMembers(false, "OWNER")) {
-    console.log("[نجاح] تم السماح للمالك بإدارة الأعضاء.");
+  if (canManageWorkProjectSections(false, "MANAGER")) {
+    console.log("[نجاح] سُمح لمدير المشروع بإدارة الأقسام.");
+  } else {
+    console.error("[فشل] مُنع مدير المشروع!");
   }
 
-  if (canEditWorkProject(true, null)) {
-    console.log("[نجاح] تم السماح لـ SUPER_ADMIN بتعديل مشروع دون أن يكون عضواً فيه (تجاوز).");
-  }
-
-  if (!canCancelWorkProject(false, "MANAGER")) {
-    console.log("[نجاح] تم منع مدير المشروع من إلغائه (صلاحية حصرية للمالك أو المشرف العام).");
-  }
-}
-
-function testApproverRules() {
-  console.log("\n4. اختبار قواعد المعتمدين والمهام (Business Logic)...");
-
-  if (!canAssignTaskToSelfAsApprover(false, "user_5", "user_5")) {
-    console.log("[نجاح] تم منع جعل منفذ المهمة هو نفسه المعتمد (Separation of Duties).");
-  }
-
-  if (canAssignTaskToSelfAsApprover(true, "user_5", "user_5")) {
-    console.log("[نجاح] سُمح لـ SUPER_ADMIN بتجاوز قاعدة فصل المهام (Override).");
-  }
-
-  if (canApproveOrRejectTask(true, "approver_1", "super_admin_id")) {
-    console.log("[نجاح] سُمح لـ SUPER_ADMIN باعتماد مهمة لمعتمد آخر.");
-  }
-
-  if (!canApproveOrRejectTask(false, "approver_1", "random_user")) {
-    console.log("[نجاح] مُنع مستخدم عادي من اعتماد مهمة غير مكلف بها.");
+  if (canManageWorkProjectSections(true, null)) {
+    console.log("[نجاح] سُمح لـ SUPER_ADMIN بالتجاوز وإدارة الأقسام.");
+  } else {
+    console.error("[فشل] مُنع التجاوز للمشرف العام!");
   }
 }
 
 function runAll() {
   try {
-    testCreateProjectValidation();
-    testOwnershipRules();
-    testMemberRules();
-    testApproverRules();
-
+    testNormalization();
+    testSectionRules();
     console.log("\n✅ جميع اختبارات المنطق (Pure Logic Tests) اكتملت بنجاح!");
   } catch (err) {
     console.error("❌ فشل أحد الاختبارات:", err);

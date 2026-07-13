@@ -1,4 +1,6 @@
 "use client";
+import { WorkProjectSectionsAdapter } from '../types';
+
 
 import React, { useState, useTransition } from 'react';
 import { WorkProjectDTO, UserDTO, ClientPermissions } from '../types';
@@ -13,6 +15,7 @@ interface CreateTaskModalProps {
   initialProjectId?: string | null;
   workProjects: WorkProjectDTO[];
   users?: UserDTO[]; // For general tasks or fallback
+  sectionsAdapter?: WorkProjectSectionsAdapter;
 }
 
 export function CreateTaskModal({ isOpen, onClose, permissions, initialProjectId, workProjects, users = [] }: CreateTaskModalProps) {

@@ -72,6 +72,12 @@ model User {
   uploadedWorkProjectAttachments WorkProjectAttachment[]  @relation("WorkProjectAttachmentsUploaded")
   uploadedTaskAttachments        TaskAttachment[]         @relation("TaskAttachmentsUploaded")
   designatedForTasks             Task[]                   @relation("DesignatedTaskApprover")
+
+  // Phase 16 Work Projects Sections Relations
+  managedWorkProjectSections    WorkProjectSection[]       @relation("WorkProjectSectionManager")
+  workProjectSectionMemberships WorkProjectSectionMember[] @relation("WorkProjectSectionMemberships")
+
+  userTaskPreference UserTaskPreference?
 }
 
 model Account {
@@ -825,13 +831,18 @@ model Task {
   createdAt        DateTime  @default(now())
   updatedAt        DateTime  @updatedAt
 
+
   workProjectId        String?
   designatedApproverId String?
+  workProjectSectionId String?
+  plannedStartAt       DateTime?
 
   assignedTo         User?             @relation("AssignedTasks", fields: [assignedToId], references: [id], onDelete: SetNull)
   createdBy          User              @relation("CreatedTasks", fields: [createdById], references: [id], onDelete: Restrict)
   workProject        WorkProject?      @relation(fields: [workProjectId], references: [id], onDelete: SetNull)
+  workProjectSection WorkProjectSection? @relation(fields: [workProjectSectionId], references: [id], onDelete: SetNull)
   designatedApprover User?             @relation("DesignatedTaskApprover", fields: [designatedApproverId], references: [id], onDelete: SetNull)
+
   approvals          TaskApproval[]
   comments           TaskComment[]
   watchers           TaskWatcher[]
@@ -842,9 +853,13 @@ model Task {
   @@index([approvalStatus])
   @@index([assignedToId])
   @@index([dueDate])
+
   @@index([workProjectId])
   @@index([designatedApproverId])
+  @@index([workProjectSectionId])
+  @@index([plannedStartAt])
 }
+
 
 model TaskApproval {
   id              String    @id @default(cuid())
@@ -947,6 +962,7 @@ model WorkProject {
   tasks        Task[]
   attachments  WorkProjectAttachment[]
   activityLogs WorkProjectActivityLog[]
+  sections     WorkProjectSection[]
 
   @@index([ownerId])
   @@index([status])
@@ -1028,4 +1044,67 @@ model TaskAttachment {
   @@index([taskId, createdAt])
   @@index([status])
   @@index([uploadedById])
+}
+
+
+enum WorkProjectSectionStatus {
+  ACTIVE
+  ARCHIVED
+}
+
+model WorkProjectSection {
+  id              String       @id @default(cuid())
+  workProjectId   String
+  name            String
+  normalizedName  String
+  description     String?
+  managerId       String?
+  color           String?      @default("#3B82F6")
+  status          WorkProjectSectionStatus @default(ACTIVE)
+  createdAt       DateTime     @default(now())
+  updatedAt       DateTime     @updatedAt
+
+  workProject     WorkProject  @relation(fields: [workProjectId], references: [id])
+  manager         User?        @relation("WorkProjectSectionManager", fields: [managerId], references: [id])
+  tasks           Task[]
+  members         WorkProjectSectionMember[]
+
+  @@unique([workProjectId, normalizedName])
+  @@index([workProjectId])
+  @@index([managerId])
+  @@index([status])
+}
+
+model WorkProjectSectionMember {
+  id          String   @id @default(cuid())
+  sectionId   String
+  userId      String
+  createdAt   DateTime @default(now())
+
+  section     WorkProjectSection @relation(fields: [sectionId], references: [id], onDelete: Cascade)
+  user        User               @relation("WorkProjectSectionMemberships", fields: [userId], references: [id])
+
+  @@unique([sectionId, userId])
+  @@index([userId])
+  @@index([sectionId])
+}
+
+enum TaskViewMode {
+  TABLE
+  GANTT
+  TIMELINE
+  CALENDAR
+  KANBAN
+  CARDS
+}
+
+model UserTaskPreference {
+  id              String       @id @default(cuid())
+  userId          String       @unique
+  user            User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  defaultViewMode TaskViewMode @default(KANBAN)
+  createdAt       DateTime     @default(now())
+  updatedAt       DateTime     @updatedAt
+
+  @@map("user_task_preferences")
 }

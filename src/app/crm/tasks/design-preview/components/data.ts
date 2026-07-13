@@ -43,6 +43,7 @@ export interface MockAttachment {
 export interface MockTask {
   id: string;
   workProjectId: string | null;
+  workProjectSectionId?: string | null;
   title: string;
   description: string;
   taskStatus: TaskStatus;
@@ -54,6 +55,7 @@ export interface MockTask {
   followersIds: string[];
   commentsCount: number;
   createdAt: string;
+  plannedStartAt?: string | null;
   dueDate: string | null;
   requiresApproval: boolean;
   history: { id: string; action: string; by: string; date: string }[];
@@ -101,6 +103,12 @@ export const MOCK_WORK_PROJECT_MEMBERS: MockWorkProjectMember[] = [
   { id: 'm5', projectId: 'wp2', userId: 'u3', role: 'MEMBER' },
 ];
 
+export const MOCK_WORK_PROJECT_SECTIONS = [
+  { id: 'sec1', workProjectId: 'wp1', name: 'التحليل والمقترحات', status: 'ACTIVE', color: '#3B82F6', managerId: 'u1' },
+  { id: 'sec2', workProjectId: 'wp1', name: 'قاعدة البيانات (مؤرشف)', status: 'ARCHIVED', color: '#6B7280', managerId: 'u4' },
+  { id: 'sec3', workProjectId: 'wp2', name: 'التصاميم', status: 'ACTIVE', color: '#8B5CF6', managerId: 'u3' }
+];
+
 export const MOCK_PROJECT_ATTACHMENTS: Record<string, MockAttachment[]> = {
   'wp1': [
     { id: 'pa1', fileName: 'متطلبات_النظام.pdf', fileSize: 1500000, mimeType: 'application/pdf', uploadedBy: 'أحمد الإداري', date: '2026-07-02T10:00:00Z' }
@@ -111,6 +119,7 @@ export const INITIAL_TASKS: MockTask[] = [
   {
     id: 't1',
     workProjectId: 'wp1',
+    workProjectSectionId: 'sec1',
     title: 'مراجعة الميزانية التشغيلية',
     description: 'يرجى مراجعة وتدقيق ميزانية المشروع.',
     taskStatus: 'TODO',
@@ -122,6 +131,7 @@ export const INITIAL_TASKS: MockTask[] = [
     followersIds: [],
     commentsCount: 2,
     createdAt: '2026-07-10T10:00:00Z',
+    plannedStartAt: '2026-07-02T00:00:00Z',
     dueDate: '2026-07-05T00:00:00Z', // Overdue
     requiresApproval: false,
     history: [{ id: 'h1', action: 'أنشأ المهمة', by: 'أحمد الإداري', date: '2026-07-10T10:00:00Z' }],
@@ -131,6 +141,7 @@ export const INITIAL_TASKS: MockTask[] = [
   {
     id: 't2',
     workProjectId: 'wp1',
+    workProjectSectionId: 'sec2',
     title: 'تحديث قواعد البيانات',
     description: '',
     taskStatus: 'IN_PROGRESS',
@@ -142,13 +153,15 @@ export const INITIAL_TASKS: MockTask[] = [
     followersIds: ['u1'],
     commentsCount: 0,
     createdAt: '2026-07-11T12:00:00Z',
-    dueDate: '2026-07-20T00:00:00Z',
+    plannedStartAt: null,
+    dueDate: '2026-07-20T00:00:00Z', // Only dueDate -> Milestone
     requiresApproval: false,
     history: [], comments: [], attachments: []
   },
   {
     id: 't3',
     workProjectId: 'wp2',
+    workProjectSectionId: 'sec3',
     title: 'اعتماد تصاميم الحملة',
     description: 'الرجاء اعتماد التصاميم قبل الإطلاق.',
     taskStatus: 'IN_PROGRESS',
@@ -160,7 +173,8 @@ export const INITIAL_TASKS: MockTask[] = [
     followersIds: ['u4'],
     commentsCount: 5,
     createdAt: '2026-07-12T09:00:00Z',
-    dueDate: '2026-07-15T00:00:00Z',
+    plannedStartAt: '2026-07-15T00:00:00Z',
+    dueDate: '2026-07-15T00:00:00Z', // Same dates -> Milestone
     requiresApproval: true,
     history: [
       { id: 'h1', action: 'أنشأ المهمة', by: 'عمر الموظف', date: '2026-07-12T09:00:00Z' },
@@ -171,6 +185,7 @@ export const INITIAL_TASKS: MockTask[] = [
   {
     id: 't4',
     workProjectId: null, // General Task
+    workProjectSectionId: null,
     title: 'تجديد رخص البرمجيات',
     description: 'مهمة عامة غير تابعة لمشروع عمل محدد.',
     taskStatus: 'TODO',
@@ -182,7 +197,8 @@ export const INITIAL_TASKS: MockTask[] = [
     followersIds: [],
     commentsCount: 0,
     createdAt: '2026-07-12T10:00:00Z',
-    dueDate: '2026-07-25T00:00:00Z',
+    plannedStartAt: '2026-07-15T00:00:00Z',
+    dueDate: '2026-07-25T00:00:00Z', // Bar
     requiresApproval: false,
     history: [], comments: [], attachments: []
   }

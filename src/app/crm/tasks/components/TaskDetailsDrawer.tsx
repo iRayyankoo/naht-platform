@@ -1,4 +1,6 @@
 "use client";
+import { WorkProjectSectionsAdapter } from '../types';
+
 
 import React, { useState, useRef, useEffect, useTransition } from 'react';
 import { TaskDTO, TaskStatus, TaskPriority, ApprovalStatus, ClientPermissions } from '../types';
@@ -14,6 +16,7 @@ interface TaskDetailsDrawerProps {
   isOpen: boolean;
   onClose: () => void;
   permissions: ClientPermissions;
+  sectionsAdapter?: WorkProjectSectionsAdapter;
 }
 
 type TabType = 'DETAILS' | 'COMMENTS' | 'ACTIVITY' | 'APPROVAL' | 'ATTACHMENTS';

@@ -8,7 +8,13 @@ import { CreateTaskModal } from './components/CreateTaskModal';
 import { CreateWorkProjectModal } from './components/CreateWorkProjectModal';
 import { WorkProjectDetailsDrawer } from './components/WorkProjectDetailsDrawer';
 import { WorkProjectsList } from './components/WorkProjectsList';
-import { TaskDTO, WorkProjectDTO, ClientPermissions, UserDTO } from './types';
+import { TaskViewSwitcher } from './components/TaskViewSwitcher';
+import { CardsView } from './components/CardsView';
+import { CalendarView } from './components/CalendarView';
+import { TimelineView } from './components/TimelineView';
+import { GanttView } from './components/GanttView';
+import { useTaskViewMode, SaveViewPreferenceAction } from './hooks/useTaskViewMode';
+import { TaskDTO, WorkProjectDTO, ClientPermissions, UserDTO, ClientTaskViewMode, WorkProjectSectionsAdapter } from './types';
 import { Toaster } from 'react-hot-toast';
 
 type MainTab = 'TASKS' | 'WORK_PROJECTS';
@@ -18,10 +24,13 @@ interface TasksClientWrapperProps {
   initialProjects: WorkProjectDTO[];
   permissions: ClientPermissions;
   users: UserDTO[];
+  defaultViewMode?: string;
+  saveViewPreference?: SaveViewPreferenceAction;
+  sectionsAdapter?: WorkProjectSectionsAdapter;
 }
 
-export function TasksClientWrapper({ initialTasks, initialProjects, permissions, users }: TasksClientWrapperProps) {
-  const [viewMode, setViewMode] = useState<'kanban' | 'list'>('kanban');
+export function TasksClientWrapper({ initialTasks, initialProjects, permissions, users, defaultViewMode, saveViewPreference, sectionsAdapter }: TasksClientWrapperProps) {
+  const { viewMode, changeViewMode } = useTaskViewMode((defaultViewMode as ClientTaskViewMode) || 'KANBAN', saveViewPreference);
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedProjectId, setSelectedProjectId] = useState<string>('ALL'); // ALL, GENERAL, or projId
 
@@ -31,6 +40,8 @@ export function TasksClientWrapper({ initialTasks, initialProjects, permissions,
   const [isTaskModalOpen, setIsTaskModalOpen] = useState(false);
   const [isProjectModalOpen, setIsProjectModalOpen] = useState(false);
   const [mainTab, setMainTab] = useState<MainTab>('TASKS');
+
+  const [projects, setProjects] = useState<WorkProjectDTO[]>(initialProjects);
 
   // Filter Tasks locally for fast search
   const filteredTasks = initialTasks.filter(t => {
@@ -142,26 +153,8 @@ export function TasksClientWrapper({ initialTasks, initialProjects, permissions,
                 </div>
               </div>
 
-              {/* View Toggle */}
-              <div className="flex bg-gray-100 p-1 rounded-xl border border-gray-200">
-                <button
-                  onClick={() => setViewMode('kanban')}
-                  className={`flex items-center justify-center p-2 rounded-lg transition-all w-10 h-10 ${
-                    viewMode === 'kanban' ? 'bg-white shadow-sm text-primary' : 'text-gray-500 hover:text-gray-900'
-                  }`}
-                  title="عرض اللوحة (Kanban)"
-                >
-                  <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 17V7m0 10a2 2 0 01-2 2H5a2 2 0 01-2-2V7a2 2 0 012-2h2a2 2 0 012 2m0 10a2 2 0 002 2h2a2 2 0 002-2M9 7a2 2 0 012-2h2a2 2 0 012 2m0 10V7m0 10a2 2 0 002 2h2a2 2 0 002-2V7a2 2 0 00-2-2h-2a2 2 0 00-2 2" /></svg>
-                </button>
-                <button
-                  onClick={() => setViewMode('list')}
-                  className={`flex items-center justify-center p-2 rounded-lg transition-all w-10 h-10 ${
-                    viewMode === 'list' ? 'bg-white shadow-sm text-primary' : 'text-gray-500 hover:text-gray-900'
-                  }`}
-                  title="عرض القائمة (List)"
-                >
-                  <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 6h16M4 10h16M4 14h16M4 18h16" /></svg>
-                </button>
+              <div className="w-full mt-4 md:mt-0">
+                <TaskViewSwitcher currentView={viewMode} onChangeView={changeViewMode} />
               </div>
             </div>
 
@@ -173,11 +166,31 @@ export function TasksClientWrapper({ initialTasks, initialProjects, permissions,
                   <h3 className="text-lg font-bold text-gray-900 mb-2">لا توجد مهام مطابقة</h3>
                   <p className="text-gray-500 text-sm max-w-md">جرّب تغيير الفلاتر المحددة أعلاه، أو قم بإنشاء مهمة جديدة.</p>
                 </div>
-              ) : viewMode === 'kanban' ? (
+              ) : viewMode === 'KANBAN' ? (
                 <KanbanBoard filteredTasks={filteredTasks} onClick={setSelectedTask} />
-              ) : (
+              ) : viewMode === 'TABLE' ? (
                 <div className="bg-white rounded-2xl border border-gray-200 shadow-sm overflow-hidden flex-1 overflow-y-auto">
                   <ListView filteredTasks={filteredTasks} onClick={setSelectedTask} />
+                </div>
+              ) : viewMode === 'CARDS' ? (
+                <div className="flex-1 overflow-y-auto">
+                  <CardsView filteredTasks={filteredTasks} onClick={setSelectedTask} />
+                </div>
+              ) : viewMode === 'CALENDAR' ? (
+                <div className="flex-1 min-h-0">
+                  <CalendarView filteredTasks={filteredTasks} onClick={setSelectedTask} />
+                </div>
+              ) : viewMode === 'TIMELINE' ? (
+                <div className="flex-1 min-h-0">
+                  <TimelineView filteredTasks={filteredTasks} onClick={setSelectedTask} />
+                </div>
+              ) : viewMode === 'GANTT' ? (
+                <div className="flex-1 min-h-0">
+                  <GanttView filteredTasks={filteredTasks} onClick={setSelectedTask} />
+                </div>
+              ) : (
+                <div className="flex-1 flex items-center justify-center text-gray-500 bg-white rounded-2xl border border-gray-100 shadow-sm">
+                  هذا العرض قيد التجهيز وسيتم إطلاقه قريباً
                 </div>
               )}
             </div>
@@ -193,7 +206,7 @@ export function TasksClientWrapper({ initialTasks, initialProjects, permissions,
                 </div>
              </div>
 
-             {initialProjects.length === 0 ? (
+             {projects.length === 0 ? (
                 <div className="flex-1 flex flex-col items-center justify-center py-20 px-4 text-center bg-white rounded-2xl shadow-sm border border-gray-100">
                   <div className="text-gray-300 text-6xl mb-4">📂</div>
                   <h3 className="text-lg font-bold text-gray-900 mb-2">لا توجد مشاريع عمل</h3>
@@ -201,7 +214,7 @@ export function TasksClientWrapper({ initialTasks, initialProjects, permissions,
                 </div>
              ) : (
                <WorkProjectsList
-                 projects={initialProjects}
+                 projects={projects}
                  onClick={setSelectedWorkProject}
                />
              )}
@@ -216,30 +229,44 @@ export function TasksClientWrapper({ initialTasks, initialProjects, permissions,
           isOpen={true}
           onClose={() => setSelectedTask(null)}
           permissions={permissions}
+          sectionsAdapter={sectionsAdapter}
         />
       )}
 
       {selectedWorkProject && (
         <WorkProjectDetailsDrawer
           project={selectedWorkProject}
-          isOpen={true}
+          isOpen={!!selectedWorkProject}
           onClose={() => setSelectedWorkProject(null)}
           permissions={permissions}
-          onOpenCreateTask={(projId) => {
-             setSelectedProjectId(projId);
-             setIsTaskModalOpen(true);
+          onOpenCreateTask={(projectId) => {
+            setSelectedProjectId(projectId);
+            setIsTaskModalOpen(true);
+          }}
+          sectionsAdapter={sectionsAdapter || {
+            getSections: async () => [],
+            createSection: async () => { throw new Error('Not implemented'); },
+            updateSection: async () => { throw new Error('Not implemented'); },
+            archiveSection: async () => { throw new Error('Not implemented'); },
+            addMember: async () => { throw new Error('Not implemented'); },
+            removeMember: async () => { throw new Error('Not implemented'); }
+          }}
+          onProjectUpdate={(updatedProject) => {
+             setProjects(prev => prev.map(p => p.id === updatedProject.id ? updatedProject : p));
+             setSelectedWorkProject(updatedProject);
           }}
         />
       )}
 
       {isTaskModalOpen && (
         <CreateTaskModal
-          isOpen={isTaskModalOpen}
+          isOpen={true}
           onClose={() => setIsTaskModalOpen(false)}
           permissions={permissions}
-          initialProjectId={selectedProjectId !== 'ALL' ? selectedProjectId : null}
-          workProjects={initialProjects}
+          initialProjectId={selectedProjectId}
+          workProjects={projects}
           users={users}
+          sectionsAdapter={sectionsAdapter}
         />
       )}
 

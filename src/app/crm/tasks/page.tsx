@@ -2,7 +2,16 @@ import { prisma } from "@/lib/prisma";
 import { getCurrentUser } from "@/lib/auth-helpers";
 import { checkPermission, isSuperAdmin } from "@/lib/rbac-helpers";
 import { TasksClientWrapper } from "./TasksClientWrapper";
-import { TaskDTO, WorkProjectDTO, ClientPermissions, TaskStatus, TaskPriority, ApprovalStatus, WorkProjectStatus, WorkProjectMemberRole, UserDTO } from "./types";
+import { TaskDTO, WorkProjectDTO, ClientPermissions, TaskStatus, TaskPriority, ApprovalStatus, WorkProjectStatus, WorkProjectMemberRole, UserDTO, WorkProjectSectionStatus } from "./types";
+import { getMyTaskViewPreference } from "@/actions/userPreferences";
+import {
+  getWorkProjectSections,
+  createWorkProjectSection,
+  updateWorkProjectSection,
+  archiveWorkProjectSection,
+  addWorkProjectSectionMember,
+  removeWorkProjectSectionMember
+} from "@/actions/workProjectSections";
 
 export const dynamic = "force-dynamic";
 
@@ -11,6 +20,8 @@ export default async function TasksPage() {
   if (!user) {
      return <div className="p-8 text-center">الرجاء تسجيل الدخول</div>;
   }
+
+  const defaultViewMode = await getMyTaskViewPreference();
 
   // 1. Check Permissions
   const canViewTasks = await checkPermission("tasks.view", "View Tasks");
@@ -76,7 +87,8 @@ export default async function TasksPage() {
         include: { approver: { select: { id: true, name: true } } },
         orderBy: { createdAt: "desc" }
       },
-      attachments: true
+      attachments: true,
+      workProjectSection: { select: { id: true, name: true, color: true, status: true } }
     }
   }) : [];
 
@@ -97,9 +109,21 @@ export default async function TasksPage() {
     taskStatus: t.taskStatus as TaskStatus,
     priority: t.priority as TaskPriority,
     dueDate: t.dueDate?.toISOString() || null,
+    plannedStartAt: t.plannedStartAt?.toISOString() || null,
     createdAt: t.createdAt.toISOString(),
     updatedAt: t.updatedAt.toISOString(),
     workProjectId: t.workProjectId,
+    workProjectSectionId: t.workProjectSectionId,
+    workProjectSection: t.workProjectSection ? {
+      id: t.workProjectSection.id,
+      name: t.workProjectSection.name,
+      description: null,
+      color: t.workProjectSection.color,
+      managerId: null,
+      manager: null,
+      members: [],
+      status: t.workProjectSection.status as WorkProjectSectionStatus
+    } : null,
     assignedToId: t.assignedToId,
     assignedTo: mapUser(t.assignedTo),
     createdBy: mapUser(t.createdBy) as UserDTO,
@@ -139,7 +163,7 @@ export default async function TasksPage() {
       members: {
         include: { user: { select: { id: true, name: true, email: true } } }
       },
-      _count: { select: { tasks: true } },
+      _count: { select: { tasks: true, sections: { where: { status: 'ACTIVE' } } } },
       tasks: {
         select: { taskStatus: true }
       }
@@ -171,7 +195,8 @@ export default async function TasksPage() {
       })),
       totalTasks,
       completedTasks,
-      progress
+      progress,
+      activeSectionsCount: p._count.sections
     };
   });
 
@@ -187,6 +212,79 @@ export default async function TasksPage() {
       initialProjects={initialProjects}
       permissions={permissions}
       users={allUsers.map(u => ({ id: u.id, name: u.name || "مستخدم غير معروف" }))}
+      defaultViewMode={defaultViewMode}
+      sectionsAdapter={{
+        getSections: async (projectId, includeArchived) => {
+          "use server";
+          const res = await getWorkProjectSections(projectId, includeArchived);
+          return res.map(s => ({
+            id: s.id,
+            workProjectId: s.workProjectId,
+            name: s.name,
+            description: s.description,
+            color: s.color,
+            managerId: s.managerId,
+            status: s.status as WorkProjectSectionStatus,
+            createdAt: s.createdAt.toISOString(),
+            updatedAt: s.updatedAt.toISOString(),
+            manager: s.manager ? { id: s.manager.id, name: s.manager.name || "مستخدم غير معروف" } : null,
+            members: s.members.map(m => ({
+              id: m.id,
+              user: { id: m.user.id, name: m.user.name || "مستخدم غير معروف" }
+            })),
+            tasksCount: s.tasksCount,
+            completedTasksCount: s.completedTasksCount,
+            cancelledTasksCount: s.cancelledTasksCount,
+            progressPercentage: s.progressPercentage
+          }));
+        },
+        createSection: async (projectId, data) => {
+          "use server";
+          const s = await createWorkProjectSection(projectId, { ...data, color: data.color || '#3B82F6' });
+          return {
+            id: s.id,
+            workProjectId: s.workProjectId,
+            name: s.name,
+            description: s.description,
+            color: s.color,
+            managerId: s.managerId,
+            status: s.status as WorkProjectSectionStatus,
+            createdAt: s.createdAt.toISOString(),
+            updatedAt: s.updatedAt.toISOString(),
+            manager: null,
+            members: []
+          };
+        },
+        updateSection: async (sectionId, data) => {
+          "use server";
+          const s = await updateWorkProjectSection(sectionId, { ...data, color: data.color || '#3B82F6' });
+          return {
+            id: s.id,
+            workProjectId: s.workProjectId,
+            name: s.name,
+            description: s.description,
+            color: s.color,
+            managerId: s.managerId,
+            status: s.status as WorkProjectSectionStatus,
+            createdAt: s.createdAt.toISOString(),
+            updatedAt: s.updatedAt.toISOString(),
+            manager: null,
+            members: []
+          };
+        },
+        archiveSection: async (sectionId) => {
+          "use server";
+          return await archiveWorkProjectSection(sectionId);
+        },
+        addMember: async (sectionId, userId) => {
+          "use server";
+          return await addWorkProjectSectionMember(sectionId, userId);
+        },
+        removeMember: async (sectionId, userId) => {
+          "use server";
+          return await removeWorkProjectSectionMember(sectionId, userId);
+        }
+      }}
     />
   );
 }

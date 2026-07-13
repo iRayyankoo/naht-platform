@@ -30,3 +30,8 @@ export function canAssignTaskToSelfAsApprover(isSuperAdmin: boolean, assigneeId:
   if (assigneeId !== approverId) return true; // not same person
   return isSuperAdmin;
 }
+
+export function canManageWorkProjectSections(isSuperAdmin: boolean, userMemberRole?: WorkProjectMemberRole | null) {
+  if (isSuperAdmin) return true;
+  return userMemberRole === "OWNER" || userMemberRole === "MANAGER";
+}
