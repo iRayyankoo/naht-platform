@@ -11,7 +11,7 @@
 - **لم يتم بناء:** `Server Actions` الخاصة بمشاريع العمل.
 - **لم يتم بناء:** نظام الرفع الآمن (Signed URLs, Supabase Private Bucket).
 - **لم يتم دمج:** واجهة المعاينة `/crm/tasks/design-preview` مع مسار `/crm/tasks` الفعلي.
-- **لم يتم تطبيق:** الـ Migration على قواعد بيانات `Staging` أو `Production`.
+- **لم يتم تطبيق:** الـ Migration محلياً أو على قواعد بيانات `Staging` أو `Production` (أُنشئت كملف فقط).
 
 ## أول مهمة للغد (ترتيب التنفيذ)
 1. **الصلاحيات (Permissions Seed):** إضافة صلاحيات مشاريع العمل والمرفقات الجديدة إلى `prisma/seed.ts` بشكل Idempotent وتشغيلها محلياً.
@@ -34,7 +34,6 @@ npm run check:ts
 
 ## الملفات الأساسية المرجعية
 - `docs/work-projects/architecture.md`: المعمارية والسياسات الثابتة.
-- `implementation_plan.md`: خطة تفاصيل الدمج المرحلي.
 - `prisma/schema.prisma`: المخطط الحالي.
 
 ## Definition of Done للمرحلة القادمة (Server Actions)
