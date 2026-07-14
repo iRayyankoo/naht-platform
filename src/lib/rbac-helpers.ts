@@ -189,7 +189,8 @@ export async function getCurrentUserScopedPermissions(userId: string): Promise<M
     }
     return permissions;
   } catch (error) {
-    console.warn("[RBAC] Failed to fetch scoped permissions for user", userId, error);
+    const message = error instanceof Error ? error.message : String(error);
+    console.warn("[RBAC] Failed to fetch scoped permissions for user. Error:", message);
     return new Map();
   }
 }
@@ -244,7 +245,8 @@ export async function checkScopedPermission(
 
     return false;
   } catch (err) {
-    console.warn(`[RBAC] Error checking scoped permission ${permissionCode} in context ${context}`, err);
+    const message = err instanceof Error ? err.message : String(err);
+    console.warn(`[RBAC] Error checking scoped permission ${permissionCode} (Context: ${context}). Error:`, message);
     return false;
   }
 }
@@ -262,10 +264,10 @@ export async function requireScopedPermission(
   if (!hasPerm) {
     const user = await getCurrentUser();
     if (mode === "enforce") {
-      console.warn(`[RBAC ENFORCE] Scoped Access Denied for User ${user?.email} to ${context}.`);
+      console.warn(`[RBAC ENFORCE] Scoped Access Denied (Context: ${context}).`);
       return false;
     } else {
-      console.warn(`[RBAC LOG] Scoped Access Denied for User ${user?.email} to ${context}. Allowed via legacy ADMIN fallback.`);
+      console.warn(`[RBAC LOG] Scoped Access Denied (Context: ${context}). Allowed via legacy ADMIN fallback.`);
       return true; 
     }
   }
