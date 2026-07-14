@@ -80,9 +80,18 @@ model User {
   userTaskPreference UserTaskPreference?
 
   // Phase O1: Organizational Foundation
-  departmentMembers     DepartmentMember[]
-  orgActivitiesAsActor  OrganizationActivityLog[] @relation("OrgActivityActor")
-  orgActivitiesAsTarget OrganizationActivityLog[] @relation("OrgActivityTarget")
+  departmentMembers       DepartmentMember[]
+  orgActivitiesAsActor    OrganizationActivityLog[] @relation("OrgActivityActor")
+  orgActivitiesAsTarget   OrganizationActivityLog[] @relation("OrgActivityTarget")
+  // Phase F1: Finance Relations
+  financeSettingsUpdated  FinanceSettings[]         @relation("FinanceSettingsUpdater")
+  financePeriodsClosed    FinanceFiscalPeriod[]     @relation("PeriodCloser")
+  financeJournalsCreated  FinanceJournalEntry[]     @relation("JournalCreatedBy")
+  financeJournalsReviewed FinanceJournalEntry[]     @relation("JournalReviewedBy")
+  financeJournalsApproved FinanceJournalEntry[]     @relation("JournalApprovedBy")
+  financeJournalsPosted   FinanceJournalEntry[]     @relation("JournalPostedBy")
+  financeJournalReversals FinanceJournalReversal[]  @relation("ReversalActor")
+  financeActivityLogs     FinanceActivityLog[]
 }
 
 model Account {
@@ -742,6 +751,9 @@ model Department {
   // Phase O1: Organizational Foundation
   members         DepartmentMember[]
   orgActivityLogs OrganizationActivityLog[] @relation("OrgActivityDept")
+
+  // Phase F1: Finance Relations
+  financeCostCenters FinanceCostCenter[]
 }
 
 model AppRole {
@@ -970,6 +982,9 @@ model WorkProject {
   attachments  WorkProjectAttachment[]
   activityLogs WorkProjectActivityLog[]
   sections     WorkProjectSection[]
+
+  // Phase F1: Finance Relations
+  financeCostCenters FinanceCostCenter[]
 
   @@index([ownerId])
   @@index([status])
@@ -1202,4 +1217,320 @@ model OrganizationActivityLog {
   @@index([departmentId])
   @@index([createdAt])
   @@map("organization_activity_logs")
+}
+
+// -----------------------------------------------------
+// Phase F1: Financial Base & General Ledger
+// -----------------------------------------------------
+
+enum FinancePeriodStatus {
+  OPEN
+  FROZEN
+  CLOSED
+}
+
+enum FinanceJournalStatus {
+  DRAFT
+  PENDING_REVIEW
+  APPROVED
+  POSTED
+  VOIDED
+}
+
+enum FinanceJournalSource {
+  MANUAL
+  REVERSAL
+}
+
+enum FinanceAccountType {
+  ASSET
+  LIABILITY
+  EQUITY
+  REVENUE
+  EXPENSE
+}
+
+enum FinanceNormalBalance {
+  DEBIT
+  CREDIT
+}
+
+enum FinanceCostCenterType {
+  DEPARTMENT
+  PROJECT
+  OTHER
+}
+
+enum FinanceActivityAction {
+  JOURNAL_CREATED
+  JOURNAL_REVIEWED
+  JOURNAL_APPROVED
+  JOURNAL_POSTED
+  JOURNAL_REVERSED
+  JOURNAL_VOIDED
+  PERIOD_OPENED
+  PERIOD_CLOSED
+  SETTINGS_UPDATED
+  ACCOUNT_CREATED
+  ACCOUNT_UPDATED
+  PERIOD_CREATED
+  YEAR_CREATED
+}
+
+enum FinanceRoundingPolicy {
+  HALF_EVEN
+  HALF_UP
+  HALF_DOWN
+}
+
+enum FinanceDocumentType {
+  JOURNAL_ENTRY
+  VENDOR_INVOICE
+  PAYMENT
+}
+
+model FinanceLedger {
+  id        String   @id @default(cuid())
+  code      String   @unique
+  nameAr    String
+  nameEn    String
+  isActive  Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  settings   FinanceSettings?
+  years      FinanceFiscalYear[]
+  accounts   FinanceAccount[]
+  costCenter FinanceCostCenter[]
+  sequences  FinanceDocumentSequence[]
+  journals   FinanceJournalEntry[]
+}
+
+model FinanceCurrency {
+  id        String   @id @default(cuid())
+  code      String   @unique // ISO e.g., "SAR", "USD"
+  nameAr    String
+  nameEn    String
+  decimals  Int      @default(2)
+  isActive  Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  settings FinanceSettings[]
+  journals FinanceJournalEntry[]
+}
+
+model FinanceSettings {
+  id               String                @id @default(cuid())
+  ledgerId         String                @unique
+  baseCurrencyId   String
+  timezone         String                @default("Asia/Riyadh")
+  roundingPolicy   FinanceRoundingPolicy @default(HALF_EVEN)
+  companyTaxNumber String?
+  isTaxEnabled     Boolean               @default(false)
+
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  updatedById String
+
+  ledger       FinanceLedger   @relation(fields: [ledgerId], references: [id], onDelete: Restrict)
+  baseCurrency FinanceCurrency @relation(fields: [baseCurrencyId], references: [id], onDelete: Restrict)
+  updatedBy    User            @relation("FinanceSettingsUpdater", fields: [updatedById], references: [id], onDelete: Restrict)
+}
+
+model FinanceDocumentSequence {
+  id           String              @id @default(cuid())
+  ledgerId     String
+  fiscalYearId String?
+  documentType FinanceDocumentType
+  prefix       String
+  nextNumber   BigInt              @default(1)
+  padding      Int                 @default(6)
+  createdAt    DateTime            @default(now())
+  updatedAt    DateTime            @updatedAt
+
+  ledger     FinanceLedger      @relation(fields: [ledgerId], references: [id], onDelete: Restrict)
+  fiscalYear FinanceFiscalYear? @relation(fields: [fiscalYearId], references: [id], onDelete: Restrict)
+
+  @@unique([ledgerId, fiscalYearId, documentType])
+}
+
+model FinanceFiscalYear {
+  id        String   @id @default(cuid())
+  ledgerId  String
+  year      Int
+  startDate DateTime @db.Date
+  endDate   DateTime @db.Date
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  ledger    FinanceLedger             @relation(fields: [ledgerId], references: [id], onDelete: Restrict)
+  periods   FinanceFiscalPeriod[]
+  sequences FinanceDocumentSequence[]
+
+  @@unique([ledgerId, year])
+}
+
+model FinanceFiscalPeriod {
+  id           String              @id @default(cuid())
+  fiscalYearId String
+  periodNumber Int
+  periodName   String // e.g., "Jan 2026"
+  startDate    DateTime            @db.Date
+  endDate      DateTime            @db.Date
+  status       FinancePeriodStatus @default(OPEN)
+
+  createdAt  DateTime  @default(now())
+  updatedAt  DateTime  @updatedAt
+  closedAt   DateTime?
+  closedById String?
+
+  fiscalYear FinanceFiscalYear     @relation(fields: [fiscalYearId], references: [id], onDelete: Restrict)
+  closedBy   User?                 @relation("PeriodCloser", fields: [closedById], references: [id], onDelete: Restrict)
+  journals   FinanceJournalEntry[]
+
+  @@unique([fiscalYearId, periodNumber])
+}
+
+model FinanceAccount {
+  id               String               @id @default(cuid())
+  ledgerId         String
+  code             String
+  nameAr           String
+  nameEn           String
+  type             FinanceAccountType
+  normalBalance    FinanceNormalBalance
+  parentId         String?
+  isPostingAllowed Boolean              @default(true)
+  isActive         Boolean              @default(true)
+  description      String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  ledger   FinanceLedger        @relation(fields: [ledgerId], references: [id], onDelete: Restrict)
+  parent   FinanceAccount?      @relation("AccountHierarchy", fields: [parentId], references: [id], onDelete: Restrict)
+  children FinanceAccount[]     @relation("AccountHierarchy")
+  lines    FinanceJournalLine[]
+
+  @@unique([ledgerId, code])
+  @@index([type])
+  @@index([parentId])
+}
+
+model FinanceCostCenter {
+  id           String                @id @default(cuid())
+  ledgerId     String
+  code         String
+  type         FinanceCostCenterType
+  nameAr       String
+  nameEn       String
+  isActive     Boolean               @default(true)
+  departmentId String?
+  projectId    String?
+  createdAt    DateTime              @default(now())
+  updatedAt    DateTime              @updatedAt
+
+  ledger     FinanceLedger        @relation(fields: [ledgerId], references: [id], onDelete: Restrict)
+  department Department?          @relation(fields: [departmentId], references: [id], onDelete: Restrict)
+  project    WorkProject?         @relation(fields: [projectId], references: [id], onDelete: Restrict)
+  lines      FinanceJournalLine[]
+
+  @@unique([ledgerId, code])
+}
+
+model FinanceJournalEntry {
+  id             String               @id @default(cuid())
+  ledgerId       String
+  fiscalPeriodId String
+  entryNumber    String? // Assigned dynamically on POSTED by atomic function
+  entryDate      DateTime             @db.Date
+  description    String
+  reference      String?
+  sourceModule   FinanceJournalSource @default(MANUAL)
+  status         FinanceJournalStatus @default(DRAFT)
+
+  currencyId     String
+  exchangeRate   Decimal @default(1) @db.Decimal(20, 10)
+  idempotencyKey String?
+
+  createdById     String
+  reviewedById    String?
+  approvedById    String?
+  postedById      String?
+  rejectionReason String?
+
+  createdAt  DateTime  @default(now())
+  updatedAt  DateTime  @updatedAt
+  reviewedAt DateTime?
+  approvedAt DateTime?
+  postedAt   DateTime?
+
+  fiscalPeriod FinanceFiscalPeriod @relation(fields: [fiscalPeriodId], references: [id], onDelete: Restrict)
+  currency     FinanceCurrency     @relation(fields: [currencyId], references: [id], onDelete: Restrict)
+  createdBy    User                @relation("JournalCreatedBy", fields: [createdById], references: [id], onDelete: Restrict)
+  reviewedBy   User?               @relation("JournalReviewedBy", fields: [reviewedById], references: [id], onDelete: Restrict)
+  approvedBy   User?               @relation("JournalApprovedBy", fields: [approvedById], references: [id], onDelete: Restrict)
+  postedBy     User?               @relation("JournalPostedBy", fields: [postedById], references: [id], onDelete: Restrict)
+
+  lines FinanceJournalLine[]
+
+  originalReversal FinanceJournalReversal? @relation("OriginalJournalEntry")
+  reversalEntry    FinanceJournalReversal? @relation("ReversalJournalEntry")
+  ledger           FinanceLedger           @relation(fields: [ledgerId], references: [id], onDelete: Restrict)
+
+  @@unique([ledgerId, entryNumber])
+  @@unique([ledgerId, idempotencyKey])
+  @@index([status])
+  @@index([entryDate])
+}
+
+model FinanceJournalLine {
+  id             String  @id @default(cuid())
+  journalEntryId String
+  lineNumber     Int
+  accountId      String
+  costCenterId   String?
+  description    String?
+
+  debitAmount      Decimal @default(0) @db.Decimal(19, 4)
+  creditAmount     Decimal @default(0) @db.Decimal(19, 4)
+  baseDebitAmount  Decimal @default(0) @db.Decimal(19, 4)
+  baseCreditAmount Decimal @default(0) @db.Decimal(19, 4)
+
+  journalEntry FinanceJournalEntry @relation(fields: [journalEntryId], references: [id], onDelete: Restrict)
+  account      FinanceAccount      @relation(fields: [accountId], references: [id], onDelete: Restrict)
+  costCenter   FinanceCostCenter?  @relation(fields: [costCenterId], references: [id], onDelete: Restrict)
+
+  @@unique([journalEntryId, lineNumber])
+  @@index([accountId])
+}
+
+model FinanceJournalReversal {
+  id              String   @id @default(cuid())
+  originalEntryId String   @unique
+  reversalEntryId String   @unique
+  reason          String
+  actorId         String
+  createdAt       DateTime @default(now())
+
+  originalEntry FinanceJournalEntry @relation("OriginalJournalEntry", fields: [originalEntryId], references: [id], onDelete: Restrict)
+  reversalEntry FinanceJournalEntry @relation("ReversalJournalEntry", fields: [reversalEntryId], references: [id], onDelete: Restrict)
+  actor         User                @relation("ReversalActor", fields: [actorId], references: [id], onDelete: Restrict)
+}
+
+model FinanceActivityLog {
+  id         String                @id @default(cuid())
+  actorId    String
+  action     FinanceActivityAction
+  entityType String
+  entityId   String
+  metadata   Json?
+  ipAddress  String?
+  createdAt  DateTime              @default(now())
+
+  actor User @relation(fields: [actorId], references: [id], onDelete: Restrict)
+
+  @@index([entityType, entityId])
+  @@index([createdAt])
 }
