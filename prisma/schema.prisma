@@ -831,35 +831,32 @@ model Task {
   createdAt        DateTime  @default(now())
   updatedAt        DateTime  @updatedAt
 
-
   workProjectId        String?
   designatedApproverId String?
   workProjectSectionId String?
   plannedStartAt       DateTime?
 
-  assignedTo         User?             @relation("AssignedTasks", fields: [assignedToId], references: [id], onDelete: SetNull)
-  createdBy          User              @relation("CreatedTasks", fields: [createdById], references: [id], onDelete: Restrict)
-  workProject        WorkProject?      @relation(fields: [workProjectId], references: [id], onDelete: SetNull)
+  assignedTo         User?               @relation("AssignedTasks", fields: [assignedToId], references: [id], onDelete: SetNull)
+  createdBy          User                @relation("CreatedTasks", fields: [createdById], references: [id], onDelete: Restrict)
+  workProject        WorkProject?        @relation(fields: [workProjectId], references: [id], onDelete: SetNull)
   workProjectSection WorkProjectSection? @relation(fields: [workProjectSectionId], references: [id], onDelete: SetNull)
-  designatedApprover User?             @relation("DesignatedTaskApprover", fields: [designatedApproverId], references: [id], onDelete: SetNull)
+  designatedApprover User?               @relation("DesignatedTaskApprover", fields: [designatedApproverId], references: [id], onDelete: SetNull)
 
-  approvals          TaskApproval[]
-  comments           TaskComment[]
-  watchers           TaskWatcher[]
-  activityLogs       TaskActivityLog[]
-  attachments        TaskAttachment[]
+  approvals    TaskApproval[]
+  comments     TaskComment[]
+  watchers     TaskWatcher[]
+  activityLogs TaskActivityLog[]
+  attachments  TaskAttachment[]
 
   @@index([taskStatus])
   @@index([approvalStatus])
   @@index([assignedToId])
   @@index([dueDate])
-
   @@index([workProjectId])
   @@index([designatedApproverId])
   @@index([workProjectSectionId])
   @@index([plannedStartAt])
 }
-
 
 model TaskApproval {
   id              String    @id @default(cuid())
@@ -1046,28 +1043,27 @@ model TaskAttachment {
   @@index([uploadedById])
 }
 
-
 enum WorkProjectSectionStatus {
   ACTIVE
   ARCHIVED
 }
 
 model WorkProjectSection {
-  id              String       @id @default(cuid())
-  workProjectId   String
-  name            String
-  normalizedName  String
-  description     String?
-  managerId       String?
-  color           String?      @default("#3B82F6")
-  status          WorkProjectSectionStatus @default(ACTIVE)
-  createdAt       DateTime     @default(now())
-  updatedAt       DateTime     @updatedAt
+  id             String                   @id @default(cuid())
+  workProjectId  String
+  name           String
+  normalizedName String
+  description    String?
+  managerId      String?
+  color          String?                  @default("#3B82F6")
+  status         WorkProjectSectionStatus @default(ACTIVE)
+  createdAt      DateTime                 @default(now())
+  updatedAt      DateTime                 @updatedAt
 
-  workProject     WorkProject  @relation(fields: [workProjectId], references: [id])
-  manager         User?        @relation("WorkProjectSectionManager", fields: [managerId], references: [id])
-  tasks           Task[]
-  members         WorkProjectSectionMember[]
+  workProject WorkProject                @relation(fields: [workProjectId], references: [id])
+  manager     User?                      @relation("WorkProjectSectionManager", fields: [managerId], references: [id])
+  tasks       Task[]
+  members     WorkProjectSectionMember[]
 
   @@unique([workProjectId, normalizedName])
   @@index([workProjectId])
@@ -1076,13 +1072,13 @@ model WorkProjectSection {
 }
 
 model WorkProjectSectionMember {
-  id          String   @id @default(cuid())
-  sectionId   String
-  userId      String
-  createdAt   DateTime @default(now())
+  id        String   @id @default(cuid())
+  sectionId String
+  userId    String
+  createdAt DateTime @default(now())
 
-  section     WorkProjectSection @relation(fields: [sectionId], references: [id], onDelete: Cascade)
-  user        User               @relation("WorkProjectSectionMemberships", fields: [userId], references: [id])
+  section WorkProjectSection @relation(fields: [sectionId], references: [id], onDelete: Cascade)
+  user    User               @relation("WorkProjectSectionMemberships", fields: [userId], references: [id])
 
   @@unique([sectionId, userId])
   @@index([userId])

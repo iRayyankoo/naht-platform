@@ -3,7 +3,7 @@ import { WorkProjectSectionsAdapter } from '../types';
 
 
 import React, { useState, useTransition } from 'react';
-import { WorkProjectDTO, UserDTO, ClientPermissions } from '../types';
+import { WorkProjectDTO, UserDTO, ClientPermissions, WorkProjectSectionDTO } from '../types';
 import toast from 'react-hot-toast';
 import { createTask } from '@/actions/tasks';
 import { useRouter } from 'next/navigation';
