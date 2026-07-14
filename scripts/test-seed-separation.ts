@@ -14,11 +14,12 @@ async function runTests() {
     execSync('npx tsx prisma/seed.ts', { stdio: 'pipe' });
     console.error('❌ Test 1 Failed: Seed should have thrown an error but succeeded.');
     passed = false;
-  } catch (err: any) {
-    if (err.stderr && err.stderr.toString().includes('UAT seed rejected')) {
+  } catch (err: unknown) {
+    const error = err as { stderr?: Buffer };
+    if (error.stderr && error.stderr.toString().includes('UAT seed rejected')) {
       console.log('✅ Test 1 Passed: Seed correctly rejected execution without SEED_PROFILE=uat.');
     } else {
-      console.error('❌ Test 1 Failed with unexpected error:', err.stderr ? err.stderr.toString() : err.message);
+      console.error('❌ Test 1 Failed with unexpected error:', error.stderr ? error.stderr.toString() : (err as Error).message);
       passed = false;
     }
   }
