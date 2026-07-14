@@ -98,18 +98,9 @@ export default async function NewUserPage() {
             </div>
 
             <div className="sm:col-span-2 lg:col-span-1">
-              <label htmlFor="departmentId" className="block text-sm font-semibold text-gray-700">القسم (Department)</label>
-              <div className="mt-2">
-                <select 
-                  id="departmentId" 
-                  name="departmentId" 
-                  className="shadow-sm focus:ring-primary focus:border-primary block w-full sm:text-sm border-gray-300 rounded-lg py-2.5 px-4 border bg-white transition-colors cursor-pointer"
-                >
-                  <option value="">بدون قسم</option>
-                  {departments.map(dept => (
-                    <option key={dept.id} value={dept.id}>{dept.name}</option>
-                  ))}
-                </select>
+              <label className="block text-sm font-semibold text-gray-700">القسم (Department)</label>
+              <div className="mt-2 p-3 bg-gray-50 border border-gray-200 rounded-lg text-sm text-gray-500">
+                تتم إدارة الأقسام والنقل عبر لوحة الهيكل التنظيمي.
               </div>
             </div>
 

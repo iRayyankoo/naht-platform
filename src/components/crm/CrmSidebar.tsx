@@ -6,8 +6,12 @@ import { usePathname } from "next/navigation";
 
 interface CrmSidebarProps {
   userName: string;
-  userRole: string;
+  userRole: string; // Left here in case it's used elsewhere, but ADMIN will be ignored for permissions
   userPermissions?: string[];
+  orgScope?: string;
+  canViewOrganization?: boolean;
+  isSuperAdmin?: boolean;
+  userId?: string;
 }
 
 interface NavLink {
@@ -146,35 +150,51 @@ const allNavGroups: NavGroup[] = [
   },
 ];
 
-export default function CrmSidebar({ userName, userRole, userPermissions = [] }: CrmSidebarProps) {
+export default function CrmSidebar({ userName, userRole, userPermissions = [], orgScope, canViewOrganization, isSuperAdmin, userId }: CrmSidebarProps) {
   const pathname = usePathname();
   const [openGroups, setOpenGroups] = useState<Record<string, boolean>>({});
   const [mounted, setMounted] = useState(false);
 
-  const hasPerm = (code: string) => userRole === "ADMIN" || userRole === "SUPER_ADMIN" || userPermissions.includes(code);
+  const hasPerm = (code: string) => isSuperAdmin || userPermissions.includes(code);
 
   // Filter groups and links based on user role
   const navGroups = allNavGroups.map(group => {
-    // Hide map from SALES
-    if (userRole === "SALES" && group.id === "projects") {
+    // Hide Interactive Map unless user is super admin
+    if (group.id === "content" && !isSuperAdmin) {
       return {
         ...group,
         links: group.links.filter(link => link.href !== "/crm/projects-map")
       };
     }
+    // Update organization links based on orgScope
+    if (group.id === "organization" && orgScope === "SELF" && userId) {
+      return {
+        ...group,
+        links: [
+          { name: "ملفي التنظيمي", href: `/crm/organization/members/${userId}`, exact: true }
+        ]
+      };
+    }
     return group;
   }).filter(group => {
+    if (group.id === "organization") {
+      return canViewOrganization;
+    }
+
     // Permission check for tasks
     if (group.id === "tasks" && !hasPerm("tasks.view")) return false;
 
-    if (userRole === "ADMIN" || userRole === "SUPER_ADMIN") return true;
-    if (userRole === "MARKETING") {
-      return group.id !== "users" && group.id !== "settings";
+    // Content management generally requires content permissions
+    if (group.id === "content") {
+      const contentPerms = ["projects.view", "pages.view", "settings.view"];
+      return isSuperAdmin || contentPerms.some(p => userPermissions.includes(p));
     }
-    if (userRole === "SALES") {
-      return ["dashboard", "sales", "projects", "tasks"].includes(group.id);
-    }
-    return false;
+
+    // Role management requires specific permission
+    if (group.id === "users" && !isSuperAdmin && !hasPerm("roles.view") && !hasPerm("users.view")) return false;
+
+    // Remove old SALES/MARKETING role checks
+    return true;
   });
 
   useEffect(() => {

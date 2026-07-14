@@ -5,7 +5,7 @@ import Link from "next/link";
 import { ImpersonationBanner } from "@/components/crm/ImpersonationBanner";
 import { getImpersonationRuntimeContext } from "@/lib/impersonation-runtime-context";
 import CrmSidebar from "@/components/crm/CrmSidebar";
-import { getCurrentUserPermissions } from "@/lib/rbac-helpers";
+import { getCurrentUserPermissions, isSuperAdmin, getCurrentUserScopedPermissions } from "@/lib/rbac-helpers";
 
 export default async function AdminLayout({
   children,
@@ -21,13 +21,36 @@ export default async function AdminLayout({
   const impersonationContext = await getImpersonationRuntimeContext();
   const permissions = session?.user ? await getCurrentUserPermissions(session?.user.id) : [];
 
+  let orgScope = "NONE";
+  let isSuper = false;
+  if (session?.user) {
+    isSuper = await isSuperAdmin(session.user.id);
+    const scopedPerms = await getCurrentUserScopedPermissions(session.user.id);
+    const orgViewScopes = scopedPerms.get("org.departments.view") || new Set();
+    const membersViewScopes = scopedPerms.get("org.members.view") || new Set();
+
+    if (isSuper || orgViewScopes.has("COMPANY") || membersViewScopes.has("COMPANY")) {
+      orgScope = "COMPANY";
+    } else if (orgViewScopes.has("DEPARTMENT") || membersViewScopes.has("DEPARTMENT")) {
+      orgScope = "DEPARTMENT";
+    } else if (membersViewScopes.has("SELF")) {
+      orgScope = "SELF";
+    }
+  }
+
+  const canViewOrganization = orgScope === "COMPANY" || orgScope === "DEPARTMENT" || orgScope === "SELF";
+
   return (
     <div className="flex min-h-screen bg-gray-50 text-gray-900">
       {/* Sidebar */}
       <CrmSidebar
-        userName={session?.user?.name || "المستخدم"}
-        userRole={(session?.user as any)?.role || "ADMIN"}
+        userName={session?.user?.name || "مستخدم"}
+        userRole={(session?.user as any)?.role || "VIEWER"}
         userPermissions={permissions}
+        orgScope={orgScope}
+        canViewOrganization={canViewOrganization}
+        isSuperAdmin={isSuper}
+        userId={session?.user?.id}
       />
 
       {/* Main Content */}
