@@ -4,27 +4,37 @@ import { prisma } from "@/lib/prisma";
 import { revalidatePath } from "next/cache";
 import bcrypt from "bcryptjs";
 import { actionRequireRole } from "@/lib/auth-helpers";
+import { Role, UserStatus } from "@prisma/client";
 
 export async function createUser(formData: FormData) {
   await actionRequireRole(["ADMIN"]);
 
+  if (formData.has("departmentId")) {
+    throw new Error("تحديث القسم غير مسموح من هنا. يرجى استخدام لوحة إدارة الهيكل التنظيمي.");
+  }
+
   const name = formData.get("name") as string;
   const email = formData.get("email") as string;
   const password = formData.get("password") as string;
-  const role = formData.get("role") as any;
-  const status = formData.get("status") as any;
+
+  const rawRole = formData.get("role") as string;
+  const rawStatus = formData.get("status") as string;
+  if (!Object.values(Role).includes(rawRole as Role)) throw new Error("Invalid Role");
+  if (rawStatus && !Object.values(UserStatus).includes(rawStatus as UserStatus)) throw new Error("Invalid Status");
+  const role = rawRole as Role;
+  const status = rawStatus as UserStatus || "ACTIVE";
+
   const isActive = formData.get("isActive") === "on";
-  const departmentId = formData.get("departmentId") as string;
   const jobTitle = formData.get("jobTitle") as string;
   const phone = formData.get("phone") as string;
 
   if (!email || !password || !name) {
-    throw new Error("يجب تعبئة جميع الحقول المطلوبة.");
+    throw new Error("الاسم والبريد وكلمة المرور مطلوبة");
   }
 
   const existing = await prisma.user.findUnique({ where: { email } });
   if (existing) {
-    throw new Error("البريد الإلكتروني مسجل مسبقاً.");
+    throw new Error("هذا البريد مستخدم مسبقاً");
   }
 
   const hashedPassword = await bcrypt.hash(password, 10);
@@ -36,8 +46,7 @@ export async function createUser(formData: FormData) {
       password: hashedPassword,
       role,
       isActive,
-      status: status || "ACTIVE",
-      departmentId: departmentId || null,
+      status,
       jobTitle: jobTitle || null,
       phone: phone || null,
     },
@@ -49,15 +58,24 @@ export async function createUser(formData: FormData) {
 export async function updateUser(id: string, formData: FormData) {
   await actionRequireRole(["ADMIN"]);
 
+  if (formData.has("departmentId")) {
+    throw new Error("تحديث القسم غير مسموح من هنا. يرجى استخدام لوحة إدارة الهيكل التنظيمي.");
+  }
+
   const user = await prisma.user.findUnique({ where: { id } });
   if (!user) throw new Error("المستخدم غير موجود");
 
   const name = formData.get("name") as string;
   const email = formData.get("email") as string;
-  const role = formData.get("role") as any;
-  const status = formData.get("status") as any;
+
+  const rawRole = formData.get("role") as string;
+  const rawStatus = formData.get("status") as string;
+  if (!Object.values(Role).includes(rawRole as Role)) throw new Error("Invalid Role");
+  if (rawStatus && !Object.values(UserStatus).includes(rawStatus as UserStatus)) throw new Error("Invalid Status");
+  const role = rawRole as Role;
+  const status = rawStatus as UserStatus || user.status;
+
   const isActive = formData.get("isActive") === "on";
-  const departmentId = formData.get("departmentId") as string;
   const jobTitle = formData.get("jobTitle") as string;
   const phone = formData.get("phone") as string;
 
@@ -65,7 +83,7 @@ export async function updateUser(id: string, formData: FormData) {
   if (user.role === "ADMIN" && (role !== "ADMIN" || !isActive)) {
     const adminCount = await prisma.user.count({ where: { role: "ADMIN", isActive: true } });
     if (adminCount <= 1) {
-      throw new Error("لا يمكن تعديل أو تعطيل المسؤول الوحيد المتبقي في النظام.");
+      throw new Error("لا يمكن تعديل دور أو تعطيل آخر مدير متبقي في النظام.");
     }
   }
 
@@ -76,8 +94,7 @@ export async function updateUser(id: string, formData: FormData) {
       email,
       role,
       isActive,
-      status: status || user.status,
-      departmentId: departmentId || null,
+      status,
       jobTitle: jobTitle || null,
       phone: phone || null,
     },
