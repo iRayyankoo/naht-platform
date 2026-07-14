@@ -452,6 +452,46 @@ async function main() {
     console.log('Task and WorkProject permissions assigned to SUPER_ADMIN role successfully.');
   }
 
+    console.log('Seeding O1 Organization Permissions...');
+  const orgPermissions = [
+    { module: 'ORGANIZATION', action: 'VIEW', code: 'org.departments.view', description: 'View departments' },
+    { module: 'ORGANIZATION', action: 'MANAGE', code: 'org.departments.manage', description: 'Manage departments' },
+    { module: 'ORGANIZATION', action: 'VIEW', code: 'org.members.view', description: 'View department members' },
+    { module: 'ORGANIZATION', action: 'ASSIGN', code: 'org.members.assign', description: 'Assign department members' },
+    { module: 'ORGANIZATION', action: 'TRANSFER', code: 'org.members.transfer', description: 'Transfer department members' },
+    { module: 'ORGANIZATION', action: 'END', code: 'org.members.end', description: 'End department memberships' },
+    { module: 'ORGANIZATION', action: 'ASSIGN', code: 'org.department_manager.assign', description: 'Assign department manager' },
+  ];
+
+  const createdOrgPerms = [];
+  for (const perm of orgPermissions) {
+    const p = await prisma.permission.upsert({
+      where: { code: perm.code },
+      update: {},
+      create: perm,
+    });
+    createdOrgPerms.push(p);
+  }
+
+  if (superAdminRole) {
+    for (const p of createdOrgPerms) {
+      await prisma.rolePermission.upsert({
+        where: {
+          roleId_permissionId: {
+            roleId: superAdminRole.id,
+            permissionId: p.id,
+          },
+        },
+        update: {},
+        create: {
+          roleId: superAdminRole.id,
+          permissionId: p.id,
+        },
+      });
+    }
+    console.log('O1 Organization permissions seeded and assigned to SUPER_ADMIN role successfully.');
+  }
+
   console.log('Staging UAT Seeding finished successfully.');
 
   // Validation
