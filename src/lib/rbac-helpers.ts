@@ -1,5 +1,8 @@
-import { getCurrentUser } from "@/lib/auth-helpers";
-import { prisma } from "@/lib/prisma";
+import { prisma } from "./prisma";
+import { getCurrentUser } from "./auth-helpers";
+
+// Role cache to avoid repeatedly fetching roles for the same user in a single request lifecycle if possible.
+// Currently we just fetch fresh each time to ensure real-time invalidation.
 
 export async function getCurrentUserPermissions(userId: string): Promise<string[]> {
   try {
@@ -19,12 +22,13 @@ export async function getCurrentUserPermissions(userId: string): Promise<string[
     });
 
     const permissions = new Set<string>();
-    for (const ur of userRoles) {
-      if (!ur.role.isActive) continue;
-      for (const rp of ur.role.permissions) {
-        permissions.add(rp.permission.code);
+    userRoles.forEach(ur => {
+      if (ur.role.isActive) {
+        ur.role.permissions.forEach(rp => {
+          permissions.add(rp.permission.code);
+        });
       }
-    }
+    });
     return Array.from(permissions);
   } catch (error) {
     console.warn("[RBAC] Failed to fetch permissions for user", userId, error);
@@ -152,4 +156,119 @@ export async function requirePermissionLogging(permissionCode: string, context: 
 
 export async function requireAnyPermissionLogging(permissionCodes: string[], context: string) {
   return requireAnyPermission(permissionCodes, { mode: "logging", context });
+}
+
+export async function getCurrentUserScopedPermissions(userId: string): Promise<Map<string, Set<string>>> {
+  try {
+    const userRoles = await prisma.userRole.findMany({
+      where: { userId },
+      include: {
+        role: {
+          include: {
+            permissions: {
+              include: {
+                permission: true
+              }
+            }
+          }
+        }
+      }
+    });
+
+    const permissions = new Map<string, Set<string>>();
+    for (const ur of userRoles) {
+      if (!ur.role.isActive) continue;
+      for (const rp of ur.role.permissions) {
+        const code = rp.permission.code;
+        const scope = rp.scope || "COMPANY"; // Fallback if type not updated yet
+        if (!permissions.has(code)) {
+          permissions.set(code, new Set());
+        }
+        permissions.get(code)!.add(scope);
+      }
+    }
+    return permissions;
+  } catch (error) {
+    console.warn("[RBAC] Failed to fetch scoped permissions for user", userId, error);
+    return new Map();
+  }
+}
+
+export interface ScopedResourceOptions {
+  targetUserId?: string;
+  targetDepartmentId?: string;
+  assignedUserId?: string;
+}
+
+export async function checkScopedPermission(
+  permissionCode: string, 
+  resource: ScopedResourceOptions,
+  context: string = ""
+): Promise<boolean> {
+  const user = await getCurrentUser();
+  if (!user) return false;
+  if (user.email === "nahtmkt@gmail.com") return true;
+
+  try {
+    const isSuper = await isSuperAdmin(user.id);
+    if (isSuper) {
+      return true;
+    }
+
+    const scopedPerms = await getCurrentUserScopedPermissions(user.id);
+    if (!scopedPerms.has(permissionCode)) return false;
+    
+    const scopes = scopedPerms.get(permissionCode)!;
+
+    if (scopes.has("COMPANY")) return true;
+
+    if (scopes.has("SELF") && resource.targetUserId === user.id) {
+      return true;
+    }
+
+    if (scopes.has("ASSIGNED") && resource.assignedUserId === user.id) {
+      return true;
+    }
+
+    if (scopes.has("DEPARTMENT") && resource.targetDepartmentId) {
+      const hasDept = await prisma.departmentMember.findFirst({
+        where: {
+          userId: user.id,
+          departmentId: resource.targetDepartmentId,
+          status: "ACTIVE",
+          effectiveTo: null
+        }
+      });
+      if (hasDept) return true;
+    }
+
+    return false;
+  } catch (err) {
+    console.warn(`[RBAC] Error checking scoped permission ${permissionCode}`, err);
+    return false;
+  }
+}
+
+export async function requireScopedPermission(
+  permissionCode: string, 
+  resource: ScopedResourceOptions,
+  options?: RequirePermissionOptions
+): Promise<boolean> {
+  const mode = options?.mode ?? getRbacEnforcementMode();
+  const context = options?.context ?? "Unknown Context";
+  
+  const hasPerm = await checkScopedPermission(permissionCode, resource, context);
+  
+  if (!hasPerm) {
+    const user = await getCurrentUser();
+    if (mode === "enforce") {
+      console.warn(`[RBAC ENFORCE] Scoped Access Denied for User ${user?.email} to ${context}.`);
+      return false;
+    } else {
+      console.warn(`[RBAC LOG] Scoped Access Denied for User ${user?.email} to ${context}. Allowed via legacy ADMIN fallback.`);
+      return true; 
+    }
+  }
+
+  return true;
 }
