@@ -23,3 +23,9 @@ CREATE INDEX "Task_plannedStartAt_idx" ON "Task"("plannedStartAt");
 
 -- AddForeignKey
 ALTER TABLE "UserTaskPreference" ADD CONSTRAINT "UserTaskPreference_userId_fkey" FOREIGN KEY ("userId") REFERENCES "User"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+
+ALTER TABLE "UserTaskPreference" ENABLE ROW LEVEL SECURITY;
+
+REVOKE ALL ON TABLE "UserTaskPreference"
+FROM anon, authenticated;
+

@@ -69,3 +69,10 @@ ALTER TABLE "WorkProjectSectionMember" ADD CONSTRAINT "WorkProjectSectionMember_
 -- AddForeignKey
 ALTER TABLE "WorkProjectSectionMember" ADD CONSTRAINT "WorkProjectSectionMember_userId_fkey" FOREIGN KEY ("userId") REFERENCES "User"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
 
+
+ALTER TABLE "WorkProjectSection" ENABLE ROW LEVEL SECURITY;
+ALTER TABLE "WorkProjectSectionMember" ENABLE ROW LEVEL SECURITY;
+
+REVOKE ALL ON TABLE "WorkProjectSection", "WorkProjectSectionMember"
+FROM anon, authenticated;
+
