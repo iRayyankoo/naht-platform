@@ -18,12 +18,15 @@ interface CreateTaskModalProps {
   sectionsAdapter?: WorkProjectSectionsAdapter;
 }
 
-export function CreateTaskModal({ isOpen, onClose, permissions, initialProjectId, workProjects, users = [] }: CreateTaskModalProps) {
+export function CreateTaskModal({ isOpen, onClose, permissions, initialProjectId, workProjects, users = [], sectionsAdapter }: CreateTaskModalProps) {
   const [projectId, setProjectId] = useState<string>('GENERAL');
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
   const [priority, setPriority] = useState<'LOW' | 'MEDIUM' | 'HIGH'>('MEDIUM');
   const [dueDate, setDueDate] = useState('');
+  const [plannedStartAt, setPlannedStartAt] = useState('');
+  const [sectionId, setSectionId] = useState('');
+  const [sections, setSections] = useState<WorkProjectSectionDTO[]>([]);
   const [requiresApproval, setRequiresApproval] = useState(false);
   const [assigneeId, setAssigneeId] = useState<string>('');
   const [approverId, setApproverId] = useState<string>('');
@@ -41,9 +44,25 @@ export function CreateTaskModal({ isOpen, onClose, permissions, initialProjectId
       setDueDate('');
       setAssigneeId('');
       setApproverId('');
+      setPlannedStartAt('');
+      setSectionId('');
       setRequiresApproval(false);
     }
   }, [isOpen, initialProjectId]);
+
+  React.useEffect(() => {
+    if (projectId !== 'GENERAL' && sectionsAdapter) {
+      sectionsAdapter.getSections(projectId).then(data => {
+        if (data) {
+
+          setSections(data.filter(s => s.status !== 'ARCHIVED'));
+        }
+      });
+    } else {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
+      setSections([]);
+    }
+  }, [projectId, sectionsAdapter]);
 
   if (!isOpen) return null;
 
@@ -119,6 +138,8 @@ export function CreateTaskModal({ isOpen, onClose, permissions, initialProjectId
              description: description || undefined,
              priority,
              dueDate: dueDate ? new Date(dueDate) : undefined,
+             plannedStartAt: plannedStartAt ? new Date(plannedStartAt) : undefined,
+             workProjectSectionId: sectionId || undefined,
              workProjectId: projectId === 'GENERAL' ? undefined : projectId,
              assignedToId: assigneeId || undefined,
              requiresApproval,
@@ -165,6 +186,7 @@ export function CreateTaskModal({ isOpen, onClose, permissions, initialProjectId
                   setProjectId(e.target.value);
                   setAssigneeId(''); // Reset assignee when project changes
                   setApproverId('');
+                  setSectionId('');
                 }}
                 className="w-full bg-gray-50 border border-gray-200 rounded-xl p-3 focus:ring-2 focus:ring-primary focus:border-primary outline-none transition-colors"
               >
@@ -222,6 +244,24 @@ export function CreateTaskModal({ isOpen, onClose, permissions, initialProjectId
               </select>
             </div>
 
+
+            {/* Section */}
+            {projectId !== 'GENERAL' && sections.length > 0 && (
+              <div>
+                <label className="block text-sm font-bold text-gray-700 mb-2">قسم المشروع</label>
+                <select
+                  value={sectionId}
+                  onChange={e => setSectionId(e.target.value)}
+                  className="w-full bg-gray-50 border border-gray-200 rounded-xl p-3 focus:ring-2 focus:ring-primary focus:border-primary outline-none transition-colors"
+                >
+                  <option value="">-- عام (بدون قسم) --</option>
+                  {sections.map(s => (
+                    <option key={s.id} value={s.id}>{s.name}</option>
+                  ))}
+                </select>
+              </div>
+            )}
+
             {/* Priority */}
             <div>
               <label className="block text-sm font-bold text-gray-700 mb-2">الأولوية</label>
@@ -234,6 +274,18 @@ export function CreateTaskModal({ isOpen, onClose, permissions, initialProjectId
                 <option value="MEDIUM">متوسطة</option>
                 <option value="HIGH">عالية</option>
               </select>
+            </div>
+
+
+            {/* Planned Start At */}
+            <div>
+              <label className="block text-sm font-bold text-gray-700 mb-2">تاريخ البدء المخطط</label>
+              <input
+                type="date"
+                value={plannedStartAt}
+                onChange={e => setPlannedStartAt(e.target.value)}
+                className="w-full bg-gray-50 border border-gray-200 rounded-xl p-3 focus:ring-2 focus:ring-primary focus:border-primary outline-none transition-colors text-right"
+              />
             </div>
 
             {/* Due Date */}

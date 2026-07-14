@@ -40,7 +40,9 @@ const APPROVAL_LABELS: Record<ApprovalStatus, string> = {
   REJECTED: 'مرفوضة'
 };
 
-export function TaskDetailsDrawer({ task, isOpen, onClose, permissions }: TaskDetailsDrawerProps) {
+export function TaskDetailsDrawer({ task, isOpen, onClose, permissions, sectionsAdapter }: TaskDetailsDrawerProps) {
+  const [sectionName, setSectionName] = useState<string | null>(null);
+
   const [activeTab, setActiveTab] = useState<TabType>('DETAILS');
   const [newComment, setNewComment] = useState('');
   const [rejectReason, setRejectReason] = useState('');
@@ -66,6 +68,20 @@ export function TaskDetailsDrawer({ task, isOpen, onClose, permissions }: TaskDe
       return () => window.removeEventListener('keydown', handleKeyDown);
     }
   }, [isOpen, onClose]);
+
+  // Fetch Section Name
+  useEffect(() => {
+    if (isOpen && task.workProjectSectionId && task.workProjectId && sectionsAdapter) {
+      sectionsAdapter.getSections(task.workProjectId).then(data => {
+        if (data) {
+          const sec = data.find(s => s.id === task.workProjectSectionId);
+          if (sec) setSectionName(sec.name);
+        }
+      });
+    } else {
+      setSectionName(null);
+    }
+  }, [isOpen, task.workProjectSectionId, task.workProjectId, sectionsAdapter]);
 
   if (!isOpen) return null;
 
@@ -324,6 +340,29 @@ export function TaskDetailsDrawer({ task, isOpen, onClose, permissions }: TaskDe
                     <span className="block text-xs font-bold text-gray-500 mb-1">منشئ المهمة</span>
                     <div className="flex items-center gap-2 mt-2 text-sm font-bold text-gray-900">
                        {creator?.name || 'غير معروف'}
+                    </div>
+                 </div>
+
+                 <div className="bg-gray-50 rounded-xl p-4 border border-gray-100">
+                    <span className="block text-xs font-bold text-gray-500 mb-1">منشئ المهمة</span>
+                    <div className="flex items-center gap-2 mt-2 text-sm font-bold text-gray-900">
+                       {creator?.name || 'غير معروف'}
+                    </div>
+                 </div>
+
+                 {task.workProjectSectionId && (
+                   <div className="bg-gray-50 rounded-xl p-4 border border-gray-100">
+                      <span className="block text-xs font-bold text-gray-500 mb-1">قسم المشروع</span>
+                      <div className="flex items-center gap-2 mt-2 text-sm font-bold text-gray-900">
+                         {sectionName || 'جاري التحميل...'}
+                      </div>
+                   </div>
+                 )}
+
+                 <div className="bg-gray-50 rounded-xl p-4 border border-gray-100">
+                    <span className="block text-xs font-bold text-gray-500 mb-1">تاريخ البدء المخطط</span>
+                    <div className="mt-2 font-bold text-sm text-gray-900">
+                       {task.plannedStartAt ? new Date(task.plannedStartAt).toLocaleDateString('ar-SA') : 'غير محدد'}
                     </div>
                  </div>
 
