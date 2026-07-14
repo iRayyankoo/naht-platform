@@ -1,45 +1,46 @@
 {
-  "name": "6-naht-platform",
-  "version": "0.1.0",
-  "private": true,
-  "scripts": {
-    "dev": "next dev",
-    "build": "prisma generate && next build",
-    "start": "next start",
-    "lint": "eslint",
-    "postinstall": "prisma generate",
-    "db:migrate:deploy": "prisma migrate deploy",
-    "db:seed": "npx tsx prisma/seed.ts",
-    "db:deploy": "npm run db:migrate:deploy && npm run db:seed"
-  },
-  "dependencies": {
-    "@aws-sdk/client-s3": "^3.1068.0",
-    "@prisma/client": "^6.4.1",
-    "@supabase/supabase-js": "^2.110.0",
-    "bcryptjs": "^3.0.3",
-    "leaflet": "^1.9.4",
-    "next": "16.2.9",
-    "next-auth": "^4.24.14",
-    "react": "19.2.4",
-    "react-dom": "19.2.4",
-    "react-hot-toast": "^2.6.0",
-    "react-leaflet": "^5.0.0"
-  },
-  "prisma": {
-    "seed": "npx tsx prisma/seed.ts"
-  },
-  "devDependencies": {
-    "@tailwindcss/postcss": "^4",
-    "@types/bcryptjs": "^2.4.6",
-    "@types/leaflet": "^1.9.21",
-    "@types/node": "^20",
-    "@types/react": "^19",
-    "@types/react-dom": "^19",
-    "eslint": "^9",
-    "eslint-config-next": "16.2.9",
-    "prisma": "^6.4.1",
-    "tailwindcss": "^4",
-    "tsx": "^4.22.4",
-    "typescript": "^5"
-  }
+    "name":  "6-naht-platform",
+    "version":  "0.1.0",
+    "private":  true,
+    "scripts":  {
+                    "dev":  "next dev",
+                    "build":  "prisma generate \u0026\u0026 next build",
+                    "start":  "next start",
+                    "lint":  "eslint",
+                    "postinstall":  "prisma generate",
+                    "db:migrate:deploy":  "prisma migrate deploy",
+                    "db:seed":  "npx tsx prisma/seed.ts",
+                    "db:deploy":  "npm run db:migrate:deploy \u0026\u0026 npm run db:seed",
+                    "db:seed:org":  "tsx prisma/seeds/org-permissions.ts"
+                },
+    "dependencies":  {
+                         "@aws-sdk/client-s3":  "^3.1068.0",
+                         "@prisma/client":  "^6.4.1",
+                         "@supabase/supabase-js":  "^2.110.0",
+                         "bcryptjs":  "^3.0.3",
+                         "leaflet":  "^1.9.4",
+                         "next":  "16.2.9",
+                         "next-auth":  "^4.24.14",
+                         "react":  "19.2.4",
+                         "react-dom":  "19.2.4",
+                         "react-hot-toast":  "^2.6.0",
+                         "react-leaflet":  "^5.0.0"
+                     },
+    "prisma":  {
+                   "seed":  "npx tsx prisma/seed.ts"
+               },
+    "devDependencies":  {
+                            "@tailwindcss/postcss":  "^4",
+                            "@types/bcryptjs":  "^2.4.6",
+                            "@types/leaflet":  "^1.9.21",
+                            "@types/node":  "^20",
+                            "@types/react":  "^19",
+                            "@types/react-dom":  "^19",
+                            "eslint":  "^9",
+                            "eslint-config-next":  "16.2.9",
+                            "prisma":  "^6.4.1",
+                            "tailwindcss":  "^4",
+                            "tsx":  "^4.22.4",
+                            "typescript":  "^5"
+                        }
 }

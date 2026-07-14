@@ -4,6 +4,11 @@ import bcrypt from 'bcryptjs';
 const prisma = new PrismaClient();
 
 async function main() {
+  if (process.env.SEED_PROFILE !== "uat" || process.env.ALLOW_UAT_DATA_WRITE !== "true") {
+    console.error("ERROR: UAT seed rejected");
+    process.exit(1);
+  }
+
   const adminEmail = process.env.STAGING_ADMIN_EMAIL || 'admin@naht-re.sa';
   const adminPassword = process.env.STAGING_ADMIN_PASSWORD || 'adminUAT2026';
   const hashedPassword = await bcrypt.hash(adminPassword, 10);
@@ -26,16 +31,17 @@ async function main() {
   }
 
   // 1. Admin User
-  const admin = await prisma.user.upsert({
-    where: { email: adminEmail },
-    update: { password: hashedPassword, role: 'ADMIN', name: 'المدير العام (UAT)' },
-    create: {
-      email: adminEmail,
-      name: 'المدير العام (UAT)',
-      password: hashedPassword,
-      role: 'ADMIN',
-    },
-  });
+  let admin = await prisma.user.findUnique({ where: { email: adminEmail } });
+  if (!admin) {
+    admin = await prisma.user.create({
+      data: {
+        email: adminEmail,
+        name: '?????? ????? (UAT)',
+        password: hashedPassword,
+        role: 'ADMIN',
+      },
+    });
+  }
 
   // 2. Site Settings
   const siteSettings = await prisma.siteSettings.upsert({
@@ -452,47 +458,7 @@ async function main() {
     console.log('Task and WorkProject permissions assigned to SUPER_ADMIN role successfully.');
   }
 
-    console.log('Seeding O1 Organization Permissions...');
-  const orgPermissions = [
-    { module: 'ORGANIZATION', action: 'VIEW', code: 'org.departments.view', description: 'View departments' },
-    { module: 'ORGANIZATION', action: 'MANAGE', code: 'org.departments.manage', description: 'Manage departments' },
-    { module: 'ORGANIZATION', action: 'VIEW', code: 'org.members.view', description: 'View department members' },
-    { module: 'ORGANIZATION', action: 'ASSIGN', code: 'org.members.assign', description: 'Assign department members' },
-    { module: 'ORGANIZATION', action: 'TRANSFER', code: 'org.members.transfer', description: 'Transfer department members' },
-    { module: 'ORGANIZATION', action: 'END', code: 'org.members.end', description: 'End department memberships' },
-    { module: 'ORGANIZATION', action: 'ASSIGN', code: 'org.department_manager.assign', description: 'Assign department manager' },
-  ];
-
-  const createdOrgPerms = [];
-  for (const perm of orgPermissions) {
-    const p = await prisma.permission.upsert({
-      where: { code: perm.code },
-      update: {},
-      create: perm,
-    });
-    createdOrgPerms.push(p);
-  }
-
-  if (superAdminRole) {
-    for (const p of createdOrgPerms) {
-      await prisma.rolePermission.upsert({
-        where: {
-          roleId_permissionId: {
-            roleId: superAdminRole.id,
-            permissionId: p.id,
-          },
-        },
-        update: {},
-        create: {
-          roleId: superAdminRole.id,
-          permissionId: p.id,
-        },
-      });
-    }
-    console.log('O1 Organization permissions seeded and assigned to SUPER_ADMIN role successfully.');
-  }
-
-  console.log('Staging UAT Seeding finished successfully.');
+    console.log('Staging UAT Seeding finished successfully.');
 
   // Validation
   const projectCount = await prisma.project.count();
