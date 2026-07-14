@@ -244,7 +244,7 @@ export async function checkScopedPermission(
 
     return false;
   } catch (err) {
-    console.warn(`[RBAC] Error checking scoped permission ${permissionCode}`, err);
+    console.warn(`[RBAC] Error checking scoped permission ${permissionCode} in context ${context}`, err);
     return false;
   }
 }
