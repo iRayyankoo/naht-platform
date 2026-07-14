@@ -78,6 +78,11 @@ model User {
   workProjectSectionMemberships WorkProjectSectionMember[] @relation("WorkProjectSectionMemberships")
 
   userTaskPreference UserTaskPreference?
+
+  // Phase O1: Organizational Foundation
+  departmentMembers     DepartmentMember[]
+  orgActivitiesAsActor  OrganizationActivityLog[] @relation("OrgActivityActor")
+  orgActivitiesAsTarget OrganizationActivityLog[] @relation("OrgActivityTarget")
 }
 
 model Account {
@@ -733,6 +738,10 @@ model Department {
   parent   Department?  @relation("DeptHierarchy", fields: [parentId], references: [id])
   children Department[] @relation("DeptHierarchy")
   users    User[]
+
+  // Phase O1: Organizational Foundation
+  members         DepartmentMember[]
+  orgActivityLogs OrganizationActivityLog[] @relation("OrgActivityDept")
 }
 
 model AppRole {
@@ -762,10 +771,11 @@ model Permission {
 }
 
 model RolePermission {
-  id           String   @id @default(cuid())
+  id           String          @id @default(cuid())
   roleId       String
   permissionId String
-  createdAt    DateTime @default(now())
+  scope        PermissionScope @default(COMPANY)
+  createdAt    DateTime        @default(now())
 
   role       AppRole    @relation(fields: [roleId], references: [id], onDelete: Cascade)
   permission Permission @relation(fields: [permissionId], references: [id], onDelete: Cascade)
@@ -1103,4 +1113,93 @@ model UserTaskPreference {
   updatedAt       DateTime     @updatedAt
 
   @@map("user_task_preferences")
+}
+
+// -----------------------------------------------------
+// Phase O1: Organizational Foundation
+// -----------------------------------------------------
+
+enum DepartmentMembershipStatus {
+  ACTIVE
+  TRANSFERRED
+  INACTIVE
+}
+
+enum DepartmentMembershipRole {
+  MEMBER
+  OBSERVER
+}
+
+enum DepartmentMembershipSource {
+  MANUAL
+  LEGACY_MIGRATION
+  HR_SYNC
+}
+
+enum PermissionScope {
+  SELF
+  ASSIGNED
+  DEPARTMENT
+  COMPANY
+}
+
+model DepartmentMember {
+  id           String @id @default(cuid())
+  departmentId String
+  userId       String
+
+  isPrimary      Boolean                    @default(false)
+  membershipRole DepartmentMembershipRole   @default(MEMBER)
+  status         DepartmentMembershipStatus @default(ACTIVE)
+  source         DepartmentMembershipSource @default(MANUAL)
+
+  effectiveFrom DateTime
+  effectiveTo   DateTime?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  department Department @relation(fields: [departmentId], references: [id], onDelete: Restrict)
+  user       User       @relation(fields: [userId], references: [id], onDelete: Restrict)
+
+  @@index([departmentId])
+  @@index([userId])
+  @@index([status])
+  @@index([effectiveFrom])
+  @@index([effectiveTo])
+  @@map("department_members")
+}
+
+enum OrganizationActionType {
+  MEMBER_ASSIGNED
+  MEMBER_TRANSFERRED
+  MEMBER_ENDED
+  PRIMARY_DEPARTMENT_CHANGED
+  MANAGER_ASSIGNED
+  MEMBER_ROLE_CHANGED
+  MANAGER_REMOVED
+  DEPARTMENT_ARCHIVED
+  DEPARTMENT_RESTORED
+}
+
+model OrganizationActivityLog {
+  id           String                 @id @default(cuid())
+  actorId      String
+  action       OrganizationActionType
+  departmentId String?
+  targetUserId String?
+  oldValues    Json?
+  newValues    Json?
+  reason       String?
+  createdAt    DateTime               @default(now())
+
+  actor      User?       @relation("OrgActivityActor", fields: [actorId], references: [id], onDelete: Restrict)
+  department Department? @relation("OrgActivityDept", fields: [departmentId], references: [id], onDelete: Restrict)
+  targetUser User?       @relation("OrgActivityTarget", fields: [targetUserId], references: [id], onDelete: Restrict)
+
+  @@index([actorId])
+  @@index([targetUserId])
+  @@index([departmentId])
+  @@index([createdAt])
+  @@map("organization_activity_logs")
 }
