@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { Users, Building2, UserMinus, ShieldAlert } from "lucide-react";
+import { Users, Building2, UserMinus, ShieldAlert } from "@/components/crm/organization/icons";
 
 interface OverviewData {
   totalDepartments: number;

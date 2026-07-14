@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import Link from "next/link";
-import { ChevronRight, User, Building2, Calendar, ArrowRightLeft, UserCog, UserMinus, Star } from "lucide-react";
+import { ChevronRight, User, Building2, Calendar, ArrowRightLeft, UserCog, UserMinus, Star } from "@/components/crm/organization/icons";
 import { AddMemberModal } from "@/components/crm/organization/modals/AddMemberModal";
 import { TransferMembershipModal } from "@/components/crm/organization/modals/TransferMembershipModal";
 import { ChangeRoleModal } from "@/components/crm/organization/modals/ChangeRoleModal";

@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import Link from "next/link";
-import { ChevronRight, Building2, UserPlus, Shield, UserCog, UserMinus, ShieldAlert } from "lucide-react";
+import { ChevronRight, Building2, UserPlus, Shield, UserCog, UserMinus, ShieldAlert } from "@/components/crm/organization/icons";
 import { AddMemberModal } from "@/components/crm/organization/modals/AddMemberModal";
 import { AssignManagerModal } from "@/components/crm/organization/modals/AssignManagerModal";
 import { assignDepartmentMember, assignDepartmentManager, removeDepartmentManager, updateDepartmentMembershipRole, endDepartmentMembership } from "@/actions/org-departments";

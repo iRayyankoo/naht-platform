@@ -2,8 +2,8 @@
 
 import { useState } from "react";
 import Link from "next/link";
-import { useRouter, useSearchParams } from "next/navigation";
-import { Search, ChevronRight, ChevronLeft, Users } from "lucide-react";
+import { useRouter } from "next/navigation";
+import { Search, ChevronRight, ChevronLeft, Users } from "@/components/crm/organization/icons";
 
 interface Membership {
   id: string;
