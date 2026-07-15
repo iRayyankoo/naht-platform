@@ -468,6 +468,9 @@ DECLARE
   v_has_cycle boolean;
 BEGIN
   IF NEW."parentId" IS NOT NULL THEN
+    -- Prevent Write Skew by taking a row-level lock on the ledger
+    PERFORM 1 FROM public."FinanceLedger" WHERE "id" = NEW."ledgerId" FOR NO KEY UPDATE;
+
     IF NEW."parentId" = NEW."id" THEN
       RAISE EXCEPTION 'Account cannot be its own parent';
     END IF;
