@@ -151,18 +151,16 @@ async function main() {
     let failedCount = 0;
     let testIndex = 0;
 
-    const runTest = async (name: string, query: string, params: any[], expectedErrorCode: string, expectedMessageFragment: string) => {
+    const runTest = async (name: string, query: string, params: unknown[], expectedErrorCode: string, expectedMessageFragment: string) => {
       testIndex++;
       const spName = `sp_test_${testIndex}`;
+      let queryFailed = false;
       try {
         await client.query(`SAVEPOINT ${spName}`);
         await client.query(query, params);
         await client.query(`RELEASE SAVEPOINT ${spName}`);
-        
-        console.error(`❌ [${name}] Failed: Expected error ${expectedErrorCode} (${expectedMessageFragment}) but query succeeded.`);
-        failedCount++;
-        throw new Error('Expected failure did not occur');
       } catch (err: unknown) {
+        queryFailed = true;
         await client.query(`ROLLBACK TO ${spName}`);
         
         if (isDatabaseError(err)) {
@@ -179,6 +177,11 @@ async function main() {
           console.error(`❌ [${name}] Failed: Unexpected error type`);
           failedCount++;
         }
+      }
+
+      if (!queryFailed) {
+        console.error(`❌ [${name}] Failed: Expected error ${expectedErrorCode} (${expectedMessageFragment}) but query succeeded.`);
+        failedCount++;
       }
     };
 
@@ -269,7 +272,6 @@ async function main() {
     await client.query(`UPDATE public."FinanceJournalLine" SET "accountId" = $1 WHERE id = 'l1'`, [a1]);
 
     await client.query(`UPDATE public."FinanceJournalEntry" SET "fiscalPeriodId" = $1 WHERE id = $2`, [p3, j1]);
-    await runTest('Period from different ledger (indirect, since p3 is in year2, ledger1, but wait! p3 is year2 which is ledger1! Let me create p4 in ledger2)');
     await client.query(`UPDATE public."FinanceJournalEntry" SET "fiscalPeriodId" = $1 WHERE id = $2`, [p1, j1]);
 
     // Account Rules
