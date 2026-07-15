@@ -149,17 +149,20 @@ export async function executeFinanceRbacSeed(tx: Prisma.TransactionClient) {
  * Safe Entrypoint for Execution.
  */
 async function main() {
-  const isProdConfirmation = process.env.CONFIRM_PRODUCTION_FINANCE_SEED === "true";
-  const isTestConfirmation = process.env.FINANCE_RBAC_SEED_CONFIRM === "APPLY_TO_ISOLATED_TEST_DB";
+  const target = process.env.FINANCE_RBAC_TARGET;
+  const confirm = process.env.FINANCE_RBAC_SEED_CONFIRM;
 
-  if (!isProdConfirmation && !isTestConfirmation) {
-    console.error("ERROR: Execution rejected. Missing explicit security confirmation.");
-    console.error("To run in tests: set FINANCE_RBAC_SEED_CONFIRM=APPLY_TO_ISOLATED_TEST_DB");
-    console.error("To run in production: set CONFIRM_PRODUCTION_FINANCE_SEED=true");
+  const isProd = target === "PRODUCTION" && confirm === "APPLY_FINANCE_RBAC_TO_PRODUCTION";
+  const isTest = target === "ISOLATED_TEST" && confirm === "APPLY_TO_ISOLATED_TEST_DB";
+
+  if (!isProd && !isTest) {
+    console.error("ERROR: Execution rejected. Missing or invalid explicit security confirmation.");
+    console.error("To run in tests: set FINANCE_RBAC_TARGET=ISOLATED_TEST and FINANCE_RBAC_SEED_CONFIRM=APPLY_TO_ISOLATED_TEST_DB");
+    console.error("To run in production: set FINANCE_RBAC_TARGET=PRODUCTION and FINANCE_RBAC_SEED_CONFIRM=APPLY_FINANCE_RBAC_TO_PRODUCTION");
     process.exit(1);
   }
 
-  const envTarget = isProdConfirmation ? "PRODUCTION" : "LOCAL TEST";
+  const envTarget = isProd ? "PRODUCTION" : "LOCAL TEST";
   console.log(`Seeding Finance F1-B Permissions and Roles into: ${envTarget} Environment`);
 
   const prisma = new PrismaClient();
