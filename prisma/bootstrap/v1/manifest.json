@@ -1,0 +1,24 @@
+{
+  "bootstrapVersion": "1.0.0",
+  "createdAt": "2026-07-15T11:34:00Z",
+  "postgresVersion": "18",
+  "prismaVersion": "6.x",
+  "schemaSha256": "29CDF3CE2A9B95AE09B84BFE82F9517D8A9DB0F3C42CD0B0976E6B30DEF5348F",
+  "sourceArtifactSha256": "869CA06CAAE3DE830C4094366493F30FF74C089A26F915C812AE88AD012DF673",
+  "dummyBaselineSha256": "847DF80799D2D40F0BFF146547CA3133C252020885E1D7A107D5F99C29872764",
+  "coveredMigrations": [
+    "20260101000000_baseline",
+    "20260708_add_audit_log",
+    "20260712120000_init_task_management"
+  ],
+  "firstMigrationToDeploy": "20260712130000_phase_3_work_projects",
+  "expectedCoreObjects": [
+    "User",
+    "AppRole",
+    "Department",
+    "Project",
+    "Task"
+  ],
+  "allowedExtensions": [],
+  "notes": "Greenfield bootstrap for new empty databases ONLY. Do NOT use on existing environments."
+}
