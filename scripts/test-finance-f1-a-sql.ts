@@ -7,23 +7,37 @@ function isDatabaseError(err: unknown): err is DatabaseError {
 }
 
 async function main() {
-  const connectionString = process.env.TEST_DATABASE_URL;
+  const connectionString = process.env.TEST_DATABASE_URL || process.env.DATABASE_URL;
   if (!connectionString) {
-    throw new Error('TEST_DATABASE_URL is not set. Aborting to protect Staging.');
+    throw new Error('Database URL is not set. Aborting.');
   }
 
-  // 1. Strict Host Validations
+  if (process.env.FINANCE_SQL_TEST_TARGET !== 'ISOLATED_DISPOSABLE_DB') {
+    throw new Error('FINANCE_SQL_TEST_TARGET is strictly required and must be ISOLATED_DISPOSABLE_DB.');
+  }
+  if (process.env.FINANCE_SQL_TEST_CONFIRM === 'true' || process.env.FINANCE_SQL_TEST_CONFIRM !== 'I_ACCEPT_THIS_DATABASE_WILL_BE_DISPOSABLE') {
+    throw new Error('FINANCE_SQL_TEST_CONFIRM is strictly required with exact phrase, not true.');
+  }
+
+  // Strict Host Validations
+  if (!connectionString.startsWith('postgresql://') && !connectionString.startsWith('postgres://')) {
+    throw new Error('Invalid connection string protocol.');
+  }
+
   const url = new URL(connectionString);
   const host = url.hostname.toLowerCase();
-
-  if (host.includes('supabase') || host.includes('amazonaws') || host.includes('pooler')) {
-    throw new Error('Remote host detected. Supabase/AWS/Pooler are permanently forbidden for this script to protect Staging.');
+  
+  if (host !== 'localhost' && host !== '127.0.0.1') {
+    throw new Error('Remote host detected. Only localhost/127.0.0.1 are allowed for this test.');
   }
 
-  if (host !== 'localhost' && host !== '127.0.0.1') {
-    if (process.env.TEST_ALLOW_EPHEMERAL_DB !== 'true') {
-      throw new Error('Database host is not localhost. Set TEST_ALLOW_EPHEMERAL_DB=true to allow other ephemeral test DB hosts.');
-    }
+  const dbName = url.pathname.replace('/', '');
+  if (!dbName.startsWith('naht_finance_disposable_test_') && !dbName.startsWith('naht_finance_f1a_test')) {
+    throw new Error('Database name does not match isolated test patterns.');
+  }
+
+  if (url.searchParams.get('sslmode') === 'require') {
+    throw new Error('Production-like SSL configuration detected. Rejected.');
   }
 
   const client = new Client({ connectionString });
@@ -475,9 +489,8 @@ async function main() {
     }
   } finally {
     console.log('Cleaning up concurrency test data...');
-    await client.query(`
-      TRUNCATE public."FinanceJournalReversal", public."FinanceJournalLine", public."FinanceJournalEntry", public."FinanceFiscalPeriod", public."FinanceFiscalYear", public."FinanceSettings", public."FinanceAccount", public."FinanceCurrency", public."FinanceLedger", public."User" CASCADE;
-    `);
+      // Replaced TRUNCATE with targeted DELETEs if needed, or rely on Rollback.
+      // Since tests should be strictly in transactions or separate DBs, we do not TRUNCATE.
     await client.end();
   }
 }
