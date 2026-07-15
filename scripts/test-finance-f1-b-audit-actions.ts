@@ -3,8 +3,7 @@ import { PrismaClient, FinanceActivityAction } from "@prisma/client";
 const prisma = new PrismaClient();
 
 async function main() {
-  console.log("Testing new FinanceActivityAction enum values...");
-
+  console.log("Testing new FinanceActivityAction enum values strictly via Rollback Transaction...");
   const testActorId = "test-actor-123";
   const newActions = [
     FinanceActivityAction.LEDGER_CREATED,
@@ -15,83 +14,56 @@ async function main() {
     FinanceActivityAction.ACCOUNT_REACTIVATED,
   ];
 
-  // 1. Create a dummy user for the actor to satisfy foreign key
   await prisma.user.upsert({
     where: { id: testActorId },
     update: {},
-    create: {
-      id: testActorId,
-      email: "test-audit-actor@example.com",
-      name: "Audit Actor"
-    }
+    create: { id: testActorId, email: "test-audit-actor@example.com", name: "Audit Actor" }
   });
 
-  const createdLogIds: string[] = [];
-
   try {
-    for (const action of newActions) {
-      console.log(`Inserting log for action: ${action}`);
-      const log = await prisma.financeActivityLog.create({
-        data: {
-          actorId: testActorId,
-          action: action,
-          entityType: "TEST",
-          entityId: "test-entity-1",
-          metadata: { test: true },
-        }
-      });
-      createdLogIds.push(log.id);
-      console.log(`✅ Success! ID: ${log.id}`);
-    }
-
-    // 2. Test reading them back
-    const readLogs = await prisma.financeActivityLog.findMany({
-      where: { id: { in: createdLogIds } }
-    });
-
-    if (readLogs.length !== newActions.length) {
-      throw new Error(`Expected ${newActions.length} logs, found ${readLogs.length}`);
-    }
-    console.log("✅ All new actions read successfully.");
-
-    // 3. Test rollback
-    try {
-      await prisma.$transaction(async (tx) => {
-        await tx.financeActivityLog.create({
+    await prisma.$transaction(async (tx) => {
+      console.log("Transaction opened.");
+      const createdLogIds: string[] = [];
+      
+      for (const action of newActions) {
+        const log = await tx.financeActivityLog.create({
           data: {
             actorId: testActorId,
-            action: FinanceActivityAction.LEDGER_CREATED,
-            entityType: "TEST_ROLLBACK",
-            entityId: "rollback",
+            action: action,
+            entityType: "TEST",
+            entityId: "test-entity-1",
           }
         });
-        throw new Error("Triggering rollback");
-      });
-    } catch (e: any) {
-      console.log("Rollback triggered as expected.");
-    }
+        createdLogIds.push(log.id);
+      }
 
-    const rollbackCheck = await prisma.financeActivityLog.findFirst({
-      where: { entityType: "TEST_ROLLBACK" }
-    });
-
-    if (rollbackCheck) {
-      throw new Error("❌ Rollback failed, log was persisted!");
-    }
-    console.log("✅ Transaction rollback successfully prevented log persistence.");
-
-  } finally {
-    // Clean up
-    console.log("Cleaning up test logs...");
-    try {
-      await prisma.financeActivityLog.deleteMany({
+      const readLogs = await tx.financeActivityLog.findMany({
         where: { id: { in: createdLogIds } }
       });
-    } catch (e: any) {
-      console.log("Cleanup skipped: FinanceActivityLog is immutable as expected.");
+
+      if (readLogs.length !== newActions.length) {
+        throw new Error(`Inside TX: Expected ${newActions.length} logs, found ${readLogs.length}`);
+      }
+      console.log("✅ Inside TX: All logs created and read successfully.");
+
+      throw new Error("SENTINEL_ERROR");
+    });
+  } catch (e: any) {
+    if (e.message !== "SENTINEL_ERROR") {
+      throw e;
     }
-    console.log("Cleaned up successfully.");
+    console.log("✅ Sentinel error caught. Rollback completed.");
   }
+
+  const lingeringLogs = await prisma.financeActivityLog.findMany({
+    where: { entityType: "TEST", entityId: "test-entity-1" }
+  });
+
+  if (lingeringLogs.length > 0) {
+    throw new Error("❌ Rollback failed! Logs persisted outside transaction.");
+  }
+
+  console.log("✅ Verified outside TX: No logs persisted.");
 }
 
 main()
