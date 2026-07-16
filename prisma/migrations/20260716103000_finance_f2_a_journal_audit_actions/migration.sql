@@ -1,0 +1,3 @@
+-- AlterEnum
+ALTER TYPE "FinanceActivityAction" ADD VALUE 'JOURNAL_UPDATED';
+ALTER TYPE "FinanceActivityAction" ADD VALUE 'JOURNAL_SUBMITTED';
