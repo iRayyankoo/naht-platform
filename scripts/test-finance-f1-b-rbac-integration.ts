@@ -274,6 +274,9 @@ async function runTests() {
     const runGuardTest = (envVars: Record<string, string>) => {
       try {
         const env = { ...process.env, ...envVars };
+        delete env.FINANCE_RBAC_TARGET;
+        delete env.FINANCE_RBAC_SEED_CONFIRM;
+        Object.assign(env, envVars);
         execSync('npx tsx prisma/seeds/finance-permissions.ts', { env, stdio: 'pipe' });
         return true; // Success
       } catch (_err: unknown) {

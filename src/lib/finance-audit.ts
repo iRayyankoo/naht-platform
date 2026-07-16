@@ -1,4 +1,4 @@
-import { PrismaClient, Prisma } from "@prisma/client";
+import { PrismaClient, Prisma, FinanceActivityAction } from "@prisma/client";
 
 /**
  * Defines the contract for Finance Audit logging.
@@ -6,15 +6,33 @@ import { PrismaClient, Prisma } from "@prisma/client";
  * audit logs are written atomically with the financial records.
  */
 export interface FinanceAuditParams {
-  actorUserId: string;
+  actorId: string;
   impersonatorUserId?: string | null;
-  action: string; // e.g. "JOURNAL_POSTED", "LEDGER_CREATED"
-  entityType: string; // e.g. "FinanceJournalEntry", "FinanceLedger"
+  action: FinanceActivityAction; 
+  entityType: string; // e.g. "FinanceLedger", "FinanceAccount"
   entityId: string;
   correlationId: string;
-  metadata?: Record<string, unknown>; // Limited safe metadata (no full journal lines or sensitive amounts unless masked)
+  metadata?: Record<string, unknown>; // Limited safe metadata
 }
 
 export interface FinanceAuditWriter {
   log(tx: Prisma.TransactionClient, params: FinanceAuditParams): Promise<void>;
 }
+
+export class DefaultFinanceAuditWriter implements FinanceAuditWriter {
+  async log(tx: Prisma.TransactionClient, params: FinanceAuditParams): Promise<void> {
+    await tx.financeActivityLog.create({
+      data: {
+        actorId: params.actorId,
+        
+        action: params.action,
+        entityType: params.entityType,
+        entityId: params.entityId,
+        
+        metadata: { ...(params.metadata || {}), correlationId: params.correlationId } as Prisma.InputJsonValue,
+      },
+    });
+  }
+}
+
+export const auditWriter = new DefaultFinanceAuditWriter();

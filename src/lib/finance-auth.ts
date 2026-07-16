@@ -1,4 +1,4 @@
-import { checkScopedPermission } from "./rbac-helpers";
+import { checkScopedPermission, isSuperAdmin, getCurrentUserScopedPermissions } from "./rbac-helpers";
 import { getCurrentUser } from "./auth-helpers";
 import { FinanceDomainError } from "./finance-errors";
 
@@ -6,8 +6,7 @@ import { FinanceDomainError } from "./finance-errors";
  * Known finance permissions. If these are not registered in the
  * RolePermission table, they will fail-close to ADMIN/SUPER_ADMIN.
  */
-export type FinancePermissionCode =
-  | "finance.journal.create"
+export type FinancePermissionCode = "finance.ledger.view" | "finance.account.view" | "finance.ledger.manage" | "finance.account.manage" | "finance.journal.create"
   | "finance.journal.approve"
   | "finance.journal.post"
   | "finance.journal.reverse"
@@ -26,9 +25,9 @@ export interface FinanceAuthDependencies {
 
 const defaultDependencies: FinanceAuthDependencies = {
   getCurrentUser,
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+   
   checkScopedPermission: (code, options, context) =>
-    checkScopedPermission(code, options as any, context),
+    checkScopedPermission(code, options as { targetUserId?: string }, context),
 };
 
 /**
@@ -81,4 +80,29 @@ export async function requireFinancePermission(
       "Internal authorization error. Access denied.",
     );
   }
+}
+
+/**
+ * Helper for backend services to pass `actorId` explicitly without relying on Next.js headers().
+ */
+export async function requireFinanceServicePermission(
+  actorId: string,
+  permissionCode: FinancePermissionCode,
+  resourceOwnerId?: string,
+  context: string = "Finance Service Operation"
+): Promise<void> {
+  const deps: FinanceAuthDependencies = {
+    getCurrentUser: async () => ({ id: actorId }),
+    checkScopedPermission: async (code: string, options: { targetUserId?: string }) => {
+      const isSuper = await isSuperAdmin(actorId);
+      if (isSuper) return true;
+      const scopedPerms = await getCurrentUserScopedPermissions(actorId);
+      if (!scopedPerms.has(code)) return false;
+      const scopes = scopedPerms.get(code)!;
+      if (scopes.has("COMPANY")) return true;
+      if (scopes.has("SELF") && options.targetUserId === actorId) return true;
+      return false;
+    }
+  };
+  await requireFinancePermission(permissionCode, resourceOwnerId, context, deps);
 }

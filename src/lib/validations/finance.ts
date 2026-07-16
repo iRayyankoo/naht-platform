@@ -20,25 +20,43 @@ const PositiveDecimalStringSchema = DecimalStringSchema.refine(
   { message: "Must be a positive value" }
 );
 
-// Account Create Schema
+import { FinanceAccountType, FinanceNormalBalance } from "@prisma/client";
+
+// Ledger Validations
+export const CreateLedgerSchema = z.object({
+  code: z.string().min(1).max(50),
+  nameAr: z.string().min(1).max(255),
+  nameEn: z.string().min(1).max(255),
+  isActive: z.boolean().default(true).optional(),
+}).strict();
+
+export const UpdateLedgerSchema = z.object({
+  nameAr: z.string().min(1).max(255).optional(),
+  nameEn: z.string().min(1).max(255).optional(),
+}).strict();
+
+// Account Validations
 export const CreateAccountSchema = z.object({
   ledgerId: z.string().cuid(),
   parentId: z.string().cuid().optional().nullable(),
   code: z.string().min(1).max(50),
   nameAr: z.string().min(1).max(255),
   nameEn: z.string().min(1).max(255),
-  type: z.enum(["ASSET", "LIABILITY", "EQUITY", "REVENUE", "EXPENSE"]),
-  currencyId: z.string().cuid().optional().nullable(),
-  isPosting: z.boolean().default(true),
-  isActive: z.boolean().default(true),
+  type: z.nativeEnum(FinanceAccountType),
+  normalBalance: z.nativeEnum(FinanceNormalBalance).optional(),
+  isPostingAllowed: z.boolean().default(true),
+  isActive: z.boolean().default(true).optional(),
+  description: z.string().max(1000).optional().nullable(),
 }).strict();
 
 export const UpdateAccountSchema = z.object({
   parentId: z.string().cuid().optional().nullable(),
   nameAr: z.string().min(1).max(255).optional(),
   nameEn: z.string().min(1).max(255).optional(),
-  isPosting: z.boolean().optional(),
-  isActive: z.boolean().optional(),
+  type: z.nativeEnum(FinanceAccountType).optional(),
+  normalBalance: z.nativeEnum(FinanceNormalBalance).optional(),
+  isPostingAllowed: z.boolean().optional(),
+  description: z.string().max(1000).optional().nullable(),
 }).strict();
 
 // Journal Line Schema
