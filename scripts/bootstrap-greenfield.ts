@@ -1,8 +1,8 @@
-import { Client, DatabaseError } from 'pg';
+import { Client } from 'pg';
 import * as fs from 'fs';
 import * as path from 'path';
 import * as crypto from 'crypto';
-import { execSync } from 'child_process';
+import { spawnSync } from 'child_process';
 
 const BOOTSTRAP_DIR = path.join(__dirname, '../prisma/bootstrap/v1');
 const SCHEMA_FILE = path.join(BOOTSTRAP_DIR, 'schema.sql');
@@ -32,6 +32,14 @@ async function main() {
     if (url.hostname.toLowerCase() !== 'localhost' && url.hostname !== '127.0.0.1') {
       throw new Error('Test environment MUST use localhost/127.0.0.1');
     }
+    if (url.port !== '55432') {
+      throw new Error('Test environment MUST use port 55432');
+    }
+    const dbName = url.pathname.substring(1);
+    if (['postgres', 'template0', 'template1'].includes(dbName.toLowerCase())) {
+      throw new Error('Cannot target default system databases');
+    }
+
   } else if (target === 'PRODUCTION') {
     if (confirm !== 'I_ACKNOWLEDGE_THIS_IS_PRODUCTION_AND_CONFIRM_EMPTY_BOOTSTRAP') {
       throw new Error('Production environment target specified, but confirmation phrase is incorrect.');
@@ -92,7 +100,10 @@ async function main() {
 
     console.log('Applying foundational schema.sql...');
     try {
-      execSync(`"C:\\Program Files\\PostgreSQL\\18\\bin\\psql.exe" -U postgres -h 127.0.0.1 -p 55432 -d naht_finance_disposable_test_greenfield -f "${SCHEMA_FILE}"`, { stdio: 'inherit' });
+      const dbUrlObj = new URL(dbUrl);
+      const dbNameForPsql = dbUrlObj.pathname.substring(1);
+      const psqlRes = spawnSync("C:\\Program Files\\PostgreSQL\\18\\bin\\psql.exe", ["-U", "postgres", "-h", "127.0.0.1", "-p", "55432", "-d", dbNameForPsql, "-f", SCHEMA_FILE], { stdio: 'inherit', shell: false });
+      if (psqlRes.status !== 0) throw new Error("Schema application failed.");
     } catch (e) {
       throw new Error(`Schema application failed.`);
     }
@@ -109,16 +120,19 @@ async function main() {
     // Run Prisma Baseline Resolve
     for (const migration of manifest.coveredMigrations) {
       console.log(`Resolving baseline migration: ${migration}...`);
-      execSync(`npx prisma migrate resolve --applied ${migration}`, { stdio: 'inherit' });
+      const res = spawnSync(process.execPath, [path.join(__dirname, '../node_modules/prisma/build/index.js'), 'migrate', 'resolve', '--applied', migration], { stdio: 'inherit', shell: false });
+      if (res.status !== 0) throw new Error("migrate resolve failed");
     }
 
     // Run Prisma Deploy
     console.log('Running prisma migrate deploy...');
-    execSync('npx prisma migrate deploy', { stdio: 'inherit' });
+    const depRes = spawnSync(process.execPath, [path.join(__dirname, '../node_modules/prisma/build/index.js'), 'migrate', 'deploy'], { stdio: 'inherit', shell: false });
+    if (depRes.status !== 0) throw new Error("migrate deploy failed");
 
     // Verify completion
     console.log('Running prisma migrate status...');
-    execSync('npx prisma migrate status', { stdio: 'inherit' });
+    const statRes = spawnSync(process.execPath, [path.join(__dirname, '../node_modules/prisma/build/index.js'), 'migrate', 'status'], { stdio: 'inherit', shell: false });
+    if (statRes.status !== 0) throw new Error("migrate status failed");
 
     console.log('Greenfield Bootstrap completed successfully.');
 
