@@ -478,8 +478,10 @@ export class JournalService {
         checkDbError(e);
       }
 
-      if (journal.status !== "PENDING_REVIEW") throw new FinanceDomainError("F_INVALID_STATE", "Only PENDING_REVIEW can be returned");
-      verifySoD(context, journal.createdById);
+      await verifyPeriodIsOpen(tx, journal!.fiscalPeriodId);
+
+      if (journal!.status !== "PENDING_REVIEW") throw new FinanceDomainError("F_INVALID_STATE", "Only PENDING_REVIEW can be returned");
+      verifySoD(context, journal!.createdById);
 
       const updated = await tx.financeJournalEntry.update({
         where: { id: journalId },
@@ -501,7 +503,7 @@ export class JournalService {
       });
 
       return updated;
-    });
+    }, { isolationLevel: Prisma.TransactionIsolationLevel.Serializable });
   }
 
   static async reviewJournal(context: FinanceActionContext, journalId: string): Promise<FinanceJournalEntry> {
@@ -567,7 +569,7 @@ export class JournalService {
       });
 
       return updated;
-    });
+    }, { isolationLevel: "Serializable" });
   }
 
   static async approveJournal(context: FinanceActionContext, journalId: string): Promise<FinanceJournalEntry> {
@@ -595,6 +597,7 @@ export class JournalService {
         const journals = await tx.$queryRaw<FinanceJournalEntry[]>`SELECT * FROM "FinanceJournalEntry" WHERE id = ${journalId} FOR UPDATE`;
         journal = journals[0];
         if (journal.status !== "PENDING_REVIEW") throw new FinanceDomainError("F_INVALID_STATE", "Only PENDING_REVIEW can be approved");
+        if (!journal.reviewedById || !journal.reviewedAt) throw new FinanceDomainError("F_INVALID_STATE", "Journal must be reviewed before approval");
         verifySoD(context, journal.createdById);
         if (journal.reviewedById === context.actorId || journal.reviewedById === context.impersonatorId) {
           throw new FinanceDomainError("F_SOD_VIOLATION", "Reviewer cannot also approve the journal");
@@ -709,8 +712,10 @@ export class JournalService {
         checkDbError(e);
       }
 
-      if (journal.status === "VOIDED") throw new FinanceDomainError("F_INVALID_STATE", "Already voided");
-      if (journal.status !== "DRAFT" && journal.status !== "PENDING_REVIEW") {
+      await verifyPeriodIsOpen(tx, journal!.fiscalPeriodId);
+
+      if (journal!.status === "VOIDED") throw new FinanceDomainError("F_INVALID_STATE", "Already voided");
+      if (journal!.status !== "DRAFT" && journal!.status !== "PENDING_REVIEW") {
         throw new FinanceDomainError("F_INVALID_STATE", "Only Draft or Pending Review can be voided");
       }
 
@@ -721,12 +726,12 @@ export class JournalService {
       const hasCompanyVoid = isSuper || voidScopes.has("COMPANY");
       const hasSelfVoid = voidScopes.has("SELF");
 
-      if (journal.status === "PENDING_REVIEW" && !hasCompanyVoid) {
+      if (journal!.status === "PENDING_REVIEW" && !hasCompanyVoid) {
          throw new FinanceDomainError("F_SCOPE_DENIED", "Voiding PENDING_REVIEW requires COMPANY scope");
       }
 
       if (!hasCompanyVoid) {
-         if (!hasSelfVoid || journal.createdById !== context.actorId) {
+         if (!hasSelfVoid || journal!.createdById !== context.actorId) {
             throw new FinanceDomainError("F_SCOPE_DENIED", "You cannot void this journal");
          }
       }
@@ -749,7 +754,7 @@ export class JournalService {
       });
 
       return updated;
-    });
+    }, { isolationLevel: Prisma.TransactionIsolationLevel.Serializable });
   }
 
   static async getJournal(context: FinanceActionContext, journalId: string): Promise<FinanceJournalEntry> {
@@ -806,9 +811,11 @@ export class JournalService {
     return { items, total };
   }
 
-  static async reverseJournal(context: FinanceActionContext, journalId: string, reversalReason: string): Promise<FinanceJournalEntry> {
+  static async reverseJournal(context: FinanceActionContext, journalId: string, targetFiscalPeriodId: string, reversalReason: string): Promise<FinanceJournalEntry> {
     verifyContext(context);
     await requireFinanceServicePermission(context.actorId, "finance.journal.reverse", context.actorId);
+    const trimmedReason = reversalReason.trim();
+    if (!trimmedReason) throw new FinanceDomainError("F_VALIDATION_ERROR", "Reversal reason is required");
 
     return prisma.$transaction(async (tx) => {
       const journals = await tx.$queryRaw<FinanceJournalEntry[]>`SELECT * FROM "FinanceJournalEntry" WHERE id = ${journalId} FOR SHARE`;
@@ -819,21 +826,37 @@ export class JournalService {
         throw new FinanceDomainError("F_INVALID_STATE", "Only POSTED journals can be reversed");
       }
 
-      await verifyPeriodIsOpen(tx, original.fiscalPeriodId);
+      // Check original period exists
+      const origPeriods = await tx.$queryRaw<{id: string, startDate: Date}[]>`SELECT id, "startDate" FROM "FinanceFiscalPeriod" WHERE id = ${original.fiscalPeriodId} FOR SHARE`;
+      if (!origPeriods.length) throw new FinanceDomainError("F_JOURNAL_INVALID_DATE", "Original fiscal period not found");
+
+      // Verify target period is OPEN and lock it
+      const targetPeriods = await tx.$queryRaw<{id: string, status: string, startDate: Date, ledgerId: string}[]>`
+        SELECT p.id, p.status, p."startDate", y."ledgerId"
+        FROM "FinanceFiscalPeriod" p
+        JOIN "FinanceFiscalYear" y ON p."fiscalYearId" = y.id
+        WHERE p.id = ${targetFiscalPeriodId}
+        FOR SHARE
+      `;
+      if (!targetPeriods.length) throw new FinanceDomainError("F_JOURNAL_INVALID_DATE", "Target fiscal period not found");
+      const targetPeriod = targetPeriods[0];
+      if (targetPeriod.status !== "OPEN") throw new FinanceDomainError("F_JOURNAL_PERIOD_CLOSED", "Target fiscal period is not open");
+      if (targetPeriod.ledgerId !== original.ledgerId) throw new FinanceDomainError("F_CROSS_LEDGER_VIOLATION", "Target period is in a different ledger");
+      if (targetPeriod.startDate < origPeriods[0].startDate) throw new FinanceDomainError("F_JOURNAL_INVALID_DATE", "Target period cannot be older than original period");
 
       // Create DRAFT reversal
       const reversal = await tx.financeJournalEntry.create({
         data: {
           ledgerId: original.ledgerId,
-          fiscalPeriodId: original.fiscalPeriodId,
-          entryDate: original.entryDate,
+          fiscalPeriodId: targetFiscalPeriodId,
+          entryDate: targetPeriod.startDate, // Reversals are recorded on the first day of the target period
           currencyId: original.currencyId,
           exchangeRate: original.exchangeRate,
           description: `Reversal of ${original.entryNumber}: ${original.description}`,
           status: "DRAFT",
           sourceModule: "REVERSAL",
           reversalOfEntryId: original.id,
-          reversalReason: reversalReason,
+          reversalReason: trimmedReason,
           createdById: context.actorId,
         },
       });
@@ -890,11 +913,18 @@ export class JournalService {
         await tx.$executeRaw`SELECT set_config('finance.correlation_id', ${context.correlationId}, true)`;
       }
 
-      const result = await tx.$queryRaw<{ finance_post_journal: string }[]>`
-        SELECT public.finance_post_journal(${journalId}, ${context.actorId})
-      `;
-
-      return { entryNumber: result[0].finance_post_journal };
+      try {
+        const result = await tx.$queryRaw<{ finance_post_journal: string }[]>`
+          SELECT public.finance_post_journal(${journalId}, ${context.actorId})
+        `;
+        return { entryNumber: result[0].finance_post_journal };
+      } catch (e: unknown) {
+        const err = e as { code?: string, meta?: { message?: string } };
+        if (err.code === "P2010" && err.meta?.message?.includes("FROZEN or CLOSED")) {
+          throw new FinanceDomainError("F_JOURNAL_PERIOD_CLOSED", "Fiscal period is not open");
+        }
+        checkDbError(e);
+      }
     }, { isolationLevel: "Serializable" });
   }
 

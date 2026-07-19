@@ -104,7 +104,7 @@ export class PeriodService {
 
       const updated = await tx.financeFiscalPeriod.update({
         where: { id: periodId },
-        data: { 
+        data: {
           status: "CLOSED",
           closedAt: new Date(),
           closedById: context.actorId
