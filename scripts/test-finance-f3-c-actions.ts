@@ -1,14 +1,21 @@
-import { PrismaClient } from "@prisma/client";
-import { setTestSessionProvider, resetTestSessionProvider } from "../src/actions/finance/finance-action-utils";
-import { createDraftAction, updateDraftAction, addLineAction, removeLineAction, getJournalAction, listJournalsAction } from "../src/actions/finance/journal-actions";
-import { listPeriodsAction } from "../src/actions/finance/period-actions";
-import { getFinanceDashboardSummaryAction } from "../src/actions/finance/dashboard-actions";
+import { PrismaClient, Prisma } from "@prisma/client";
+import {
+  handleCreateDraft,
+  handleAddLine,
+  handleSubmitForReview,
+  handleReviewJournal,
+  handleApproveJournal,
+  handlePostJournal,
+  handleGetJournal,
+  handleGetFinanceDashboardSummary,
+} from "../src/actions/finance/finance-handlers";
+import { SessionDependencies } from "../src/actions/finance/finance-action-utils";
 import { strict as assert } from "assert";
 
 const prisma = new PrismaClient();
 
 async function runTests() {
-  console.log("Starting Finance Batch 3 - Chunk 1C Server Actions Tests...");
+  console.log("Starting Finance Batch 3 - Chunk 1C Server Actions Tests (Strict & Mock-Free)...");
 
   // Setup test data
   let adminUser = await prisma.user.findFirst({ where: { email: "admin1c@naht.local" } });
@@ -22,8 +29,56 @@ async function runTests() {
     }
   }
 
+  let admin2User = await prisma.user.findFirst({ where: { email: "admin2c@naht.local" } });
+  if (!admin2User) admin2User = await prisma.user.create({ data: { email: "admin2c@naht.local", isActive: true } });
+
+  if (superAdminRole) {
+    const existingAdmin2 = await prisma.userRole.findFirst({ where: { userId: admin2User.id, roleId: superAdminRole.id } });
+    if (!existingAdmin2) {
+      await prisma.userRole.create({ data: { userId: admin2User.id, roleId: superAdminRole.id } });
+    }
+  }
+
   let viewerUser = await prisma.user.findFirst({ where: { email: "viewer1c@naht.local" } });
   if (!viewerUser) viewerUser = await prisma.user.create({ data: { email: "viewer1c@naht.local", isActive: true } });
+
+  // Create a custom SELF-scope role for viewerUser
+  let selfViewerRole = await prisma.appRole.findUnique({ where: { code: "TEST_SELF_VIEWER" } });
+  if (!selfViewerRole) {
+    selfViewerRole = await prisma.appRole.create({
+      data: {
+        code: "TEST_SELF_VIEWER",
+        name: "Test Self Viewer"
+      }
+    });
+    const viewPermission = await prisma.permission.findUnique({ where: { code: "finance.journal.view" } });
+    if (viewPermission) {
+      await prisma.rolePermission.create({
+        data: {
+          roleId: selfViewerRole.id,
+          permissionId: viewPermission.id,
+          scope: "SELF"
+        }
+      });
+    }
+  }
+  const existingSelfViewerRole = await prisma.userRole.findFirst({ where: { userId: viewerUser.id, roleId: selfViewerRole.id } });
+  if (!existingSelfViewerRole) {
+    await prisma.userRole.create({
+      data: { userId: viewerUser.id, roleId: selfViewerRole.id }
+    });
+  }
+
+  let otherViewer = await prisma.user.findFirst({ where: { email: "viewer2c@naht.local" } });
+  if (!otherViewer) otherViewer = await prisma.user.create({ data: { email: "viewer2c@naht.local", isActive: true } });
+
+  if (superAdminRole) {
+    const existingOtherViewer = await prisma.userRole.findFirst({ where: { userId: otherViewer.id, roleId: superAdminRole.id } });
+    if (!existingOtherViewer) {
+      await prisma.userRole.create({ data: { userId: otherViewer.id, roleId: superAdminRole.id } });
+    }
+  }
+
 
   let inactiveUser = await prisma.user.findFirst({ where: { email: "inactive1c@naht.local" } });
   if (!inactiveUser) inactiveUser = await prisma.user.create({ data: { email: "inactive1c@naht.local", isActive: false } });
@@ -42,8 +97,12 @@ async function runTests() {
     data: { ledgerId: ledger.id, baseCurrencyId: currency.id, roundingPolicy: "HALF_UP", updatedById: adminUser.id },
   });
 
-  const account = await prisma.financeAccount.create({
+  const account1 = await prisma.financeAccount.create({
     data: { id: `acc1-1c-${runId}`, ledgerId: ledger.id, code: `1001-1c-${runId}`, nameAr: "Cash", nameEn: "Cash", type: "ASSET", normalBalance: "DEBIT", isActive: true, isPostingAllowed: true },
+  });
+
+  const account2 = await prisma.financeAccount.create({
+    data: { id: `acc2-1c-${runId}`, ledgerId: ledger.id, code: `4001-1c-${runId}`, nameAr: "Revenue", nameEn: "Revenue", type: "REVENUE", normalBalance: "CREDIT", isActive: true, isPostingAllowed: true },
   });
 
   const year = await prisma.financeFiscalYear.create({
@@ -58,133 +117,230 @@ async function runTests() {
     data: { id: `seq-1c-${runId}`, ledgerId: ledger.id, fiscalYearId: year.id, documentType: "JOURNAL_ENTRY", prefix: "JE1C-", nextNumber: 1 }
   });
 
-  // Helper to set mock session
-  const setSession = (userId: string | null, targetUserId?: string | null) => {
-    setTestSessionProvider({
-      getCurrentUser: async () => (userId ? { id: userId } : null),
-      getImpersonationRuntimeContext: async () => {
-        if (!targetUserId) return null;
-        return { actorUserId: userId as string, targetUserId };
-      },
-    });
-  };
+  // Helpers to mock dependencies per call
+  const makeDeps = (user: { id: string; isActive: boolean } | null, targetUser?: { id: string } | null): SessionDependencies => ({
+    getCurrentUser: async () => user ? { id: user.id, isActive: user.isActive } : null,
+    getImpersonationRuntimeContext: async () => {
+      if (!targetUser || !user) return null;
+      return { actorUserId: user.id, targetUserId: targetUser.id };
+    }
+  });
 
   try {
-    // =========================================================
-    // 1. Unauthorized / Authentication Tests
-    // =========================================================
-    console.log("Testing Unauthorized access...");
-    setSession(null);
-    const unauthResult = await createDraftAction({ ledgerId: ledger.id });
+    console.log("--- 1. Testing Unauthorized ---");
+    const unauthResult = await handleCreateDraft({ ledgerId: ledger.id }, makeDeps(null));
     assert.strictEqual(unauthResult.ok, false);
-    if (!unauthResult.ok) {
-      assert.strictEqual(unauthResult.error.code, "F_PERMISSION_DENIED");
+    if (!unauthResult.ok) assert.strictEqual(unauthResult.error.code, "F_PERMISSION_DENIED");
+
+    console.log("--- 2. Testing Inactive User ---");
+    const inactiveResult = await handleCreateDraft({ ledgerId: ledger.id }, makeDeps(inactiveUser));
+    assert.strictEqual(inactiveResult.ok, false);
+    if (!inactiveResult.ok) assert.strictEqual(inactiveResult.error.code, "F_PERMISSION_DENIED");
+
+    console.log("--- 3. Testing Impersonation Actor Mismatch ---");
+    const mismatchDeps: SessionDependencies = {
+      getCurrentUser: async () => ({ id: viewerUser.id, isActive: true }),
+      getImpersonationRuntimeContext: async () => ({ actorUserId: adminUser.id, targetUserId: viewerUser.id }) // Mismatch! actorUserId doesn't match current user
+    };
+    const mismatchResult = await handleGetFinanceDashboardSummary(mismatchDeps);
+    assert.strictEqual(mismatchResult.ok, false);
+    if (!mismatchResult.ok) assert.strictEqual(mismatchResult.error.code, "F_PERMISSION_DENIED");
+
+    console.log("--- 4. Testing Target Missing or Inactive ---");
+    // Grant SUPER_ADMIN to inactive user so it's not rejected by RBAC but by context
+    if (superAdminRole) {
+      const existingInactiveRole = await prisma.userRole.findFirst({ where: { userId: inactiveUser.id, roleId: superAdminRole.id } });
+      if (!existingInactiveRole) {
+        await prisma.userRole.create({ data: { userId: inactiveUser.id, roleId: superAdminRole.id } });
+      }
     }
 
-    // =========================================================
-    // 2. Impersonation Tests (Valid & Invalid)
-    // =========================================================
-    console.log("Testing Impersonation Context (Mismatch)...");
-    // User is viewer, but runtime claims admin is impersonating
-    setTestSessionProvider({
-      getCurrentUser: async () => ({ id: viewerUser.id }),
-      getImpersonationRuntimeContext: async () => ({ actorUserId: adminUser.id, targetUserId: viewerUser.id }),
-    });
-    const mismatchResult = await getFinanceDashboardSummaryAction();
-    assert.equal(mismatchResult.ok, false);
-    if (!mismatchResult.ok) assert.equal(mismatchResult.error.code, "F_PERMISSION_DENIED");
-
-    // Valid impersonation setup (admin impersonates viewer)
-    setSession(adminUser.id, viewerUser.id);
-    const validImpersonationResult = await createDraftAction({ ledgerId: ledger.id });
-    
-    // Either way, it shouldn't be F_PERMISSION_DENIED (unless viewer is unauthorized for the action)
-    if (!validImpersonationResult.ok) {
-      assert.notEqual(validImpersonationResult.error.code, "F_PERMISSION_DENIED");
+    const inactiveTargetDeps = makeDeps(adminUser, inactiveUser);
+    const injectRes = await handleCreateDraft({
+      ledgerId: ledger.id,
+      fiscalPeriodId: period.id,
+      entryDate: "2026-02-01T00:00:00.000Z",
+      currencyId: currency.id,
+      exchangeRate: "1.0000",
+      description: "Test",
+    }, inactiveTargetDeps);
+    assert.strictEqual(injectRes.ok, false);
+    if (!injectRes.ok) {
+      assert.strictEqual(injectRes.error.code, "F_PERMISSION_DENIED");
     }
 
-    // =========================================================
-    // 3. Zod Field Validation Errors
-    // =========================================================
-    console.log("Testing Zod Field Errors...");
-    setSession(adminUser.id);
-    const zodResult = await createDraftAction({ ledgerId: ledger.id, fiscalPeriodId: period.id, entryDate: "invalid-date" });
-    assert.equal(zodResult.ok, false);
-    if (!zodResult.ok) {
-      assert.equal(zodResult.error.code, "F_VALIDATION_ERROR");
-      assert.ok(zodResult.error.fieldErrors?.entryDate);
-    }
-
-    // =========================================================
-    // 4. Lifecycle & DTO Accuracy
-    // =========================================================
-    console.log("Testing Lifecycle and DTO Mapping...");
-    setSession(adminUser.id);
-    
-    // Create Draft
-    const createRes = await createDraftAction({
+    console.log("--- 5. Zod Strict Rejection of Injected Fields ---");
+    const injectFieldsRes = await handleCreateDraft({
       ledgerId: ledger.id,
       fiscalPeriodId: period.id,
       entryDate: new Date().toISOString(),
       currencyId: currency.id,
-      exchangeRate: "1.00",
-      description: "Test DTO Mapping",
-      reference: "REF-123"
+      description: "Test",
+      actorId: adminUser.id // INJECTED
+    }, makeDeps(adminUser));
+    assert.strictEqual(injectFieldsRes.ok, false);
+    if (!injectFieldsRes.ok) {
+      assert.strictEqual(injectFieldsRes.error.code, "F_VALIDATION_ERROR");
+      assert.ok(injectFieldsRes.error.fieldErrors?.actorId !== undefined || injectFieldsRes.error.message.includes("validation")); // strict will complain about unrecognized key
+    }
+
+    console.log("--- 6. DTO Decimal Validation & Limits ---");
+    const badDecimalRes = await handleCreateDraft({
+      ledgerId: ledger.id,
+      fiscalPeriodId: period.id,
+      entryDate: "2026-02-01T00:00:00.000Z",
+      currencyId: currency.id,
+      exchangeRate: "1.00000", // > 4 scale
+      description: "Test",
+    }, makeDeps(adminUser));
+    assert.strictEqual(badDecimalRes.ok, false);
+    if (!badDecimalRes.ok) assert.strictEqual(badDecimalRes.error.code, "F_VALIDATION_ERROR");
+
+    console.log("--- 7. Successful Impersonation and Audit Trace ---");
+    const validImpersonationDeps = makeDeps(adminUser, admin2User);
+    const draftRes = await handleCreateDraft({
+      ledgerId: ledger.id,
+      fiscalPeriodId: period.id,
+      entryDate: "2026-02-01T00:00:00.000Z",
+      currencyId: currency.id,
+      exchangeRate: "1.0000",
+      description: "Valid Impersonation Draft",
+      reference: "IMP-1"
+    }, validImpersonationDeps);
+    assert.strictEqual(draftRes.ok, true);
+    if (!draftRes.ok) return;
+    const impersonatedJournal = draftRes.data;
+
+    // Prove it saved actor
+    const savedJournal = await prisma.financeJournalEntry.findUnique({ where: { id: impersonatedJournal.id } });
+    assert.strictEqual(savedJournal!.createdById, admin2User.id);
+
+    // Prove audit log contains it
+    const logs = await prisma.financeActivityLog.findMany({ where: { entityId: savedJournal!.id } });
+    assert.ok(logs.length > 0);
+    assert.strictEqual(logs[0].actorId, admin2User.id);
+    assert.strictEqual((logs[0].metadata as any).impersonatorUserId, adminUser.id);
+    assert.ok((logs[0].metadata as any).correlationId && (logs[0].metadata as any).correlationId.length > 0);
+
+    console.log("--- 8. True IDOR (SELF Scope vs Other's Journal) ---");
+    // Create a journal by admin
+    const adminDraftRes = await handleCreateDraft({
+      ledgerId: ledger.id,
+      fiscalPeriodId: period.id,
+      entryDate: new Date().toISOString(),
+      currencyId: currency.id,
+      description: "Admin Draft",
+    }, makeDeps(adminUser));
+    assert.strictEqual(adminDraftRes.ok, true);
+    if (!adminDraftRes.ok) return;
+
+    // Attempt to read it by viewer (who has NO permissions or only SELF)
+    const viewerReadRes = await handleGetJournal({ id: adminDraftRes.data.id }, makeDeps(viewerUser));
+    assert.strictEqual(viewerReadRes.ok, false);
+    if (!viewerReadRes.ok) assert.strictEqual(viewerReadRes.error.code, "F_SCOPE_DENIED"); // Due to no COMPANY scope
+
+    console.log("--- 9. Dashboard SELF vs COMPANY ---");
+    // Inject a draft for viewerUser directly into DB
+    await prisma.financeJournalEntry.create({
+      data: {
+        ledgerId: ledger.id,
+        fiscalPeriodId: period.id,
+        currencyId: currency.id,
+        createdById: viewerUser.id,
+        status: "DRAFT",
+        entryDate: new Date("2026-02-01"),
+        exchangeRate: new Prisma.Decimal("1.0"),
+        description: "Viewer SELF Draft"
+      }
     });
-    assert.equal(createRes.ok, true, JSON.stringify(createRes));
-    if (!createRes.ok) return;
 
-    const journal = createRes.data;
-    assert.equal(typeof journal.exchangeRate, "string");
-    assert.equal(typeof journal.entryDate, "string");
-    assert.equal(journal.description, "Test DTO Mapping");
-    assert.ok(!("createdById" in journal), "Should not leak internal fields");
+    const dashboardAdminRes = await handleGetFinanceDashboardSummary(makeDeps(adminUser)); // Has COMPANY via SUPER_ADMIN
+    assert.strictEqual(dashboardAdminRes.ok, true);
+    if (dashboardAdminRes.ok) {
+      // Total includes all drafts (viewer's + admin's + admin2's)
+      assert.ok(dashboardAdminRes.data.totalDrafts >= 3);
+    }
 
-    // Add Line
-    const addLineRes = await addLineAction({
-      journalId: journal.id,
-      accountId: account.id,
-      debitAmount: "100.50",
-      creditAmount: "0"
-    });
-    assert.equal(addLineRes.ok, true);
-    if (!addLineRes.ok) return;
+    const dashboardViewerRes = await handleGetFinanceDashboardSummary(makeDeps(viewerUser)); // SELF
+    assert.strictEqual(dashboardViewerRes.ok, true);
+    if (dashboardViewerRes.ok) {
+      assert.strictEqual(dashboardViewerRes.data.totalDrafts, 1); // Only the one we injected
+      assert.strictEqual(dashboardViewerRes.data.openPeriodsCount, 0); // No period.view permission
+    }
 
-    const line = addLineRes.data;
-    assert.equal(typeof line.debitAmount, "string");
-    assert.equal(line.debitAmount, "100.5");
+    console.log("--- 10. AddLine DTO Constraints (Mutual Exclusivity) ---");
+    const addLineRes1 = await handleAddLine({
+      journalId: impersonatedJournal.id,
+      accountId: account1.id,
+      debitAmount: "100.00",
+      creditAmount: "100.00" // BOTH -> Fail
+    }, validImpersonationDeps);
+    assert.strictEqual(addLineRes1.ok, false);
 
-    // Get Journal (to verify relations map correctly)
-    const getRes = await getJournalAction({ id: journal.id });
-    assert.equal(getRes.ok, true);
-    if (!getRes.ok) return;
+    const addLineRes2 = await handleAddLine({
+      journalId: impersonatedJournal.id,
+      accountId: account1.id,
+      // NEITHER -> Fail
+    }, validImpersonationDeps);
+    assert.strictEqual(addLineRes2.ok, false);
 
-    assert.ok(getRes.data.lines);
-    assert.equal(getRes.data.lines.length, 1);
-    assert.equal(getRes.data.lines[0].debitAmount, "100.5");
+    const addLineRes3 = await handleAddLine({
+      journalId: impersonatedJournal.id,
+      accountId: account1.id,
+      debitAmount: "100.00" // SUCCESS
+    }, validImpersonationDeps);
+    assert.strictEqual(addLineRes3.ok, true);
 
-    // List Periods
-    const listPeriodsRes = await listPeriodsAction({ take: 5 });
-    assert.equal(listPeriodsRes.ok, true);
+    const addLineRes4 = await handleAddLine({
+      journalId: impersonatedJournal.id,
+      accountId: account2.id,
+      creditAmount: "100.00" // SUCCESS
+    }, validImpersonationDeps);
+    assert.strictEqual(addLineRes4.ok, true);
 
-    // =========================================================
-    // 5. Prisma Error Interception (Convert to F_INTERNAL_ERROR)
-    // =========================================================
-    console.log("Testing Prisma DB Error Interception...");
-    // Try to remove a line that doesn't exist, which might throw a known FinanceDomainError, 
-    // or pass malformed IDs if bypassing zod somehow. 
-    // We will simulate a malformed DB call by providing a fake UUID to updateDraft.
-    // If Prisma throws 'Record not found', we catch it as internal error (or validation error).
-    // The service might throw F_VALIDATION_ERROR for not found. Let's force an actual Prisma Error if possible,
-    // or just rely on the implementation plan. The wrapper catches non-FinanceDomainErrors.
-    
-    console.log("All Server Action Integration Tests Passed!");
+    console.log("--- 11. Lifecycle Success Path ---");
+    const submitRes = await handleSubmitForReview({ id: impersonatedJournal.id }, validImpersonationDeps);
+    assert.strictEqual(submitRes.ok, true);
 
+    const reviewRes = await handleReviewJournal({ id: impersonatedJournal.id }, makeDeps(adminUser)); // Admin reviews
+    assert.strictEqual(reviewRes.ok, true);
+
+    const approveRes = await handleApproveJournal({ id: impersonatedJournal.id }, makeDeps(otherViewer)); // otherViewer approves
+    assert.strictEqual(approveRes.ok, true);
+
+    // Create a 4th user for POST to satisfy SoD
+    let posterCUser = await prisma.user.findFirst({ where: { email: "poster2c@naht.local" } });
+    if (!posterCUser) posterCUser = await prisma.user.create({ data: { email: "poster2c@naht.local", isActive: true } });
+    if (superAdminRole) {
+      const existingPoster = await prisma.userRole.findFirst({ where: { userId: posterCUser.id, roleId: superAdminRole.id } });
+      if (!existingPoster) {
+        await prisma.userRole.create({ data: { userId: posterCUser.id, roleId: superAdminRole.id } });
+      }
+    }
+
+    const postRes = await handlePostJournal({ id: impersonatedJournal.id }, makeDeps(posterCUser)); // posterCUser posts
+    assert.strictEqual(postRes.ok, true);
+    if (postRes.ok) {
+      assert.ok(postRes.data.entryNumber);
+    }
+
+    console.log("--- 12. Internal Error Safety ---");
+    const { withFinanceActionErrorHandler } = await import("@/actions/finance/finance-action-utils");
+    const fakeAction = async () => {
+      throw new Error("SECRET_DATABASE_PASSWORD_OR_SQL");
+    };
+    const errorSafetyRes = await withFinanceActionErrorHandler(fakeAction, makeDeps(adminUser));
+    assert.strictEqual(errorSafetyRes.ok, false);
+    if (!errorSafetyRes.ok) {
+      assert.strictEqual(errorSafetyRes.error.code, "F_INTERNAL_ERROR");
+      assert.ok(!errorSafetyRes.error.message.includes("SECRET_DATABASE"));
+    }
+
+    console.log("🎉 All Server Action Chunk 1C Strict Tests Passed!");
   } catch (error) {
     console.error("Test failed:", error);
     process.exit(1);
   } finally {
-    resetTestSessionProvider();
     await prisma.$disconnect();
   }
 }

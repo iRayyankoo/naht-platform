@@ -57,7 +57,8 @@ async function runGateway() {
             'scripts/test-finance-f1-b-batch1a.ts',
             'scripts/test-finance-f2-a-audit-actions.ts',
             'scripts/test-finance-f3-a-reversal.ts',
-            'scripts/test-finance-f3-b-services.ts'
+            'scripts/test-finance-f3-b-services.ts',
+            'scripts/test-finance-f3-c-actions.ts'
         ];
 
         
