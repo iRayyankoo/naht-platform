@@ -282,6 +282,9 @@ async function runTests() {
       
       if (["approveJournal Rollback", "returnForModification Rollback"].includes(test)) {
          await JournalService.submitForReview(ctxCreator, d.id);
+         if (test === "approveJournal Rollback") {
+            await JournalService.reviewJournal(ctxAdmin, d.id);
+         }
       }
 
       const snapshotBefore = await takeSnapshot(prisma, d.id);
@@ -343,6 +346,9 @@ async function runTests() {
       const action2 = test.split(" vs ")[1] || test;
       if (action1 === "Approve" || action1 === "Return" || test === "Ledger Deactivate vs Approve" || test === "Period Lock vs Approve") {
          await JournalService.submitForReview(ctxCreator, d.id);
+         if (action1 === "Approve" || test === "Ledger Deactivate vs Approve" || test === "Period Lock vs Approve" || action2 === "Approve") {
+            await JournalService.reviewJournal(ctxAdmin, d.id);
+         }
       }
 
       await enableConcurrencyAdvisory();
@@ -456,6 +462,7 @@ async function runTests() {
           await JournalService.addLine(ctxManager, d.id, { accountId: acc1.id, debitAmount: "100", creditAmount: "0" });
           await JournalService.addLine(ctxManager, d.id, { accountId: acc2.id, debitAmount: "0", creditAmount: "100" });
           await JournalService.submitForReview(ctxManager, d.id);
+          await JournalService.reviewJournal(ctxAdmin, d.id);
           const ctxImpersonator = { actorId: adminId, impersonatorId: managerId, correlationId: "CORR" };
           await JournalService.approveJournal(ctxImpersonator, d.id);
         }
