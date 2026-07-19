@@ -11,6 +11,7 @@ export type FinancePermissionCode = "finance.ledger.view" | "finance.account.vie
   | "finance.journal.post"
   | "finance.journal.reverse"
   | "finance.period.manage"
+  | "finance.period.view"
   | "finance.journal.submit"
   | "finance.journal.review"
   | "finance.journal.void"
