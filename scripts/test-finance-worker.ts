@@ -48,13 +48,18 @@ async function run() {
        else if (test === "Ledger Deactivate vs Approve") await prisma.financeLedger.update({ where: { id: extra1 }, data: { isActive: false }});
     }
     console.log("SUCCESS");
-  } catch(e: any) {
-    if (e.name === "FinanceDomainError" || e.name === "FinanceValidationError" || e.name === "FinancePermissionDeniedError") {
-      console.log(e.message);
-    } else if (e.message) {
-      console.log(e.message);
+  } catch(e: unknown) {
+    if (e instanceof Error) {
+      const isDomain = e.name.startsWith("Finance");
+      if (isDomain) {
+         console.log(e.message);
+      } else {
+         console.log(`[FATAL_ERROR] ${e.message}`);
+         process.exitCode = 1;
+      }
     } else {
-      console.log(String(e));
+      console.log(`[UNKNOWN_ERROR] ${String(e)}`);
+      process.exitCode = 1;
     }
   } finally {
     await prisma.$disconnect();

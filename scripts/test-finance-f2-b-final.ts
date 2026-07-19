@@ -26,12 +26,9 @@ function compareSnapshots(s1: JournalSnapshot | null, s2: JournalSnapshot | null
   return s1Str === s2Str;
 }
 
-const randomId = process.env.TEST_RANDOM_ID || Math.floor(Math.random() * 1000000).toString();
-const dbName = `naht_finance_disposable_test_batch2_${randomId}`;
-const dbUrl = `postgresql://postgres@127.0.0.1:55432/${dbName}?schema=public`;
-
-process.env.DATABASE_URL = dbUrl;
-process.env.DIRECT_URL = dbUrl;
+const dbName = process.env.DATABASE_NAME || "";
+const dbUrl = process.env.DATABASE_URL || "";
+if (!dbName || !dbUrl) throw new Error("Missing DATABASE_NAME or DATABASE_URL from env");
 
 const tsxBuildPath = path.join(process.cwd(), 'node_modules/tsx/dist/cli.mjs');
 const prismaBuildPath = path.join(process.cwd(), 'node_modules/prisma/build/index.js');
@@ -85,17 +82,14 @@ const manifest = {
 const results: { category: string, name: string, result: string, expected: string, actual: string, dbState: string }[] = [];
 const startTotal = Date.now();
 
+let fails = 0;
+let fatalError = false;
+
 function addResult(category: string, name: string, result: string, expected: string, actual: string, dbState: string) {
   results.push({ category, name, result, expected, actual, dbState });
 }
 
 async function runTests() {
-  console.log(`Setting up random disposable DB: ${dbName}`);
-  const setupClient = new Client({ connectionString: "postgresql://postgres@127.0.0.1:55432/postgres" });
-  await setupClient.connect();
-  await setupClient.query(`CREATE DATABASE "${dbName}"`);
-  await setupClient.end();
-
   try {
     const customEnv = Object.assign({}, process.env, { DATABASE_URL: dbUrl, DIRECT_URL: dbUrl });
     
@@ -125,20 +119,6 @@ async function runTests() {
     }
     scanDir('scripts');
     scanDir('src');
-
-    const boot = spawnSync(process.execPath, [tsxBuildPath, "scripts/bootstrap-greenfield.ts"], {
-      env: { ...customEnv, GREENFIELD_BOOTSTRAP_TARGET: "ISOLATED_DISPOSABLE_DB", GREENFIELD_BOOTSTRAP_CONFIRM: "INITIALIZE_EMPTY_DISPOSABLE_DATABASE" }, 
-      stdio: "inherit", 
-      shell: false
-    });
-    if (boot.status !== 0) throw new Error("Bootstrap failed");
-
-    const seed = spawnSync(process.execPath, [tsxBuildPath, "prisma/seeds/finance-permissions.ts"], {
-      env: { ...customEnv, FINANCE_RBAC_TARGET: "ISOLATED_TEST", FINANCE_RBAC_SEED_CONFIRM: "APPLY_TO_ISOLATED_TEST_DB" }, 
-      stdio: "inherit", 
-      shell: false
-    });
-    if (seed.status !== 0) throw new Error("Finance RBAC Seed failed");
 
     const prisma = new PrismaClient({ datasources: { db: { url: dbUrl } } });
     
@@ -421,7 +401,9 @@ async function runTests() {
         return ctxCreator.actorId;
       };
 
-      const p1 = startWorker("1", "", getWorker1Role(test), acc1.id, adminId);
+      const extra1Arg = test.includes("Period") ? period.id : (test.includes("Ledger") ? ledger.id : acc1.id);
+
+      const p1 = startWorker("1", "", getWorker1Role(test), extra1Arg, adminId);
 
       let hit = false;
       for (let i = 0; i < 40; i++) {
@@ -440,7 +422,7 @@ async function runTests() {
 
       // Thread 1 is now blocked inside the trigger holding a row lock!
       // Start thread 2
-      const p2 = startWorker("2", "", getWorker2Role(test), acc1.id, adminId);
+      const p2 = startWorker("2", "", getWorker2Role(test), extra1Arg, adminId);
       
       await new Promise(r => setTimeout(r, 400));
       
@@ -507,29 +489,16 @@ async function runTests() {
     await prisma2.$disconnect();
     await prisma.$disconnect();
 
-  } catch (err: unknown) {
-    console.error("\n🚨 FATAL ERROR IN TESTS:", getErrorMessage(err));
-    process.exit(1);
+  } catch (e: unknown) {
+    console.log(`🚨 FATAL ERROR IN TESTS: ${(e as Error).message}`);
+    process.exitCode = 1;
+    fatalError = true;
   } finally {
-    console.log("Cleaning up DB...");
-    const guardRegex = /^naht_finance_disposable_test_batch2_\d+$/;
-    if (guardRegex.test(dbName) && dbUrl.includes("127.0.0.1:55432")) {
-      const cleanupClient = new Client({ connectionString: "postgresql://postgres@127.0.0.1:55432/postgres" });
-      await cleanupClient.connect();
-      await cleanupClient.query('SELECT pg_terminate_backend(pid) FROM pg_stat_activity WHERE datname = $1 AND pid <> pg_backend_pid()', [dbName]);
-      await cleanupClient.query(`DROP DATABASE "${dbName}"`);
-      await cleanupClient.end();
-      console.log(`✅ DB ${dbName} successfully dropped.`);
-    } else {
-      console.log("⚠️ DB drop guard failed. Skipping drop.");
-      process.exit(1);
-    }
+    // The parent process (gateway) is responsible for dropping the test database.
 
     console.log(`\n\n### Batch 2 Test Matrix Report`);
     console.log(`| Category | Test Name | Executed | Result | Expected | Actual | DB State |`);
     console.log(`|---|---|---|---|---|---|---|`);
-    
-    let fails = 0;
     
     for (const cat of Object.keys(manifest)) {
       const expectedTests = manifest[cat as keyof typeof manifest];
@@ -554,17 +523,16 @@ async function runTests() {
     console.log(`\nExecution Time: ${duration}s`);
     console.log(`Database Used: ${dbName}`);
     
-    if (fails > 0) {
+    if (fails > 0 || fatalError) {
       console.log(`\n❌ Exhaustive test failed with ${fails} errors.`);
-      process.exit(1);
+      process.exitCode = 1;
     } else {
       console.log(`\n✅ All exhaustive tests passed perfectly!`);
-      process.exit(0);
     }
   }
 }
 
 runTests().catch(e => {
   console.error("Test Harness Fatal Error:", getErrorMessage(e));
-  process.exit(1);
+  process.exitCode = 1;
 });
