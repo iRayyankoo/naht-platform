@@ -20,6 +20,7 @@ export type CreateDraftInput = {
 
 export type AddLineInput = {
   accountId: string;
+  costCenterId?: string | null;
   debitAmount: string | Prisma.Decimal;
   creditAmount: string | Prisma.Decimal;
   description?: string;
@@ -213,6 +214,7 @@ export class JournalService {
           journalEntryId: journalId,
           lineNumber,
           accountId: input.accountId,
+          costCenterId: input.costCenterId,
           debitAmount: debitDec,
           creditAmount: creditDec,
           baseDebitAmount,
@@ -282,6 +284,7 @@ export class JournalService {
         where: { id: lineId },
         data: {
           accountId: input.accountId,
+          costCenterId: input.costCenterId,
           debitAmount: input.debitAmount !== undefined ? finalDebit : undefined,
           creditAmount: input.creditAmount !== undefined ? finalCredit : undefined,
           baseDebitAmount,
@@ -757,7 +760,7 @@ export class JournalService {
     }, { isolationLevel: Prisma.TransactionIsolationLevel.Serializable });
   }
 
-  static async getJournal(context: FinanceActionContext, journalId: string): Promise<FinanceJournalEntry> {
+  static async getJournal(context: FinanceActionContext, journalId: string): Promise<Prisma.FinanceJournalEntryGetPayload<{ include: { lines: true } }>> {
     await requireFinanceServicePermission(context.actorId, "finance.journal.view", context.actorId);
 
     const journal = await prisma.financeJournalEntry.findUnique({

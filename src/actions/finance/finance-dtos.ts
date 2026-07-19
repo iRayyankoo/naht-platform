@@ -57,7 +57,7 @@ export interface FinanceDashboardSummaryDTO {
 // ============================================================================
 
 export function mapPeriodToDTO(
-  period: Prisma.FinanceFiscalPeriodGetPayload<{}>
+  period: Prisma.FinanceFiscalPeriodGetPayload<Prisma.FinanceFiscalPeriodDefaultArgs>
 ): FinanceFiscalPeriodDTO {
   return {
     id: period.id,
@@ -72,7 +72,7 @@ export function mapPeriodToDTO(
 }
 
 export function mapJournalLineToDTO(
-  line: Prisma.FinanceJournalLineGetPayload<{}>
+  line: Prisma.FinanceJournalLineGetPayload<Prisma.FinanceJournalLineDefaultArgs>
 ): FinanceJournalLineDTO {
   return {
     id: line.id,
@@ -111,7 +111,7 @@ export function mapJournalToDTO(
 }
 
 export function mapJournalToDTOWithoutLines(
-  journal: Prisma.FinanceJournalEntryGetPayload<{}>
+  journal: Prisma.FinanceJournalEntryGetPayload<Prisma.FinanceJournalEntryDefaultArgs>
 ): FinanceJournalEntryDTO {
   return {
     id: journal.id,
@@ -133,76 +133,102 @@ export function mapJournalToDTOWithoutLines(
 // Input Validation Schemas
 // ============================================================================
 
-// A strict decimal string regex (e.g. "100.50", "0.01", "1000")
 const DecimalStringSchema = z
   .string()
-  .regex(/^[0-9]+(\.[0-9]+)?$/, "Invalid decimal format");
+  .regex(/^[0-9]{1,15}(\.[0-9]{1,4})?$/, "Invalid decimal format, max 19,4")
+  .refine((val) => !/[\x00-\x1F\x7F]/.test(val), "Control characters not allowed");
+
+const IdSchema = z
+  .string()
+  .min(1)
+  .max(100)
+  .refine((val) => !/[\x00-\x1F\x7F]/.test(val), "Control characters not allowed");
 
 export const CreateDraftInputSchema = z.object({
-  ledgerId: z.string().min(1).max(100),
-  fiscalPeriodId: z.string().min(1).max(100),
+  ledgerId: IdSchema,
+  fiscalPeriodId: IdSchema,
   entryDate: z.string().datetime(), // ISO Date String
-  currencyId: z.string().min(1).max(100),
+  currencyId: IdSchema,
   exchangeRate: DecimalStringSchema.optional(),
   description: z.string().min(1).max(500),
   reference: z.string().max(100).optional(),
-});
+}).strict();
 
 export const UpdateDraftInputSchema = z.object({
-  journalId: z.string().min(1).max(100),
+  journalId: IdSchema,
   description: z.string().min(1).max(500).optional(),
   reference: z.string().max(100).optional(),
   entryDate: z.string().datetime().optional(),
-});
+}).strict();
+
+
+
+function validateLineAmounts(data: { debitAmount?: string; creditAmount?: string }) {
+  let debit = false;
+  let credit = false;
+  if (data.debitAmount) {
+    try { debit = new Prisma.Decimal(data.debitAmount).gt(0); } catch { debit = false; }
+  }
+  if (data.creditAmount) {
+    try { credit = new Prisma.Decimal(data.creditAmount).gt(0); } catch { credit = false; }
+  }
+  if (debit && credit) return false;
+  if (!debit && !credit) return false;
+  return true;
+}
 
 export const AddLineInputSchema = z.object({
-  journalId: z.string().min(1).max(100),
-  accountId: z.string().min(1).max(100),
-  costCenterId: z.string().max(100).optional(),
+  journalId: IdSchema,
+  accountId: IdSchema,
+  costCenterId: IdSchema.nullable().optional(),
   description: z.string().max(500).optional(),
   debitAmount: DecimalStringSchema.optional(),
   creditAmount: DecimalStringSchema.optional(),
-});
+}).strict().refine(validateLineAmounts, { message: "Exactly one of debitAmount or creditAmount must be provided and > 0" });
 
 export const UpdateLineInputSchema = z.object({
-  journalId: z.string().min(1).max(100),
-  lineId: z.string().min(1).max(100),
-  accountId: z.string().min(1).max(100).optional(),
-  costCenterId: z.string().max(100).optional(),
+  journalId: IdSchema,
+  lineId: IdSchema,
+  accountId: IdSchema.optional(),
+  costCenterId: IdSchema.nullable().optional(),
   description: z.string().max(500).optional(),
   debitAmount: DecimalStringSchema.optional(),
   creditAmount: DecimalStringSchema.optional(),
-});
+}).strict().refine((data) => {
+  // If neither is provided, that means we are not updating amounts.
+  if (data.debitAmount === undefined && data.creditAmount === undefined) return true;
+  return validateLineAmounts(data);
+}, { message: "Exactly one of debitAmount or creditAmount must be provided and > 0" });
 
 export const RemoveLineInputSchema = z.object({
-  journalId: z.string().min(1).max(100),
-  lineId: z.string().min(1).max(100),
-});
+  journalId: IdSchema,
+  lineId: IdSchema,
+}).strict();
 
 export const ActionReasonInputSchema = z.object({
-  journalId: z.string().min(1).max(100),
+  journalId: IdSchema,
   reason: z.string().min(1).max(500),
-});
+}).strict();
 
 export const ReverseJournalInputSchema = z.object({
-  journalId: z.string().min(1).max(100),
-  targetFiscalPeriodId: z.string().min(1).max(100),
+  journalId: IdSchema,
+  targetFiscalPeriodId: IdSchema,
   reversalReason: z.string().min(1).max(500),
-});
+}).strict();
 
 export const IdInputSchema = z.object({
-  id: z.string().min(1).max(100),
-});
+  id: IdSchema,
+}).strict();
 
 export const ListJournalsInputSchema = z.object({
-  ledgerId: z.string().min(1).max(100).optional(),
+  ledgerId: IdSchema.optional(),
   status: z.enum(["DRAFT", "PENDING_REVIEW", "APPROVED", "POSTED", "VOIDED"]).optional(),
   skip: z.number().int().min(0).default(0),
   take: z.number().int().min(1).max(100).default(50),
-});
+}).strict();
 
 export const ListPeriodsInputSchema = z.object({
-  fiscalYearId: z.string().min(1).max(100).optional(),
+  fiscalYearId: IdSchema.optional(),
   skip: z.number().int().min(0).default(0),
   take: z.number().int().min(1).max(100).default(50),
-});
+}).strict();
