@@ -85,13 +85,13 @@ async function main() {
     await runTest('Reject reversal missing reason', `
       INSERT INTO public."FinanceJournalEntry" (id, "ledgerId", "fiscalPeriodId", "description", "status", "sourceModule", "currencyId", "exchangeRate", "createdById", "entryDate", "createdAt", "updatedAt", "reversalOfEntryId")
       VALUES ('f3_r_bad1a', $1, $2, 'Rev', 'DRAFT', 'REVERSAL', $3, 1, $4, '2026-01-15', now(), now(), $5);
-    `, [ledger, p1, c1, u1, j1], '23514', 'chk_reversal_source_match');
+    `, [ledger, p1, c1, u1, j1], '23514', 'chk_reversal_fields_together');
 
     // 1B. Reject reversal missing reversalOfEntryId
     await runTest('Reject reversal missing origin ID', `
       INSERT INTO public."FinanceJournalEntry" (id, "ledgerId", "fiscalPeriodId", "description", "status", "sourceModule", "currencyId", "exchangeRate", "createdById", "entryDate", "createdAt", "updatedAt", "reversalReason")
       VALUES ('f3_r_bad1b', $1, $2, 'Rev', 'DRAFT', 'REVERSAL', $3, 1, $4, '2026-01-15', now(), now(), 'Reason');
-    `, [ledger, p1, c1, u1], '23514', 'chk_reversal_source_match');
+    `, [ledger, p1, c1, u1], '23514', 'chk_reversal_fields_together');
 
     // 3. Reject self reversal
     await runTest('Reject self reversal', `
@@ -169,7 +169,7 @@ async function main() {
 
     // 10. Reject differing costCenterId
     // Setup cost center
-    await client.query(`INSERT INTO public."FinanceCostCenter" (id, "ledgerId", "code", "nameAr", "nameEn", "isActive", "createdAt", "updatedAt") VALUES ('cc_1', $1, 'CC1', 'CC1', 'CC1', true, now(), now()) ON CONFLICT DO NOTHING`, [ledger]);
+    await client.query(`INSERT INTO public."FinanceCostCenter" (id, "ledgerId", "code", "nameAr", "nameEn", "type", "isActive", "createdAt", "updatedAt") VALUES ('cc_1', $1, 'CC1', 'CC1', 'CC1', 'OTHER', true, now(), now()) ON CONFLICT DO NOTHING`, [ledger]);
     await client.query(`
       INSERT INTO public."FinanceJournalLine" (id, "journalEntryId", "lineNumber", "accountId", "debitAmount", "creditAmount", "baseDebitAmount", "baseCreditAmount", "costCenterId")
       VALUES ('rl_1', 'f3_r_res3', 1, $1, 0, 100, 0, 100, 'cc_1'), ('rl_2', 'f3_r_res3', 2, $2, 100, 0, 100, 0, null);
@@ -234,9 +234,9 @@ async function main() {
     // 13B. Prove no impersonation value is saved when not impersonating
     await client.query(`SET finance.impersonator_id = ''`);
     await client.query(`
-      INSERT INTO public."FinanceJournalEntry" (id, "ledgerId", "fiscalPeriodId", "description", "status", "sourceModule", "currencyId", "exchangeRate", "createdById", "entryDate", "createdAt", "updatedAt")
-      VALUES ('f3_no_imp', $1, $2, 'NoImp', 'DRAFT', 'MANUAL', $3, 1, $4, '2026-01-15', now(), now());
-    `, [ledger, p1, c1, u1]);
+      INSERT INTO public."FinanceJournalEntry" (id, "ledgerId", "fiscalPeriodId", "description", "status", "sourceModule", "currencyId", "exchangeRate", "createdById", "reviewedById", "approvedById", "entryDate", "createdAt", "updatedAt")
+      VALUES ('f3_no_imp', $1, $2, 'NoImp', 'APPROVED', 'MANUAL', $3, 1, $4, $5, $6, '2026-01-15', now(), now());
+    `, [ledger, p1, c1, u1, u2, u3]);
     await client.query(`
       INSERT INTO public."FinanceJournalLine" (id, "journalEntryId", "lineNumber", "accountId", "debitAmount", "creditAmount", "baseDebitAmount", "baseCreditAmount")
       VALUES ('nl_1', 'f3_no_imp', 1, $1, 0, 100, 0, 100), ('nl_2', 'f3_no_imp', 2, $2, 100, 0, 100, 0);

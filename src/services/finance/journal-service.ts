@@ -47,12 +47,26 @@ function checkDbError(e: unknown): never {
   throw e;
 }
 
+
+async function verifyPeriodIsOpen(tx: Prisma.TransactionClient, periodId: string) {
+  const periods = await tx.$queryRaw<{id: string, status: string}[]>`
+    SELECT p.id, p.status
+    FROM "FinanceFiscalPeriod" p
+    WHERE p.id = ${periodId}
+    FOR SHARE
+  `;
+  if (!periods.length) throw new FinanceDomainError("F_JOURNAL_INVALID_DATE", "No fiscal period found");
+  if (periods[0].status !== "OPEN") throw new FinanceDomainError("F_JOURNAL_PERIOD_CLOSED", "Fiscal period is not open");
+}
+
 export class JournalService {
   static async createDraft(context: FinanceActionContext, input: CreateDraftInput): Promise<FinanceJournalEntry> {
     verifyContext(context);
     await requireFinanceServicePermission(context.actorId, "finance.journal.create", context.actorId);
 
     return prisma.$transaction(async (tx) => {
+      await verifyPeriodIsOpen(tx, input.fiscalPeriodId);
+
       if (input.idempotencyKey) {
         const existing = await tx.financeJournalEntry.findFirst({
           where: { ledgerId: input.ledgerId, idempotencyKey: input.idempotencyKey },
@@ -79,11 +93,11 @@ export class JournalService {
 
       const exchangeRate = new Prisma.Decimal(input.exchangeRate || 1);
       if (exchangeRate.lte(0)) throw new FinanceDomainError("F_VALIDATION_ERROR", "Exchange rate must be positive");
-      
+
       if (currency.id === ledger.settings.baseCurrencyId && !exchangeRate.equals(1)) {
         throw new FinanceDomainError("F_VALIDATION_ERROR", "Base currency exchange rate must be exactly 1");
       }
-      
+
       const journal = await tx.financeJournalEntry.create({
         data: {
           ledgerId: input.ledgerId,
@@ -121,6 +135,8 @@ export class JournalService {
       const journals = await tx.$queryRaw<FinanceJournalEntry[]>`SELECT * FROM "FinanceJournalEntry" WHERE id = ${journalId} FOR UPDATE`;
       if (!journals.length) throw new FinanceDomainError("F_JOURNAL_NOT_FOUND", "Journal not found");
       const journal = journals[0];
+
+      await verifyPeriodIsOpen(tx, journal.fiscalPeriodId);
 
       if (journal.status !== "DRAFT") throw new FinanceDomainError("F_INVALID_STATE", "Only DRAFT journals can be updated");
       if (journal.createdById !== context.actorId) throw new FinanceDomainError("F_PERMISSION_DENIED", "Only the creator can modify the draft");
@@ -166,6 +182,8 @@ export class JournalService {
       if (!journals.length) throw new FinanceDomainError("F_JOURNAL_NOT_FOUND", "Journal not found");
       const journal = journals[0];
 
+      await verifyPeriodIsOpen(tx, journal.fiscalPeriodId);
+
       if (journal.status !== "DRAFT") throw new FinanceDomainError("F_INVALID_STATE", "Lines can only be added to DRAFT");
       if (journal.createdById !== context.actorId) throw new FinanceDomainError("F_PERMISSION_DENIED", "Only creator can add lines");
 
@@ -186,7 +204,7 @@ export class JournalService {
       const rate = journal.exchangeRate || new Prisma.Decimal(1);
       const debitDec = new Prisma.Decimal(debitAmount);
       const creditDec = new Prisma.Decimal(creditAmount);
-      
+
       const baseDebitAmount = debitDec.mul(rate).toDP(4);
       const baseCreditAmount = creditDec.mul(rate).toDP(4);
 
@@ -225,6 +243,8 @@ export class JournalService {
       const journals = await tx.$queryRaw<FinanceJournalEntry[]>`SELECT * FROM "FinanceJournalEntry" WHERE id = ${journalId} FOR UPDATE`;
       if (!journals.length) throw new FinanceDomainError("F_JOURNAL_NOT_FOUND", "Journal not found");
       const journal = journals[0];
+
+      await verifyPeriodIsOpen(tx, journal.fiscalPeriodId);
 
       if (journal.status !== "DRAFT") throw new FinanceDomainError("F_INVALID_STATE", "Lines can only be updated in DRAFT");
       if (journal.createdById !== context.actorId) throw new FinanceDomainError("F_PERMISSION_DENIED", "Only creator can update lines");
@@ -293,6 +313,8 @@ export class JournalService {
       if (!journals.length) throw new FinanceDomainError("F_JOURNAL_NOT_FOUND", "Journal not found");
       const journal = journals[0];
 
+      await verifyPeriodIsOpen(tx, journal.fiscalPeriodId);
+
       if (journal.status !== "DRAFT") throw new FinanceDomainError("F_INVALID_STATE", "Lines can only be removed from DRAFT");
       if (journal.createdById !== context.actorId) throw new FinanceDomainError("F_PERMISSION_DENIED", "Only creator can remove lines");
 
@@ -348,7 +370,7 @@ export class JournalService {
 
       try {
         const periods = await tx.$queryRaw<{id: string, status: string}[]>`
-          SELECT p.id, p.status 
+          SELECT p.id, p.status
           FROM "FinanceFiscalPeriod" p
           WHERE p.id = ${journal.fiscalPeriodId}
           FOR SHARE
@@ -366,7 +388,7 @@ export class JournalService {
       let totalCredit = new Prisma.Decimal(0);
       let totalBaseDebit = new Prisma.Decimal(0);
       let totalBaseCredit = new Prisma.Decimal(0);
-      
+
       const rate = journal.exchangeRate || new Prisma.Decimal(1);
       const accountIds = lines.map(l => l.accountId);
 
@@ -374,10 +396,10 @@ export class JournalService {
         const uniqueAccounts = [...new Set(accountIds)].sort();
         try {
           const accounts = await tx.$queryRaw<{id: string, isActive: boolean, isPostingAllowed: boolean, ledgerId: string}[]>`
-            SELECT id, "isActive", "isPostingAllowed", "ledgerId" 
-            FROM "FinanceAccount" 
-            WHERE id IN (${Prisma.join(uniqueAccounts)}) 
-            ORDER BY id ASC 
+            SELECT id, "isActive", "isPostingAllowed", "ledgerId"
+            FROM "FinanceAccount"
+            WHERE id IN (${Prisma.join(uniqueAccounts)})
+            ORDER BY id ASC
             FOR SHARE
           `;
           const accountMap = new Map(accounts.map(a => [a.id, a]));
@@ -415,7 +437,7 @@ export class JournalService {
         where: { id: journalId },
         data: {
           status: "PENDING_REVIEW",
-          reviewedById: null, 
+          reviewedById: null,
           reviewedAt: null,
         },
       });
@@ -440,7 +462,7 @@ export class JournalService {
     if (!trimmedReason || trimmedReason.length < 5) throw new FinanceDomainError("F_VALIDATION_ERROR", "Valid reason required");
 
     return prisma.$transaction(async (tx) => {
-      try { 
+      try {
           await tx.$executeRaw`SELECT set_config('lock_timeout', '2000ms', true)`;
           await tx.$executeRaw`SELECT set_config('statement_timeout', '2000ms', true)`;
         } catch (e: unknown) {
@@ -482,6 +504,72 @@ export class JournalService {
     });
   }
 
+  static async reviewJournal(context: FinanceActionContext, journalId: string): Promise<FinanceJournalEntry> {
+    await requireFinanceServicePermission(context.actorId, "finance.journal.review", context.actorId);
+
+    return prisma.$transaction(async (tx) => {
+      try {
+        await tx.$executeRaw`SELECT set_config('lock_timeout', '2000ms', true)`;
+      } catch (e) {
+        throw new FinanceDomainError("F_SYSTEM_ERROR", "Failed to acquire lock timeout configuration");
+      }
+
+      const preJournal = await tx.financeJournalEntry.findUnique({ where: { id: journalId }, select: { ledgerId: true, entryDate: true } });
+      if (!preJournal) throw new FinanceDomainError("F_JOURNAL_NOT_FOUND", "Journal not found");
+
+      try {
+        const ledgers = await tx.$queryRaw<{id: string, isActive: boolean}[]>`SELECT id, "isActive" FROM "FinanceLedger" WHERE id = ${preJournal.ledgerId} FOR SHARE`;
+        if (!ledgers.length || !ledgers[0].isActive) throw new FinanceDomainError("F_LEDGER_INACTIVE", "Ledger is inactive");
+      } catch (e: unknown) {
+        checkDbError(e);
+      }
+
+      let journal;
+      try {
+        const journals = await tx.$queryRaw<FinanceJournalEntry[]>`SELECT * FROM "FinanceJournalEntry" WHERE id = ${journalId} FOR UPDATE`;
+        journal = journals[0];
+        if (journal.status !== "PENDING_REVIEW") throw new FinanceDomainError("F_INVALID_STATE", "Only PENDING_REVIEW can be reviewed");
+        verifySoD(context, journal.createdById);
+      } catch (e: unknown) {
+        checkDbError(e);
+      }
+
+      try {
+        const periods = await tx.$queryRaw<{id: string, status: string}[]>`
+          SELECT p.id, p.status
+          FROM "FinanceFiscalPeriod" p
+          WHERE p.id = ${journal.fiscalPeriodId}
+          FOR SHARE
+        `;
+        if (!periods.length) throw new FinanceDomainError("F_JOURNAL_INVALID_DATE", "No fiscal period found");
+        if (periods[0].status !== "OPEN") throw new FinanceDomainError("F_JOURNAL_PERIOD_CLOSED", "Fiscal period is not open");
+      } catch (e: unknown) {
+        checkDbError(e);
+      }
+
+      // We do not change the status, it remains PENDING_REVIEW until approved
+      const updated = await tx.financeJournalEntry.update({
+        where: { id: journalId },
+        data: {
+          reviewedById: context.actorId,
+          reviewedAt: new Date(),
+        },
+      });
+
+      await auditWriter.log(tx, {
+        action: "JOURNAL_REVIEWED",
+        entityType: "FinanceJournalEntry",
+        entityId: journalId,
+        actorId: context.actorId,
+        impersonatorUserId: context.impersonatorId,
+        correlationId: context.correlationId,
+        metadata: { outcome: "REVIEWED" },
+      });
+
+      return updated;
+    });
+  }
+
   static async approveJournal(context: FinanceActionContext, journalId: string): Promise<FinanceJournalEntry> {
     await requireFinanceServicePermission(context.actorId, "finance.journal.approve", context.actorId);
 
@@ -508,13 +596,16 @@ export class JournalService {
         journal = journals[0];
         if (journal.status !== "PENDING_REVIEW") throw new FinanceDomainError("F_INVALID_STATE", "Only PENDING_REVIEW can be approved");
         verifySoD(context, journal.createdById);
+        if (journal.reviewedById === context.actorId || journal.reviewedById === context.impersonatorId) {
+          throw new FinanceDomainError("F_SOD_VIOLATION", "Reviewer cannot also approve the journal");
+        }
       } catch (e: unknown) {
         checkDbError(e);
       }
 
       try {
         const periods = await tx.$queryRaw<{id: string, status: string}[]>`
-          SELECT p.id, p.status 
+          SELECT p.id, p.status
           FROM "FinanceFiscalPeriod" p
           WHERE p.id = ${journal.fiscalPeriodId}
           FOR SHARE
@@ -532,16 +623,16 @@ export class JournalService {
       let totalCredit = new Prisma.Decimal(0);
       let totalBaseDebit = new Prisma.Decimal(0);
       let totalBaseCredit = new Prisma.Decimal(0);
-      
+
       const rate = journal.exchangeRate || new Prisma.Decimal(1);
       const accountIds = [...new Set(lines.map(l => l.accountId))].sort();
 
       try {
         const accounts = await tx.$queryRaw<{id: string, isActive: boolean, isPostingAllowed: boolean, ledgerId: string}[]>`
-          SELECT id, "isActive", "isPostingAllowed", "ledgerId" 
-          FROM "FinanceAccount" 
-          WHERE id IN (${Prisma.join(accountIds)}) 
-          ORDER BY id ASC 
+          SELECT id, "isActive", "isPostingAllowed", "ledgerId"
+          FROM "FinanceAccount"
+          WHERE id IN (${Prisma.join(accountIds)})
+          ORDER BY id ASC
           FOR SHARE
         `;
         const accountMap = new Map(accounts.map(a => [a.id, a]));
@@ -552,7 +643,7 @@ export class JournalService {
           if (!acc.isActive) throw new FinanceDomainError("F_JOURNAL_ACCOUNT_INACTIVE", "Account is inactive");
           if (!acc.isPostingAllowed) throw new FinanceDomainError("F_JOURNAL_ACCOUNT_NOT_POSTING", "Account does not allow posting");
           if (acc.ledgerId !== journal.ledgerId) throw new FinanceDomainError("F_CROSS_LEDGER_VIOLATION", "Account ledger does not match journal ledger");
-          
+
           totalDebit = totalDebit.plus(line.debitAmount);
           totalCredit = totalCredit.plus(line.creditAmount);
 
@@ -602,7 +693,7 @@ export class JournalService {
     if (!trimmedReason) throw new FinanceDomainError("F_VALIDATION_ERROR", "Reason required");
 
     return prisma.$transaction(async (tx) => {
-      try { 
+      try {
           await tx.$executeRaw`SELECT set_config('lock_timeout', '2000ms', true)`;
           await tx.$executeRaw`SELECT set_config('statement_timeout', '2000ms', true)`;
         } catch (e: unknown) {
@@ -626,14 +717,14 @@ export class JournalService {
       const isSuper = await isSuperAdmin(context.actorId);
       const scopedPerms = await getCurrentUserScopedPermissions(context.actorId);
       const voidScopes = scopedPerms.get("finance.journal.void") || new Set();
-      
+
       const hasCompanyVoid = isSuper || voidScopes.has("COMPANY");
       const hasSelfVoid = voidScopes.has("SELF");
 
       if (journal.status === "PENDING_REVIEW" && !hasCompanyVoid) {
          throw new FinanceDomainError("F_SCOPE_DENIED", "Voiding PENDING_REVIEW requires COMPANY scope");
       }
-      
+
       if (!hasCompanyVoid) {
          if (!hasSelfVoid || journal.createdById !== context.actorId) {
             throw new FinanceDomainError("F_SCOPE_DENIED", "You cannot void this journal");
@@ -663,7 +754,7 @@ export class JournalService {
 
   static async getJournal(context: FinanceActionContext, journalId: string): Promise<FinanceJournalEntry> {
     await requireFinanceServicePermission(context.actorId, "finance.journal.view", context.actorId);
-    
+
     const journal = await prisma.financeJournalEntry.findUnique({
       where: { id: journalId },
       include: { lines: true },
@@ -674,7 +765,7 @@ export class JournalService {
     const scopedPerms = await getCurrentUserScopedPermissions(context.actorId);
     const viewScopes = scopedPerms.get("finance.journal.view") || new Set();
     const hasCompany = isSuper || viewScopes.has("COMPANY");
-    
+
     if (!hasCompany && journal.createdById !== context.actorId) {
        throw new FinanceDomainError("F_SCOPE_DENIED", "You can only view your own journals");
     }
@@ -688,12 +779,12 @@ export class JournalService {
     const isSuper = await isSuperAdmin(context.actorId);
     const scopedPerms = await getCurrentUserScopedPermissions(context.actorId);
     const viewScopes = scopedPerms.get("finance.journal.view") || new Set();
-    
+
     const hasCompany = isSuper || viewScopes.has("COMPANY");
 
     if (pagination.skip !== undefined && pagination.skip < 0) throw new FinanceDomainError("F_VALIDATION_ERROR", "skip cannot be negative");
     if (pagination.take !== undefined && pagination.take < 0) throw new FinanceDomainError("F_VALIDATION_ERROR", "take cannot be negative");
-    
+
     const whereClause: Prisma.FinanceJournalEntryWhereInput = {};
     if (filter.ledgerId) whereClause.ledgerId = filter.ledgerId;
     if (filter.status) whereClause.status = filter.status;
@@ -705,7 +796,7 @@ export class JournalService {
     const items = await prisma.financeJournalEntry.findMany({
       where: whereClause,
       skip: pagination.skip !== undefined ? pagination.skip : 0,
-      take: Math.min(pagination.take !== undefined ? pagination.take : 50, 100), 
+      take: Math.min(pagination.take !== undefined ? pagination.take : 50, 100),
       orderBy: [
         { createdAt: "desc" },
         { id: "desc" }
@@ -714,4 +805,97 @@ export class JournalService {
     const total = await prisma.financeJournalEntry.count({ where: whereClause });
     return { items, total };
   }
+
+  static async reverseJournal(context: FinanceActionContext, journalId: string, reversalReason: string): Promise<FinanceJournalEntry> {
+    verifyContext(context);
+    await requireFinanceServicePermission(context.actorId, "finance.journal.reverse", context.actorId);
+
+    return prisma.$transaction(async (tx) => {
+      const journals = await tx.$queryRaw<FinanceJournalEntry[]>`SELECT * FROM "FinanceJournalEntry" WHERE id = ${journalId} FOR SHARE`;
+      if (!journals.length) throw new FinanceDomainError("F_JOURNAL_NOT_FOUND", "Journal not found");
+      const original = journals[0];
+
+      if (original.status !== "POSTED") {
+        throw new FinanceDomainError("F_INVALID_STATE", "Only POSTED journals can be reversed");
+      }
+
+      await verifyPeriodIsOpen(tx, original.fiscalPeriodId);
+
+      // Create DRAFT reversal
+      const reversal = await tx.financeJournalEntry.create({
+        data: {
+          ledgerId: original.ledgerId,
+          fiscalPeriodId: original.fiscalPeriodId,
+          entryDate: original.entryDate,
+          currencyId: original.currencyId,
+          exchangeRate: original.exchangeRate,
+          description: `Reversal of ${original.entryNumber}: ${original.description}`,
+          status: "DRAFT",
+          sourceModule: "REVERSAL",
+          reversalOfEntryId: original.id,
+          reversalReason: reversalReason,
+          createdById: context.actorId,
+        },
+      });
+
+      // Flip lines
+      const originalLines = await tx.financeJournalLine.findMany({
+        where: { journalEntryId: original.id }
+      });
+
+      for (const line of originalLines) {
+        await tx.financeJournalLine.create({
+          data: {
+            journalEntryId: reversal.id,
+            lineNumber: line.lineNumber,
+            accountId: line.accountId,
+            costCenterId: line.costCenterId,
+            debitAmount: line.creditAmount,
+            creditAmount: line.debitAmount,
+            baseDebitAmount: line.baseCreditAmount,
+            baseCreditAmount: line.baseDebitAmount,
+            description: line.description,
+          }
+        });
+      }
+
+      await auditWriter.log(tx, {
+        action: "JOURNAL_CREATED",
+        entityType: "FinanceJournalEntry",
+        entityId: reversal.id,
+        actorId: context.actorId,
+        impersonatorUserId: context.impersonatorId,
+        correlationId: context.correlationId,
+        metadata: { status: "DRAFT", isReversal: true, originalEntryId: original.id },
+      });
+
+      return reversal;
+    }, { isolationLevel: "Serializable" });
+  }
+
+  static async postJournal(context: FinanceActionContext, journalId: string): Promise<{ entryNumber: string }> {
+    verifyContext(context);
+    await requireFinanceServicePermission(context.actorId, "finance.journal.post", context.actorId);
+
+    // Call the finance_post_journal function.
+    // Notice that we don't need a transaction block because the DB function handles it safely
+    // BUT we must pass impersonation context.
+    return prisma.$transaction(async (tx) => {
+      if (context.impersonatorId) {
+        await tx.$executeRaw`SELECT set_config('finance.impersonator_id', ${context.impersonatorId}, true)`;
+      } else {
+        await tx.$executeRaw`SELECT set_config('finance.impersonator_id', '', true)`;
+      }
+      if (context.correlationId) {
+        await tx.$executeRaw`SELECT set_config('finance.correlation_id', ${context.correlationId}, true)`;
+      }
+
+      const result = await tx.$queryRaw<{ finance_post_journal: string }[]>`
+        SELECT public.finance_post_journal(${journalId}, ${context.actorId})
+      `;
+
+      return { entryNumber: result[0].finance_post_journal };
+    }, { isolationLevel: "Serializable" });
+  }
+
 }
