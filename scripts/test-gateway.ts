@@ -55,8 +55,10 @@ async function runGateway() {
             'scripts/test-finance-f1-b-account.ts',
             'scripts/test-finance-f1-b-concurrency.ts',
             'scripts/test-finance-f1-b-batch1a.ts',
-            'scripts/test-finance-f2-a-audit-actions.ts'
+            'scripts/test-finance-f2-a-audit-actions.ts',
+            'scripts/test-finance-f3-a-reversal.ts'
         ];
+
         
         // 7. Setup Test Database for Legacy Scripts
         runStep('Setup Legacy DB', process.execPath, ['scripts/setup-legacy-db.js'], dbEnv);

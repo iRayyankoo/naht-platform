@@ -346,10 +346,10 @@ async function main() {
     const r1 = 'rev_1';
     await client.query(`
       INSERT INTO public."FinanceJournalEntry"
-      (id, "ledgerId", "fiscalPeriodId", "description", "status", "sourceModule", "currencyId", "exchangeRate", "createdById", "reviewedById", "approvedById", "entryDate", "createdAt", "updatedAt")
+      (id, "ledgerId", "fiscalPeriodId", "description", "status", "sourceModule", "currencyId", "exchangeRate", "createdById", "reviewedById", "approvedById", "entryDate", "createdAt", "updatedAt", "reversalOfEntryId", "reversalReason")
       VALUES
-      ($1, $2, $3, 'Rev', 'APPROVED', 'REVERSAL', $4, 3.75, $5, $6, $7, '2026-01-20', now(), now());
-    `, [r1, ledger1, p1, currency2, userId1, userId2, userId3]);
+      ($1, $2, $3, 'Rev', 'APPROVED', 'REVERSAL', $4, 3.75, $5, $6, $7, '2026-01-20', now(), now(), $8, 'Test Reversal');
+    `, [r1, ledger1, p1, currency2, userId1, userId2, userId3, j1]);
 
     await client.query(`
       INSERT INTO public."FinanceJournalLine" (id, "journalEntryId", "lineNumber", "accountId", "debitAmount", "creditAmount", "baseDebitAmount", "baseCreditAmount")
@@ -360,7 +360,7 @@ async function main() {
 
     await runTest('Link Reversal before posting',
       `INSERT INTO public."FinanceJournalReversal" (id, "originalEntryId", "reversalEntryId", "reason", "actorId") VALUES ('rr1', $1, $2, 'R', $3)`,
-      [j1, r1, userId4], 'P0001', 'also be POSTED'
+      [j1, r1, userId4], 'P0001', 'must be POSTED'
     );
 
     // Post reversal
@@ -369,7 +369,7 @@ async function main() {
     // Test bad linking (bypassing trigger with zero-balance to hit CHECK constraint)
     await client.query(`
        INSERT INTO public."FinanceJournalEntry" (id, "ledgerId", "fiscalPeriodId", "description", "status", "sourceModule", "currencyId", "exchangeRate", "createdById", "reviewedById", "approvedById", "entryDate", "createdAt", "updatedAt")
-       VALUES ('r_zero', $1, $2, 'Zero', 'APPROVED', 'REVERSAL', $3, 1, $4, $5, $6, '2026-01-20', now(), now());
+       VALUES ('r_zero', $1, $2, 'Zero', 'APPROVED', 'MANUAL', $3, 1, $4, $5, $6, '2026-01-20', now(), now());
     `, [ledger1, p1, currency1, userId1, userId2, userId3]);
 
     await client.query(`
@@ -389,9 +389,7 @@ async function main() {
     );
 
 
-    // Link Reversal correctly
-    await client.query(`INSERT INTO public."FinanceJournalReversal" (id, "originalEntryId", "reversalEntryId", "reason", "actorId") VALUES ('rr1', $1, $2, 'R', $3)`, [j1, r1, userId4]);
-
+    // Link Reversal correctly - Now handled automatically during post_journal!
     await runTest('Double Reversal',
       `INSERT INTO public."FinanceJournalReversal" (id, "originalEntryId", "reversalEntryId", "reason", "actorId") VALUES ('rr2', $1, $2, 'R2', $3)`,
       [j1, r1, userId4], '23505', 'FinanceJournalReversal_originalEntryId_key'
