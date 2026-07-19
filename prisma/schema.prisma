@@ -1271,6 +1271,8 @@ enum FinanceActivityAction {
   JOURNAL_REVERSED
   JOURNAL_VOIDED
   PERIOD_OPENED
+  PERIOD_FROZEN
+  PERIOD_UNFROZEN
   PERIOD_CLOSED
   SETTINGS_UPDATED
   ACCOUNT_CREATED
@@ -1486,6 +1488,12 @@ model FinanceJournalEntry {
   originalReversal FinanceJournalReversal? @relation("OriginalJournalEntry")
   reversalEntry    FinanceJournalReversal? @relation("ReversalJournalEntry")
   ledger           FinanceLedger           @relation(fields: [ledgerId], references: [id], onDelete: Restrict)
+
+  reversalOfEntryId String?
+  reversalReason    String?
+
+  originalReversedEntry FinanceJournalEntry?  @relation("DraftReversalLink", fields: [reversalOfEntryId], references: [id], onDelete: Restrict)
+  draftReversalEntries  FinanceJournalEntry[] @relation("DraftReversalLink")
 
   @@unique([ledgerId, entryNumber])
   @@unique([ledgerId, idempotencyKey])
