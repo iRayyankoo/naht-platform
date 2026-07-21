@@ -7,12 +7,20 @@ export const metadata: Metadata = {
 
 export default async function FinanceDashboardPage() {
   const summaryRes = await getFinanceDashboardSummaryAction();
-  const summary = summaryRes.ok ? summaryRes.data : {
-    totalDrafts: 0,
-    totalPendingReview: 0,
-    totalApproved: 0,
-    openPeriodsCount: 0,
-  };
+
+  if (!summaryRes.ok) {
+    return (
+      <div className="flex-1 space-y-4 p-8 pt-6 rtl">
+        <h2 className="text-2xl font-bold tracking-tight text-gray-900">المالية - لوحة التحكم</h2>
+        <div className="bg-red-50 border border-red-200 text-red-800 rounded-lg p-4">
+          <p className="font-medium">عذراً، حدث خطأ أثناء تحميل بيانات لوحة التحكم.</p>
+          <p className="text-sm mt-1">{summaryRes.error?.message || "يرجى المحاولة لاحقاً أو التواصل مع الدعم الفني."}</p>
+        </div>
+      </div>
+    );
+  }
+
+  const summary = summaryRes.data;
 
   return (
     <div className="flex-1 space-y-6 p-8 pt-6 rtl">

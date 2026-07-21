@@ -1,18 +1,33 @@
 import { Metadata } from "next";
 import Link from "next/link";
 import { listJournalsAction } from "@/actions/finance/journal-actions";
+import { FinanceJournalEntryDTO } from "@/actions/finance/finance-dtos";
 
 export const metadata: Metadata = {
   title: "القيود اليومية",
 };
 
-export default async function JournalsPage({ searchParams }: { searchParams: { page?: string, status?: string } }) {
-  const page = parseInt(searchParams.page || "1");
+export default async function JournalsPage({ searchParams }: { searchParams: Promise<{ page?: string, status?: string }> }) {
+  const resolvedParams = await searchParams;
+  const page = parseInt(resolvedParams.page || "1");
   const take = 20;
   const skip = (page - 1) * take;
 
-  const res = await listJournalsAction({ skip, take, status: searchParams.status });
-  const data = res.ok ? res.data : { items: [], total: 0 };
+  const res = await listJournalsAction({ skip, take, status: resolvedParams.status });
+
+  if (!res.ok) {
+    return (
+      <div className="flex-1 space-y-4 p-8 pt-6 rtl">
+        <h2 className="text-3xl font-bold tracking-tight text-gray-900">القيود اليومية</h2>
+        <div className="bg-red-50 border border-red-200 text-red-800 rounded-lg p-4">
+          <p className="font-medium">عذراً، حدث خطأ أثناء تحميل القيود اليومية.</p>
+          <p className="text-sm mt-1">{res.error?.message || "يرجى المحاولة لاحقاً."}</p>
+        </div>
+      </div>
+    );
+  }
+
+  const data = res.data;
   const totalPages = Math.ceil(data.total / take);
 
   return (
@@ -44,13 +59,13 @@ export default async function JournalsPage({ searchParams }: { searchParams: { p
                   <td colSpan={7} className="px-6 py-8 text-center text-gray-500">لا توجد بيانات لعرضها.</td>
                 </tr>
               ) : (
-                data.items.map((journal: any) => (
+                data.items.map((journal: FinanceJournalEntryDTO) => (
                   <tr key={journal.id} className="hover:bg-gray-50">
                     <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">{journal.entryNumber || "-"}</td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{new Date(journal.entryDate).toLocaleDateString("ar-SA")}</td>
                     <td className="px-6 py-4 text-sm text-gray-500 truncate max-w-xs">{journal.description}</td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{journal.currencyId}</td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{journal.totalBaseAmount || "-"}</td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{journal.currency ? `${journal.currency.code} — ${journal.currency.nameAr}` : journal.currencyId}</td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{journal.totalBaseDebit || "-"}</td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm">
                       <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
                         journal.status === "APPROVED" ? "bg-green-100 text-green-800" :

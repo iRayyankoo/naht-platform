@@ -234,6 +234,11 @@ async function runTests() {
     assert.strictEqual(adminDraftRes.ok, true);
     if (!adminDraftRes.ok) return;
 
+    // Prove audit log does NOT contain impersonatorUserId for non-impersonated action
+    const normalLogs = await prisma.financeActivityLog.findMany({ where: { entityId: adminDraftRes.data.id } });
+    assert.ok(normalLogs.length > 0);
+    assert.strictEqual((normalLogs[0].metadata as any).impersonatorUserId, undefined);
+
     // Attempt to read it by viewer (who has NO permissions or only SELF)
     const viewerReadRes = await handleGetJournal({ id: adminDraftRes.data.id }, makeDeps(viewerUser));
     assert.strictEqual(viewerReadRes.ok, false);

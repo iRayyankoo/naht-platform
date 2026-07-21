@@ -1,7 +1,7 @@
 import { PrismaClient, FinanceLedger } from "@prisma/client";
 import { CreateLedgerSchema, UpdateLedgerSchema } from "../../lib/validations/finance";
-import { FinanceDomainError, FinanceErrorMapper } from "../../lib/finance-errors";
-import { requireFinancePermission, requireFinanceServicePermission } from "../../lib/finance-auth";
+import { FinanceDomainError } from "../../lib/finance-errors";
+import { requireFinanceServicePermission } from "../../lib/finance-auth";
 import { auditWriter } from "../../lib/finance-audit";
 import * as crypto from "crypto";
 
@@ -191,7 +191,7 @@ export class LedgerService {
   static async getLedger(
     actorId: string,
     id: string,
-    correlationId: string = crypto.randomUUID()
+    /* correlationId ignored */
   ): Promise<FinanceLedger> {
     try {
       await requireFinanceServicePermission(actorId, "finance.ledger.view");
@@ -212,7 +212,7 @@ export class LedgerService {
    */
   static async listLedgers(
     actorId: string,
-    correlationId: string = crypto.randomUUID()
+    /* correlationId ignored */
   ): Promise<FinanceLedger[]> {
     try {
       await requireFinanceServicePermission(actorId, "finance.ledger.view");

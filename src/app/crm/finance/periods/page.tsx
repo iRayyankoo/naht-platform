@@ -1,18 +1,33 @@
 import { Metadata } from "next";
 import Link from "next/link";
 import { listPeriodsAction } from "@/actions/finance/period-actions";
+import { FinanceFiscalPeriodDTO } from "@/actions/finance/finance-dtos";
 
 export const metadata: Metadata = {
   title: "الفترات المالية",
 };
 
-export default async function PeriodsPage({ searchParams }: { searchParams: { page?: string, yearId?: string } }) {
-  const page = parseInt(searchParams.page || "1");
+export default async function PeriodsPage({ searchParams }: { searchParams: Promise<{ page?: string, yearId?: string }> }) {
+  const resolvedParams = await searchParams;
+  const page = parseInt(resolvedParams.page || "1");
   const take = 20;
   const skip = (page - 1) * take;
 
-  const res = await listPeriodsAction({ skip, take, fiscalYearId: searchParams.yearId });
-  const data = res.ok ? res.data : { items: [], total: 0 };
+  const res = await listPeriodsAction({ skip, take, fiscalYearId: resolvedParams.yearId });
+
+  if (!res.ok) {
+    return (
+      <div className="flex-1 space-y-4 p-8 pt-6 rtl">
+        <h2 className="text-3xl font-bold tracking-tight text-gray-900">الفترات المالية</h2>
+        <div className="bg-red-50 border border-red-200 text-red-800 rounded-lg p-4">
+          <p className="font-medium">عذراً، حدث خطأ أثناء تحميل الفترات المالية.</p>
+          <p className="text-sm mt-1">{res.error?.message || "يرجى المحاولة لاحقاً."}</p>
+        </div>
+      </div>
+    );
+  }
+
+  const data = res.data;
   const totalPages = Math.ceil(data.total / take);
 
   return (
@@ -43,7 +58,7 @@ export default async function PeriodsPage({ searchParams }: { searchParams: { pa
                   <td colSpan={6} className="px-6 py-8 text-center text-gray-500">لا توجد بيانات لعرضها.</td>
                 </tr>
               ) : (
-                data.items.map((period: any) => (
+                data.items.map((period: FinanceFiscalPeriodDTO) => (
                   <tr key={period.id} className="hover:bg-gray-50">
                     <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">{period.periodName}</td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{period.periodNumber}</td>

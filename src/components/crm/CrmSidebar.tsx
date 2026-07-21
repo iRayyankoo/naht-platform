@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo, useCallback } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 
@@ -164,93 +164,98 @@ const allNavGroups: NavGroup[] = [
 
 export default function CrmSidebar({ userName, userRole, userPermissions = [], orgScope, canViewOrganization, isSuperAdmin, userId }: CrmSidebarProps) {
   const pathname = usePathname();
-  const [openGroups, setOpenGroups] = useState<Record<string, boolean>>({});
+  const [openGroups, setOpenGroups] = useState<Record<string, boolean>>(() => {
+    let parsed: Record<string, boolean> = {};
+    if (typeof window !== "undefined") {
+      const saved = localStorage.getItem("crm_sidebar_state");
+      if (saved) {
+        try { parsed = JSON.parse(saved); } catch {}
+      }
+    }
+    return parsed;
+  });
   const [mounted, setMounted] = useState(false);
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
-  const hasPerm = (code: string) => isSuperAdmin || userPermissions.includes(code);
+  const hasPerm = useCallback((code: string) => isSuperAdmin || userPermissions.includes(code), [isSuperAdmin, userPermissions]);
 
   // Filter groups and links based on user role
-  const navGroups = allNavGroups.map(group => {
-    // Hide Interactive Map unless user is super admin
-    if (group.id === "content" && !isSuperAdmin) {
-      return {
-        ...group,
-        links: group.links.filter(link => link.href !== "/crm/projects-map")
-      };
-    }
-    // Update organization links based on orgScope
-    if (group.id === "organization" && orgScope === "SELF" && userId) {
-      return {
-        ...group,
-        links: [
-          { name: "ملفي التنظيمي", href: `/crm/organization/members/${userId}`, exact: true }
-        ]
-      };
-    }
-    return group;
-  }).filter(group => {
-    if (group.id === "organization") {
-      return canViewOrganization;
-    }
+  const navGroups = useMemo(() => {
+    return allNavGroups.map(group => {
+      // Hide Interactive Map unless user is super admin
+      if (group.id === "content" && !isSuperAdmin) {
+        return {
+          ...group,
+          links: group.links.filter(link => link.href !== "/crm/projects-map")
+        };
+      }
+      // Update organization links based on orgScope
+      if (group.id === "organization" && orgScope === "SELF" && userId) {
+        return {
+          ...group,
+          links: [
+            { name: "ملفي التنظيمي", href: `/crm/organization/members/${userId}`, exact: true }
+          ]
+        };
+      }
+      return group;
+    }).filter(group => {
+      if (group.id === "organization") {
+        return canViewOrganization;
+      }
 
-    // Permission check for tasks
-    if (group.id === "tasks" && !hasPerm("tasks.view")) return false;
+      // Permission check for tasks
+      if (group.id === "tasks" && !hasPerm("tasks.view")) return false;
 
-    // Content management generally requires content permissions
-    if (group.id === "content") {
-      const contentPerms = ["projects.view", "pages.view", "settings.view"];
-      return isSuperAdmin || contentPerms.some(p => userPermissions.includes(p));
-    }
+      // Content management generally requires content permissions
+      if (group.id === "content") {
+        const contentPerms = ["projects.view", "pages.view", "settings.view"];
+        return isSuperAdmin || contentPerms.some(p => userPermissions.includes(p));
+      }
 
-    // Role management requires specific permission
-    if (group.id === "users" && !isSuperAdmin && !hasPerm("roles.view") && !hasPerm("users.view")) return false;
+      // Role management requires specific permission
+      if (group.id === "users" && !isSuperAdmin && !hasPerm("roles.view") && !hasPerm("users.view")) return false;
 
-    // Finance requires any finance view permission
-    if (group.id === "finance") {
-      const financePerms = ["finance.journal.view", "finance.period.view", "finance.ledger.view"];
-      return isSuperAdmin || financePerms.some(p => userPermissions.includes(p));
-    }
+      // Finance requires any finance view permission
+      if (group.id === "finance") {
+        const financePerms = ["finance.journal.view", "finance.period.view", "finance.ledger.view"];
+        return isSuperAdmin || financePerms.some(p => userPermissions.includes(p));
+      }
 
-    // Remove old SALES/MARKETING role checks
-    return true;
-  });
+      // Remove old SALES/MARKETING role checks
+      return true;
+    });
+  }, [isSuperAdmin, orgScope, userId, canViewOrganization, userPermissions, hasPerm]);
 
   useEffect(() => {
-    setMounted(true);
-    // 1. Check local storage first
-    const saved = localStorage.getItem("crm_sidebar_state");
-    let parsed: Record<string, boolean> = {};
-    if (saved) {
-      try {
-        parsed = JSON.parse(saved);
-      } catch (e) {}
-    }
+    Promise.resolve().then(() => setMounted(true));
+  }, []);
 
-    // 2. Identify the active group based on current URL
-    let activeGroupId = "";
-    for (const group of navGroups) {
-      for (const link of group.links) {
-        const l = link as any;
-        if (!l.disabled) {
-          if (l.exact) {
-            if (pathname === l.href) activeGroupId = group.id;
-          } else {
-            if (pathname.startsWith(l.href)) activeGroupId = group.id;
-          }
+  // 2. Identify the active group based on current URL
+  let activeGroupId = "";
+  for (const group of navGroups) {
+    for (const link of group.links) {
+      if (!link.disabled) {
+        if (link.exact) {
+          if (pathname === link.href) activeGroupId = group.id;
+        } else {
+          if (pathname.startsWith(link.href)) activeGroupId = group.id;
         }
       }
     }
+  }
 
-    // If there is an active group, ensure it's open
-    if (activeGroupId) {
-      parsed[activeGroupId] = true;
-    }
-
-    setOpenGroups(parsed);
-  }, [pathname]);
+  const isGroupOpen = (id: string) => {
+    if (id === activeGroupId) return true;
+    return !!openGroups[id];
+  };
 
   const toggleGroup = (id: string) => {
-    const newState = { ...openGroups, [id]: !openGroups[id] };
+    const newState = { ...openGroups, [id]: !isGroupOpen(id) };
+    if (id === activeGroupId && !openGroups[id]) {
+      // If it was forced open by active route but not in state, explicitly set it to false
+      newState[id] = false;
+    }
     setOpenGroups(newState);
     localStorage.setItem("crm_sidebar_state", JSON.stringify(newState));
   };
@@ -272,15 +277,35 @@ export default function CrmSidebar({ userName, userRole, userPermissions = [], o
   }
 
   return (
-    <aside className="w-64 bg-white border-l border-gray-200 flex flex-col hidden md:flex">
-      <div className="h-16 flex items-center justify-center border-b border-gray-200 px-6 shrink-0">
-        <h1 className="text-xl font-bold text-primary">نحت العقارية</h1>
-      </div>
-      
+    <>
+      {/* Mobile Hamburger Button */}
+      <button
+        className="md:hidden fixed top-3 right-4 z-50 p-2 bg-white rounded-md shadow-sm border border-gray-200 text-gray-600 hover:text-primary hover:bg-gray-50 focus:outline-none"
+        onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+        aria-label="Toggle Menu"
+      >
+        <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d={mobileMenuOpen ? "M6 18L18 6M6 6l12 12" : "M4 6h16M4 12h16M4 18h16"} />
+        </svg>
+      </button>
+
+      {/* Mobile Backdrop */}
+      {mobileMenuOpen && (
+        <div
+          className="fixed inset-0 bg-black/50 z-40 md:hidden transition-opacity"
+          onClick={() => setMobileMenuOpen(false)}
+        />
+      )}
+
+      {/* Sidebar */}
+      <aside className={`fixed inset-y-0 right-0 z-40 w-64 bg-white border-l border-gray-200 flex flex-col transform transition-transform duration-300 md:relative md:translate-x-0 ${mobileMenuOpen ? 'translate-x-0' : 'translate-x-full'}`}>
+        <div className="h-16 flex items-center justify-center border-b border-gray-200 px-6 shrink-0">
+          <h1 className="text-xl font-bold text-primary">نحت العقارية</h1>
+        </div>
+
       <nav className="flex-1 overflow-y-auto py-4 px-3 space-y-2 custom-scrollbar">
         {navGroups.map((group) => {
-          const isOpen = !!openGroups[group.id];
-          // Check if any link inside is active to highlight the group header slightly if needed
+          const isOpen = isGroupOpen(group.id);
           const hasActiveChild = group.links.some(l => !l.disabled && isActiveLink(l.href, l.exact));
 
           return (
@@ -298,13 +323,13 @@ export default function CrmSidebar({ userName, userRole, userPermissions = [], o
                   <span>{group.title}</span>
                 </div>
                 <svg
-                  className={`w-4 h-4 text-gray-400 transition-transform duration-200 ${isOpen ? "rotate-180" : ""}`}
+                  className={`w-5 h-5 transition-transform duration-200 ${isGroupOpen(group.id) ? "rotate-90" : "rotate-180"}`}
                   fill="none" viewBox="0 0 24 24" stroke="currentColor"
                 >
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7" />
                 </svg>
               </button>
-              
+
               {isOpen && (
                 <div className="mt-1 space-y-1 px-3 pb-2 border-l-2 border-gray-100 ml-4 rtl:ml-0 rtl:mr-4 rtl:border-l-0 rtl:border-r-2">
                   {group.links.map((link, idx) => {
@@ -320,9 +345,10 @@ export default function CrmSidebar({ userName, userRole, userPermissions = [], o
                       <Link
                         key={idx}
                         href={link.href}
+                        onClick={() => setMobileMenuOpen(false)}
                         className={`flex items-center gap-2 px-3 py-2 text-sm rounded-md font-medium transition-colors ${
-                          active 
-                            ? "bg-primary text-white shadow-sm" 
+                          active
+                            ? "bg-primary text-white shadow-sm"
                             : "text-gray-600 hover:text-primary hover:bg-gray-50"
                         }`}
                       >
@@ -350,5 +376,6 @@ export default function CrmSidebar({ userName, userRole, userPermissions = [], o
         </div>
       </div>
     </aside>
+    </>
   );
 }

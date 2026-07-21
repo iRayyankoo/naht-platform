@@ -16,6 +16,22 @@ export interface FinanceFiscalPeriodDTO {
   closedAt: string | null;
 }
 
+export interface FinanceCurrencyInfoDTO {
+  code: string;
+  nameAr: string;
+  nameEn: string;
+}
+
+export interface FinancePeriodInfoDTO {
+  periodName: string;
+}
+
+export interface FinanceAccountInfoDTO {
+  code: string;
+  nameAr: string;
+  nameEn: string;
+}
+
 export interface FinanceJournalLineDTO {
   id: string;
   journalEntryId: string;
@@ -27,6 +43,7 @@ export interface FinanceJournalLineDTO {
   creditAmount: string;
   baseDebitAmount: string;
   baseCreditAmount: string;
+  account?: FinanceAccountInfoDTO | null;
 }
 
 export interface FinanceJournalEntryDTO {
@@ -42,6 +59,12 @@ export interface FinanceJournalEntryDTO {
   currencyId: string;
   exchangeRate: string;
   rejectionReason: string | null;
+  currency?: FinanceCurrencyInfoDTO | null;
+  period?: FinancePeriodInfoDTO | null;
+  totalDebit?: string;
+  totalCredit?: string;
+  totalBaseDebit?: string;
+  totalBaseCredit?: string;
   lines?: FinanceJournalLineDTO[];
 }
 
@@ -72,7 +95,9 @@ export function mapPeriodToDTO(
 }
 
 export function mapJournalLineToDTO(
-  line: Prisma.FinanceJournalLineGetPayload<Prisma.FinanceJournalLineDefaultArgs>
+  line: Prisma.FinanceJournalLineGetPayload<{
+    include: { account: true };
+  }> | Prisma.FinanceJournalLineGetPayload<Prisma.FinanceJournalLineDefaultArgs>
 ): FinanceJournalLineDTO {
   return {
     id: line.id,
@@ -85,14 +110,39 @@ export function mapJournalLineToDTO(
     creditAmount: line.creditAmount.toString(),
     baseDebitAmount: line.baseDebitAmount.toString(),
     baseCreditAmount: line.baseCreditAmount.toString(),
+    account: "account" in line && line.account ? {
+      code: line.account.code,
+      nameAr: line.account.nameAr,
+      nameEn: line.account.nameEn,
+    } : null,
   };
 }
 
 export function mapJournalToDTO(
   journal: Prisma.FinanceJournalEntryGetPayload<{
+    include: {
+      lines: { include: { account: true } };
+      currency: true;
+      fiscalPeriod: true;
+    };
+  }> | Prisma.FinanceJournalEntryGetPayload<{
     include: { lines: true };
   }>
 ): FinanceJournalEntryDTO {
+  let totalDebit = new Prisma.Decimal(0);
+  let totalCredit = new Prisma.Decimal(0);
+  let totalBaseDebit = new Prisma.Decimal(0);
+  let totalBaseCredit = new Prisma.Decimal(0);
+
+  if (journal.lines) {
+    for (const line of journal.lines) {
+      totalDebit = totalDebit.add(line.debitAmount);
+      totalCredit = totalCredit.add(line.creditAmount);
+      totalBaseDebit = totalBaseDebit.add(line.baseDebitAmount);
+      totalBaseCredit = totalBaseCredit.add(line.baseCreditAmount);
+    }
+  }
+
   return {
     id: journal.id,
     ledgerId: journal.ledgerId,
@@ -106,13 +156,45 @@ export function mapJournalToDTO(
     currencyId: journal.currencyId,
     exchangeRate: journal.exchangeRate.toString(),
     rejectionReason: journal.rejectionReason,
+    currency: "currency" in journal && journal.currency ? {
+      code: journal.currency.code,
+      nameAr: journal.currency.nameAr,
+      nameEn: journal.currency.nameEn,
+    } : null,
+    period: "fiscalPeriod" in journal && journal.fiscalPeriod ? {
+      periodName: journal.fiscalPeriod.periodName,
+    } : null,
+    totalDebit: totalDebit.toString(),
+    totalCredit: totalCredit.toString(),
+    totalBaseDebit: totalBaseDebit.toString(),
+    totalBaseCredit: totalBaseCredit.toString(),
     lines: journal.lines ? journal.lines.map(mapJournalLineToDTO) : undefined,
   };
 }
 
 export function mapJournalToDTOWithoutLines(
-  journal: Prisma.FinanceJournalEntryGetPayload<Prisma.FinanceJournalEntryDefaultArgs>
+  journal: Prisma.FinanceJournalEntryGetPayload<{
+    include: {
+      currency: true;
+      fiscalPeriod: true;
+      lines: { select: { debitAmount: true; creditAmount: true; baseDebitAmount: true; baseCreditAmount: true; } };
+    };
+  }> | Prisma.FinanceJournalEntryGetPayload<Prisma.FinanceJournalEntryDefaultArgs>
 ): FinanceJournalEntryDTO {
+  let totalDebit = new Prisma.Decimal(0);
+  let totalCredit = new Prisma.Decimal(0);
+  let totalBaseDebit = new Prisma.Decimal(0);
+  let totalBaseCredit = new Prisma.Decimal(0);
+
+  if ("lines" in journal && Array.isArray(journal.lines)) {
+    for (const line of journal.lines) {
+      if (line.debitAmount) totalDebit = totalDebit.add(line.debitAmount);
+      if (line.creditAmount) totalCredit = totalCredit.add(line.creditAmount);
+      if (line.baseDebitAmount) totalBaseDebit = totalBaseDebit.add(line.baseDebitAmount);
+      if (line.baseCreditAmount) totalBaseCredit = totalBaseCredit.add(line.baseCreditAmount);
+    }
+  }
+
   return {
     id: journal.id,
     ledgerId: journal.ledgerId,
@@ -126,6 +208,18 @@ export function mapJournalToDTOWithoutLines(
     currencyId: journal.currencyId,
     exchangeRate: journal.exchangeRate.toString(),
     rejectionReason: journal.rejectionReason,
+    currency: "currency" in journal && journal.currency ? {
+      code: journal.currency.code,
+      nameAr: journal.currency.nameAr,
+      nameEn: journal.currency.nameEn,
+    } : null,
+    period: "fiscalPeriod" in journal && journal.fiscalPeriod ? {
+      periodName: journal.fiscalPeriod.periodName,
+    } : null,
+    totalDebit: totalDebit.toString(),
+    totalCredit: totalCredit.toString(),
+    totalBaseDebit: totalBaseDebit.toString(),
+    totalBaseCredit: totalBaseCredit.toString(),
   };
 }
 

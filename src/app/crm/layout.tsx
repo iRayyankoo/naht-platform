@@ -1,6 +1,5 @@
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
-import { redirect } from "next/navigation";
 import Link from "next/link";
 import { ImpersonationBanner } from "@/components/crm/ImpersonationBanner";
 import { getImpersonationRuntimeContext } from "@/lib/impersonation-runtime-context";
@@ -45,7 +44,7 @@ export default async function AdminLayout({
       {/* Sidebar */}
       <CrmSidebar
         userName={session?.user?.name || "مستخدم"}
-        userRole={(session?.user as any)?.role || "VIEWER"}
+        userRole={session?.user && 'role' in session.user ? (session.user as { role: string }).role : "VIEWER"}
         userPermissions={permissions}
         orgScope={orgScope}
         canViewOrganization={canViewOrganization}
@@ -57,7 +56,7 @@ export default async function AdminLayout({
       <div className="flex-1 flex flex-col overflow-hidden">
         <ImpersonationBanner context={impersonationContext} />
         <header className="h-16 bg-white border-b border-gray-200 flex items-center justify-between px-6">
-          <div className="flex items-center md:hidden">
+          <div className="flex items-center md:hidden rtl:pr-12 ltr:pl-12">
             <h1 className="text-xl font-bold text-primary">نحت العقارية</h1>
           </div>
           <div className="flex-1"></div>

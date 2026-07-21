@@ -1,13 +1,15 @@
 import { Metadata } from "next";
 import { getJournalAction } from "@/actions/finance/journal-actions";
+import { FinanceJournalLineDTO } from "@/actions/finance/finance-dtos";
 import Link from "next/link";
 
 export const metadata: Metadata = {
   title: "تفاصيل القيد",
 };
 
-export default async function JournalDetailPage({ params }: { params: { id: string } }) {
-  const res = await getJournalAction({ id: params.id });
+export default async function JournalDetailPage({ params }: { params: Promise<{ id: string }> }) {
+  const resolvedParams = await params;
+  const res = await getJournalAction({ id: resolvedParams.id });
   
   if (!res.ok || !res.data) {
     return (
@@ -73,7 +75,7 @@ export default async function JournalDetailPage({ params }: { params: { id: stri
           <div className="px-6 py-4 space-y-3">
             <div className="flex justify-between border-b border-gray-100 pb-2">
               <span className="font-semibold text-gray-700">العملة:</span>
-              <span className="text-gray-900">{journal.currencyId}</span>
+              <span className="text-gray-900">{journal.currency ? `${journal.currency.code} — ${journal.currency.nameAr}` : journal.currencyId}</span>
             </div>
             <div className="flex justify-between border-b border-gray-100 pb-2">
               <span className="font-semibold text-gray-700">سعر الصرف:</span>
@@ -81,7 +83,7 @@ export default async function JournalDetailPage({ params }: { params: { id: stri
             </div>
             <div className="flex justify-between border-b border-gray-100 pb-2">
               <span className="font-semibold text-gray-700">الفترة المالية:</span>
-              <span className="text-gray-900">{journal.fiscalPeriodId}</span>
+              <span className="text-gray-900">{journal.period?.periodName || journal.fiscalPeriodId}</span>
             </div>
             {journal.rejectionReason && (
               <div className="flex justify-between pt-1">
@@ -115,10 +117,10 @@ export default async function JournalDetailPage({ params }: { params: { id: stri
                   <td colSpan={6} className="px-6 py-8 text-center text-gray-500">لا توجد أسطر في هذا القيد.</td>
                 </tr>
               ) : (
-                journal.lines.map((line: any) => (
+                journal.lines.map((line: FinanceJournalLineDTO) => (
                   <tr key={line.id} className="hover:bg-gray-50">
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{line.lineNumber}</td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{line.accountId}</td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{line.account ? `${line.account.code} - ${line.account.nameAr}` : line.accountId}</td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{line.costCenterId || "-"}</td>
                     <td className="px-6 py-4 text-sm text-gray-500 truncate max-w-xs">{line.description || "-"}</td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-red-600">{line.debitAmount}</td>
@@ -127,6 +129,20 @@ export default async function JournalDetailPage({ params }: { params: { id: stri
                 ))
               )}
             </tbody>
+            <tfoot className="bg-gray-50 border-t border-gray-200">
+              <tr>
+                <td colSpan={4} className="px-6 py-4 text-right text-sm font-bold text-gray-900">الإجمالي:</td>
+                <td className="px-6 py-4 whitespace-nowrap text-sm font-bold text-red-600">{journal.totalDebit || "0"}</td>
+                <td className="px-6 py-4 whitespace-nowrap text-sm font-bold text-green-600">{journal.totalCredit || "0"}</td>
+              </tr>
+              {journal.exchangeRate !== "1" && (
+                <tr>
+                  <td colSpan={4} className="px-6 py-4 text-right text-sm font-bold text-gray-900">الإجمالي بالعملة الأساسية:</td>
+                  <td className="px-6 py-4 whitespace-nowrap text-sm font-bold text-red-600">{journal.totalBaseDebit || "0"}</td>
+                  <td className="px-6 py-4 whitespace-nowrap text-sm font-bold text-green-600">{journal.totalBaseCredit || "0"}</td>
+                </tr>
+              )}
+            </tfoot>
           </table>
         </div>
       </div>

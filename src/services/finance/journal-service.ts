@@ -346,7 +346,7 @@ export class JournalService {
     return prisma.$transaction(async (tx) => {
       try {
         await tx.$executeRaw`SELECT set_config('lock_timeout', '2000ms', true)`;
-      } catch (e: unknown) {
+      } catch {
         throw new FinanceDomainError("F_SYSTEM_ERROR", "Failed to acquire lock timeout configuration");
       }
 
@@ -468,7 +468,7 @@ export class JournalService {
       try {
           await tx.$executeRaw`SELECT set_config('lock_timeout', '2000ms', true)`;
           await tx.$executeRaw`SELECT set_config('statement_timeout', '2000ms', true)`;
-        } catch (e: unknown) {
+        } catch {
           throw new FinanceDomainError("F_SYSTEM_ERROR", "Failed to set timeouts");
         }
 
@@ -515,7 +515,7 @@ export class JournalService {
     return prisma.$transaction(async (tx) => {
       try {
         await tx.$executeRaw`SELECT set_config('lock_timeout', '2000ms', true)`;
-      } catch (e) {
+      } catch {
         throw new FinanceDomainError("F_SYSTEM_ERROR", "Failed to acquire lock timeout configuration");
       }
 
@@ -581,7 +581,7 @@ export class JournalService {
     return prisma.$transaction(async (tx) => {
       try {
         await tx.$executeRaw`SELECT set_config('lock_timeout', '2000ms', true)`;
-      } catch (e) {
+      } catch {
         throw new FinanceDomainError("F_SYSTEM_ERROR", "Failed to acquire lock timeout configuration");
       }
 
@@ -702,7 +702,7 @@ export class JournalService {
       try {
           await tx.$executeRaw`SELECT set_config('lock_timeout', '2000ms', true)`;
           await tx.$executeRaw`SELECT set_config('statement_timeout', '2000ms', true)`;
-        } catch (e: unknown) {
+        } catch {
           throw new FinanceDomainError("F_SYSTEM_ERROR", "Failed to set timeouts");
         }
 
@@ -760,12 +760,12 @@ export class JournalService {
     }, { isolationLevel: Prisma.TransactionIsolationLevel.Serializable });
   }
 
-  static async getJournal(context: FinanceActionContext, journalId: string): Promise<Prisma.FinanceJournalEntryGetPayload<{ include: { lines: true } }>> {
+  static async getJournal(context: FinanceActionContext, journalId: string): Promise<Prisma.FinanceJournalEntryGetPayload<{ include: { lines: { include: { account: true } }, currency: true, fiscalPeriod: true } }>> {
     await requireFinanceServicePermission(context.actorId, "finance.journal.view", context.actorId);
 
     const journal = await prisma.financeJournalEntry.findUnique({
       where: { id: journalId },
-      include: { lines: true },
+      include: { lines: { include: { account: true } }, currency: true, fiscalPeriod: true },
     });
     if (!journal) throw new FinanceDomainError("F_JOURNAL_NOT_FOUND", "Journal not found");
 
@@ -781,7 +781,7 @@ export class JournalService {
     return journal;
   }
 
-  static async listJournals(context: FinanceActionContext, filter: { ledgerId?: string, status?: FinanceJournalStatus }, pagination: { skip?: number, take?: number } = {}): Promise<{ items: FinanceJournalEntry[], total: number }> {
+  static async listJournals(context: FinanceActionContext, filter: { ledgerId?: string, status?: FinanceJournalStatus }, pagination: { skip?: number, take?: number } = {}): Promise<{ items: Prisma.FinanceJournalEntryGetPayload<{ include: { lines: { select: { debitAmount: true, creditAmount: true, baseDebitAmount: true, baseCreditAmount: true } }, currency: true, fiscalPeriod: true } }>[], total: number }> {
     await requireFinanceServicePermission(context.actorId, "finance.journal.view", context.actorId);
 
     const isSuper = await isSuperAdmin(context.actorId);
@@ -809,6 +809,11 @@ export class JournalService {
         { createdAt: "desc" },
         { id: "desc" }
       ],
+      include: {
+        lines: { select: { debitAmount: true, creditAmount: true, baseDebitAmount: true, baseCreditAmount: true } },
+        currency: true,
+        fiscalPeriod: true
+      }
     });
     const total = await prisma.financeJournalEntry.count({ where: whereClause });
     return { items, total };

@@ -1,7 +1,6 @@
-import { execSync, spawnSync } from 'child_process';
+import { spawnSync, spawn } from 'child_process';
 import * as crypto from 'crypto';
-
-const scriptPath = 'npx tsx scripts/bootstrap-greenfield.ts';
+import { Client } from 'pg';
 
 function runTest(envVars: Record<string, string>, expectedErrorFragment: string) {
   const customEnv = Object.assign({}, process.env, envVars);
@@ -49,32 +48,66 @@ runTest(
 
 async function runConcurrencyTest() {
   console.log('6. Concurrency -> Reject second instance');
+  const randomDb = `naht_finance_disposable_test_greenfield_${crypto.randomBytes(4).toString('hex')}`;
   const env = {
     ...process.env,
-    DATABASE_URL: 'postgresql://postgres@127.0.0.1:55432/naht_finance_disposable_test_greenfield?schema=public',
+    DATABASE_URL: `postgresql://postgres@127.0.0.1:55432/${randomDb}?schema=public`,
     GREENFIELD_BOOTSTRAP_TARGET: 'ISOLATED_DISPOSABLE_DB',
     GREENFIELD_BOOTSTRAP_CONFIRM: 'INITIALIZE_EMPTY_DISPOSABLE_DATABASE'
   };
-  const p1 = new Promise((resolve) => {
-    const r = spawnSync(process.execPath, ["node_modules/tsx/dist/cli.mjs", "scripts/bootstrap-greenfield.ts"], { env: env, shell: false });
-    resolve((r.stdout ? r.stdout.toString() : "") + (r.stderr ? r.stderr.toString() : ""));
-  });
-  const p2 = new Promise((resolve) => {
-    const r = spawnSync(process.execPath, ["node_modules/tsx/dist/cli.mjs", "scripts/bootstrap-greenfield.ts"], { env: env, shell: false });
-    resolve((r.stdout ? r.stdout.toString() : "") + (r.stderr ? r.stderr.toString() : ""));
-  });
 
-  const [res1, res2] = await Promise.all([p1, p2]);
-  const combined = (res1 as string) + (res2 as string);
+  const setupClient = new Client({ connectionString: "postgresql://postgres@127.0.0.1:55432/postgres" });
+  await setupClient.connect();
+  try {
+    await setupClient.query(`CREATE DATABASE ${randomDb}`);
+  } catch (e: unknown) {
+    if (e instanceof Error) {
+      throw new Error(`Failed to create test database: ${e.message}`);
+    }
+    throw e;
+  }
 
-  if (combined.includes('Another bootstrap process is currently running') || combined.includes('Database is not empty!')) {
-    console.log(`✅ Passed: Concurrency lock successfully triggered or database empty check worked.`);
-  } else {
-    console.error(`TEST FAILED: Concurrency lock did not trigger correctly.`);
-    process.exit(1);
+  try {
+    const runProcess = () => {
+      return new Promise<string>((resolve) => {
+        const proc = spawn(process.execPath, ["node_modules/tsx/dist/cli.mjs", "scripts/bootstrap-greenfield.ts"], { env: env, shell: false });
+        let out = "";
+        proc.stdout.on('data', d => out += d.toString());
+        proc.stderr.on('data', d => out += d.toString());
+        proc.on('close', () => resolve(out));
+      });
+    };
+
+    const p1 = runProcess();
+    const p2 = runProcess();
+
+    const [res1, res2] = await Promise.all([p1, p2]);
+    const combined = res1 + res2;
+
+    if (combined.includes('Another bootstrap process is currently running')) {
+      console.log(`✅ Passed: Concurrency lock successfully triggered. One process was rejected.`);
+    } else {
+      console.error(`TEST FAILED: Concurrency lock did not trigger correctly.`);
+      console.error(`Output 1:\n${res1}`);
+      console.error(`Output 2:\n${res2}`);
+      process.exit(1);
+    }
+  } finally {
+    // Drop the test database to clean up
+    try {
+      await setupClient.query(`DROP DATABASE ${randomDb} WITH (FORCE)`);
+    } catch (e: unknown) {
+      if (e instanceof Error) {
+        console.error(`Failed to drop test database: ${e.message}`);
+      }
+    }
+    await setupClient.end();
   }
 }
 
 runConcurrencyTest().then(() => {
   console.log('All standalone guard tests passed.');
+}).catch(err => {
+  console.error("Concurrency test failed:", err);
+  process.exit(1);
 });

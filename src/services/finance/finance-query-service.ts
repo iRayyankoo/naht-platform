@@ -1,5 +1,5 @@
 import { prisma } from "@/lib/prisma";
-import { Prisma, FinanceFiscalPeriod, FinanceJournalEntry } from "@prisma/client";
+import { Prisma, FinanceFiscalPeriod } from "@prisma/client";
 import { requireFinanceServicePermission } from "@/lib/finance-auth";
 import { getCurrentUserScopedPermissions, isSuperAdmin } from "@/lib/rbac-helpers";
 import { FinanceActionContext } from "@/lib/finance-context";

@@ -1,4 +1,4 @@
-import { PrismaClient, Prisma, FinanceActivityAction } from "@prisma/client";
+import { Prisma, FinanceActivityAction } from "@prisma/client";
 
 /**
  * Defines the contract for Finance Audit logging.
@@ -21,15 +21,19 @@ export interface FinanceAuditWriter {
 
 export class DefaultFinanceAuditWriter implements FinanceAuditWriter {
   async log(tx: Prisma.TransactionClient, params: FinanceAuditParams): Promise<void> {
+    const finalMetadata: Record<string, unknown> = { ...(params.metadata || {}) };
+    finalMetadata.correlationId = params.correlationId;
+    if (params.impersonatorUserId) {
+      finalMetadata.impersonatorUserId = params.impersonatorUserId;
+    }
+
     await tx.financeActivityLog.create({
       data: {
         actorId: params.actorId,
-        
         action: params.action,
         entityType: params.entityType,
         entityId: params.entityId,
-        
-        metadata: { ...(params.metadata || {}), correlationId: params.correlationId } as Prisma.InputJsonValue,
+        metadata: finalMetadata as Prisma.InputJsonValue,
       },
     });
   }

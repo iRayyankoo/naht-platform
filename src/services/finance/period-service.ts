@@ -1,4 +1,4 @@
-import { PrismaClient, FinanceFiscalPeriod, Prisma } from "@prisma/client";
+import { PrismaClient, FinanceFiscalPeriod } from "@prisma/client";
 import { requireFinanceServicePermission } from "@/lib/finance-auth";
 import { FinanceDomainError } from "@/lib/finance-errors";
 import { auditWriter } from "@/lib/finance-audit";

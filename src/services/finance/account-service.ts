@@ -1,7 +1,7 @@
 import { PrismaClient, FinanceAccount } from "@prisma/client";
 import { CreateAccountSchema, UpdateAccountSchema } from "../../lib/validations/finance";
-import { FinanceDomainError, FinanceErrorMapper } from "../../lib/finance-errors";
-import { requireFinancePermission, requireFinanceServicePermission } from "../../lib/finance-auth";
+import { FinanceDomainError } from "../../lib/finance-errors";
+import { requireFinanceServicePermission } from "../../lib/finance-auth";
 import { auditWriter } from "../../lib/finance-audit";
 import { FinanceAccountType, FinanceNormalBalance } from "@prisma/client";
 import * as crypto from "crypto";
@@ -340,7 +340,7 @@ export class AccountService {
   static async getAccount(
     actorId: string,
     id: string,
-    correlationId: string = crypto.randomUUID()
+    /* correlationId ignored */
   ): Promise<FinanceAccount> {
     try {
       await requireFinanceServicePermission(actorId, "finance.account.view");
@@ -364,7 +364,7 @@ export class AccountService {
     ledgerId: string,
     skip: number = 0,
     take: number = 100,
-    correlationId: string = crypto.randomUUID()
+    /* correlationId ignored */
   ): Promise<FinanceAccount[]> {
     try {
       await requireFinanceServicePermission(actorId, "finance.account.view");
