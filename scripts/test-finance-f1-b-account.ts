@@ -186,7 +186,10 @@ async function main() {
 
   console.log("Testing RBAC Read Access (listAccounts)...");
   const list = await AccountService.listAccounts(USER_ID, ledger.id);
-  assert.ok(list.length > 0);
+  assert.ok(list.items.length > 0);
+  assert.ok(list.total > 0, "listAccounts returned empty list for company scope");
+  assert.ok(list.items.some(a => a.id === parentAccount.id), "listAccounts didn't contain created asset account");
+  console.log(`User retrieved ${list.items.length} accounts.`);
 
   console.log("Testing RBAC Read Access (getAccount)...");
   const fetched = await AccountService.getAccount(USER_ID, childAccount.id);

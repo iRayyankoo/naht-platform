@@ -18,6 +18,16 @@ export type CreateDraftInput = {
   idempotencyKey?: string;
 };
 
+export type CreateDraftWithLinesInput = CreateDraftInput & {
+  lines: {
+    accountId: string;
+    costCenterId?: string | null;
+    debitAmount?: string | Prisma.Decimal;
+    creditAmount?: string | Prisma.Decimal;
+    description?: string;
+  }[];
+};
+
 export type AddLineInput = {
   accountId: string;
   costCenterId?: string | null;
@@ -49,15 +59,23 @@ function checkDbError(e: unknown): never {
 }
 
 
-async function verifyPeriodIsOpen(tx: Prisma.TransactionClient, periodId: string) {
-  const periods = await tx.$queryRaw<{id: string, status: string}[]>`
-    SELECT p.id, p.status
+async function verifyPeriodAndDate(tx: Prisma.TransactionClient, periodId: string, ledgerId: string, entryDate: Date) {
+  const periods = await tx.$queryRaw<{id: string, status: string, startDate: Date, endDate: Date, ledgerId: string}[]>`
+    SELECT p.id, p.status, p."startDate", p."endDate", y."ledgerId"
     FROM "FinanceFiscalPeriod" p
-    WHERE p.id = ${periodId}
-    FOR SHARE
+    JOIN "FinanceFiscalYear" y ON p."fiscalYearId" = y.id
+    WHERE p.id = ${periodId} FOR SHARE
   `;
   if (!periods.length) throw new FinanceDomainError("F_JOURNAL_INVALID_DATE", "No fiscal period found");
-  if (periods[0].status !== "OPEN") throw new FinanceDomainError("F_JOURNAL_PERIOD_CLOSED", "Fiscal period is not open");
+  const period = periods[0];
+
+  if (period.status !== "OPEN") throw new FinanceDomainError("F_JOURNAL_PERIOD_CLOSED", "Fiscal period is not open");
+  if (period.ledgerId !== ledgerId) throw new FinanceDomainError("F_VALIDATION_ERROR", "Period does not belong to the selected ledger");
+
+  const d = entryDate.getTime();
+  if (d < period.startDate.getTime() || d > period.endDate.getTime()) {
+    throw new FinanceDomainError("F_VALIDATION_ERROR", "Entry date is outside the fiscal period bounds");
+  }
 }
 
 export class JournalService {
@@ -66,7 +84,7 @@ export class JournalService {
     await requireFinanceServicePermission(context.actorId, "finance.journal.create", context.actorId);
 
     return prisma.$transaction(async (tx) => {
-      await verifyPeriodIsOpen(tx, input.fiscalPeriodId);
+      await verifyPeriodAndDate(tx, input.fiscalPeriodId, input.ledgerId, input.entryDate);
 
       if (input.idempotencyKey) {
         const existing = await tx.financeJournalEntry.findFirst({
@@ -137,7 +155,7 @@ export class JournalService {
       if (!journals.length) throw new FinanceDomainError("F_JOURNAL_NOT_FOUND", "Journal not found");
       const journal = journals[0];
 
-      await verifyPeriodIsOpen(tx, journal.fiscalPeriodId);
+      await verifyPeriodAndDate(tx, journal.fiscalPeriodId, journal.ledgerId, data.entryDate || journal.entryDate);
 
       if (journal.status !== "DRAFT") throw new FinanceDomainError("F_INVALID_STATE", "Only DRAFT journals can be updated");
       if (journal.createdById !== context.actorId) throw new FinanceDomainError("F_PERMISSION_DENIED", "Only the creator can modify the draft");
@@ -183,7 +201,7 @@ export class JournalService {
       if (!journals.length) throw new FinanceDomainError("F_JOURNAL_NOT_FOUND", "Journal not found");
       const journal = journals[0];
 
-      await verifyPeriodIsOpen(tx, journal.fiscalPeriodId);
+      await verifyPeriodAndDate(tx, journal.fiscalPeriodId, journal.ledgerId, journal.entryDate);
 
       if (journal.status !== "DRAFT") throw new FinanceDomainError("F_INVALID_STATE", "Lines can only be added to DRAFT");
       if (journal.createdById !== context.actorId) throw new FinanceDomainError("F_PERMISSION_DENIED", "Only creator can add lines");
@@ -206,8 +224,8 @@ export class JournalService {
       const debitDec = new Prisma.Decimal(debitAmount);
       const creditDec = new Prisma.Decimal(creditAmount);
 
-      const baseDebitAmount = debitDec.mul(rate).toDP(4);
-      const baseCreditAmount = creditDec.mul(rate).toDP(4);
+      const baseDebitAmount = debitDec.mul(rate).toDP(4, Prisma.Decimal.ROUND_HALF_UP);
+      const baseCreditAmount = creditDec.mul(rate).toDP(4, Prisma.Decimal.ROUND_HALF_UP);
 
       const line = await tx.financeJournalLine.create({
         data: {
@@ -246,7 +264,7 @@ export class JournalService {
       if (!journals.length) throw new FinanceDomainError("F_JOURNAL_NOT_FOUND", "Journal not found");
       const journal = journals[0];
 
-      await verifyPeriodIsOpen(tx, journal.fiscalPeriodId);
+      await verifyPeriodAndDate(tx, journal.fiscalPeriodId, journal.ledgerId, journal.entryDate);
 
       if (journal.status !== "DRAFT") throw new FinanceDomainError("F_INVALID_STATE", "Lines can only be updated in DRAFT");
       if (journal.createdById !== context.actorId) throw new FinanceDomainError("F_PERMISSION_DENIED", "Only creator can update lines");
@@ -277,8 +295,8 @@ export class JournalService {
       }
 
       const rate = journal.exchangeRate || new Prisma.Decimal(1);
-      const baseDebitAmount = finalDebit.mul(rate).toDP(4);
-      const baseCreditAmount = finalCredit.mul(rate).toDP(4);
+      const baseDebitAmount = finalDebit.mul(rate).toDP(4, Prisma.Decimal.ROUND_HALF_UP);
+      const baseCreditAmount = finalCredit.mul(rate).toDP(4, Prisma.Decimal.ROUND_HALF_UP);
 
       const updated = await tx.financeJournalLine.update({
         where: { id: lineId },
@@ -316,7 +334,7 @@ export class JournalService {
       if (!journals.length) throw new FinanceDomainError("F_JOURNAL_NOT_FOUND", "Journal not found");
       const journal = journals[0];
 
-      await verifyPeriodIsOpen(tx, journal.fiscalPeriodId);
+      await verifyPeriodAndDate(tx, journal.fiscalPeriodId, journal.ledgerId, journal.entryDate);
 
       if (journal.status !== "DRAFT") throw new FinanceDomainError("F_INVALID_STATE", "Lines can only be removed from DRAFT");
       if (journal.createdById !== context.actorId) throw new FinanceDomainError("F_PERMISSION_DENIED", "Only creator can remove lines");
@@ -481,7 +499,7 @@ export class JournalService {
         checkDbError(e);
       }
 
-      await verifyPeriodIsOpen(tx, journal!.fiscalPeriodId);
+      await verifyPeriodAndDate(tx, journal!.fiscalPeriodId, journal!.ledgerId, journal!.entryDate);
 
       if (journal!.status !== "PENDING_REVIEW") throw new FinanceDomainError("F_INVALID_STATE", "Only PENDING_REVIEW can be returned");
       verifySoD(context, journal!.createdById);
@@ -715,7 +733,7 @@ export class JournalService {
         checkDbError(e);
       }
 
-      await verifyPeriodIsOpen(tx, journal!.fiscalPeriodId);
+      await verifyPeriodAndDate(tx, journal!.fiscalPeriodId, journal!.ledgerId, journal!.entryDate);
 
       if (journal!.status === "VOIDED") throw new FinanceDomainError("F_INVALID_STATE", "Already voided");
       if (journal!.status !== "DRAFT" && journal!.status !== "PENDING_REVIEW") {
@@ -934,6 +952,171 @@ export class JournalService {
         checkDbError(e);
       }
     }, { isolationLevel: "Serializable" });
+  }
+  static async createDraftWithLines(
+    context: FinanceActionContext,
+    input: CreateDraftWithLinesInput
+  ): Promise<Prisma.FinanceJournalEntryGetPayload<{ include: { lines: { include: { account: true } }; currency: true; fiscalPeriod: true } }>> {
+    verifyContext(context);
+    await requireFinanceServicePermission(context.actorId, "finance.journal.create", context.actorId);
+
+    return prisma.$transaction(async (tx) => {
+      if (input.idempotencyKey) {
+        // Idempotency check with locking to prevent concurrent identical inserts
+        await tx.$executeRaw`SELECT pg_advisory_xact_lock(hashtext('idempotency_' || ${input.idempotencyKey}))`;
+        const existing = await tx.financeJournalEntry.findFirst({
+          where: { ledgerId: input.ledgerId, idempotencyKey: input.idempotencyKey },
+          select: { id: true },
+        });
+        if (existing) {
+          throw new FinanceDomainError("F_IDEMPOTENCY_CONFLICT", "Duplicate idempotency key in ledger");
+        }
+      }
+
+      // Fetch Period with FOR SHARE to block Freezing/Closing
+      const periods = await tx.$queryRaw<{id: string, status: string, startDate: Date, endDate: Date}[]>`
+        SELECT p.id, p.status, p."startDate", p."endDate"
+        FROM "FinanceFiscalPeriod" p
+        JOIN "FinanceFiscalYear" y ON p."fiscalYearId" = y.id
+        WHERE p.id = ${input.fiscalPeriodId} AND y."ledgerId" = ${input.ledgerId}
+        FOR SHARE
+      `;
+      if (!periods.length) throw new FinanceDomainError("F_JOURNAL_INVALID_DATE", "No fiscal period found or does not belong to ledger");
+      const period = periods[0];
+      if (period.status !== "OPEN") throw new FinanceDomainError("F_JOURNAL_PERIOD_CLOSED", "Fiscal period is not open");
+
+      const d = input.entryDate.getTime();
+      if (d < period.startDate.getTime() || d > period.endDate.getTime()) {
+        throw new FinanceDomainError("F_VALIDATION_ERROR", "Entry date is outside the fiscal period bounds");
+      }
+
+      const ledger = await tx.financeLedger.findUnique({
+        where: { id: input.ledgerId },
+        select: { id: true, isActive: true, settings: true },
+      });
+      if (!ledger) throw new FinanceDomainError("F_LEDGER_NOT_FOUND", "Ledger not found");
+      if (!ledger.isActive) throw new FinanceDomainError("F_LEDGER_INACTIVE", "Ledger is inactive");
+      if (!ledger.settings) throw new FinanceDomainError("F_VALIDATION_ERROR", "Ledger settings not found");
+
+      const currency = await tx.financeCurrency.findUnique({
+        where: { id: input.currencyId },
+      });
+      if (!currency) throw new FinanceDomainError("F_VALIDATION_ERROR", "Currency not found");
+      if (!currency.isActive) throw new FinanceDomainError("F_VALIDATION_ERROR", "Currency is inactive");
+
+      // Exchange Rate logic
+      let exchangeRate: Prisma.Decimal;
+      if (currency.id === ledger.settings.baseCurrencyId) {
+        exchangeRate = new Prisma.Decimal(1);
+        if (input.exchangeRate && !new Prisma.Decimal(input.exchangeRate).equals(1)) {
+           throw new FinanceDomainError("F_VALIDATION_ERROR", "Base currency exchange rate must be exactly 1");
+        }
+      } else {
+        if (!input.exchangeRate) {
+           throw new FinanceDomainError("F_VALIDATION_ERROR", "Foreign currency exchange rate must be explicitly provided");
+        }
+        exchangeRate = new Prisma.Decimal(input.exchangeRate);
+        if (exchangeRate.lte(0)) {
+           throw new FinanceDomainError("F_VALIDATION_ERROR", "Exchange rate must be positive");
+        }
+      }
+
+      // Pre-verify all lines by fetching in bulk
+      const accountIds = [...new Set(input.lines.map(l => l.accountId))];
+      const accounts = await tx.financeAccount.findMany({
+        where: { id: { in: accountIds } }
+      });
+      const accountMap = new Map(accounts.map(a => [a.id, a]));
+
+      const costCenterIds = [...new Set(input.lines.map(l => l.costCenterId).filter(Boolean) as string[])];
+      let costCenterMap = new Map();
+      if (costCenterIds.length > 0) {
+        const costCenters = await tx.financeCostCenter.findMany({
+          where: { id: { in: costCenterIds } }
+        });
+        costCenterMap = new Map(costCenters.map(c => [c.id, c]));
+      }
+
+      for (const line of input.lines) {
+        const account = accountMap.get(line.accountId);
+        if (!account) throw new FinanceDomainError("F_VALIDATION_ERROR", "Account not found");
+        if (!account.isActive) throw new FinanceDomainError("F_VALIDATION_ERROR", "Account is inactive");
+        if (!account.isPostingAllowed) throw new FinanceDomainError("F_VALIDATION_ERROR", "Account does not allow posting");
+        if (account.ledgerId !== input.ledgerId) throw new FinanceDomainError("F_CROSS_LEDGER_VIOLATION", "Account does not belong to the selected ledger");
+
+        if (line.costCenterId) {
+          const costCenter = costCenterMap.get(line.costCenterId);
+          if (!costCenter) throw new FinanceDomainError("F_VALIDATION_ERROR", "Cost Center not found");
+          if (!costCenter.isActive) throw new FinanceDomainError("F_VALIDATION_ERROR", "Cost Center is inactive");
+          if (costCenter.ledgerId !== input.ledgerId) throw new FinanceDomainError("F_CROSS_LEDGER_VIOLATION", "Cost Center does not belong to the selected ledger");
+        }
+      }
+
+      // Create the journal entry header
+      const journal = await tx.financeJournalEntry.create({
+        data: {
+          ledgerId: input.ledgerId,
+          fiscalPeriodId: input.fiscalPeriodId,
+          entryDate: input.entryDate,
+          currencyId: input.currencyId,
+          exchangeRate: exchangeRate,
+          reference: input.reference,
+          description: input.description,
+          status: "DRAFT",
+          createdById: context.actorId,
+          idempotencyKey: input.idempotencyKey,
+        },
+      });
+
+      // Insert all lines
+      const lineCreates = [];
+      let lineNumber = 1;
+      for (const line of input.lines) {
+        const debitAmount = new Prisma.Decimal(line.debitAmount ?? 0);
+        const creditAmount = new Prisma.Decimal(line.creditAmount ?? 0);
+
+        if (debitAmount.lte(0) && creditAmount.lte(0)) {
+          throw new FinanceDomainError("F_VALIDATION_ERROR", "Line must have positive debit or credit");
+        }
+        if (debitAmount.gt(0) && creditAmount.gt(0)) {
+          throw new FinanceDomainError("F_VALIDATION_ERROR", "Line cannot have both debit and credit");
+        }
+
+        const baseDebitAmount = debitAmount.mul(exchangeRate).toDP(4, Prisma.Decimal.ROUND_HALF_UP);
+        const baseCreditAmount = creditAmount.mul(exchangeRate).toDP(4, Prisma.Decimal.ROUND_HALF_UP);
+
+        lineCreates.push({
+          journalEntryId: journal.id,
+          lineNumber: lineNumber++,
+          accountId: line.accountId,
+          costCenterId: line.costCenterId,
+          description: line.description,
+          debitAmount,
+          creditAmount,
+          baseDebitAmount,
+          baseCreditAmount,
+        });
+      }
+
+      await tx.financeJournalLine.createMany({
+        data: lineCreates
+      });
+
+      await auditWriter.log(tx, {
+        action: "JOURNAL_CREATED",
+        entityType: "FinanceJournalEntry",
+        entityId: journal.id,
+        actorId: context.actorId,
+        impersonatorUserId: context.impersonatorId,
+        correlationId: context.correlationId,
+        metadata: { status: "DRAFT", linesCount: input.lines.length },
+      });
+
+      return await tx.financeJournalEntry.findUniqueOrThrow({
+        where: { id: journal.id },
+        include: { lines: { include: { account: true } }, currency: true, fiscalPeriod: true }
+      });
+    });
   }
 
 }

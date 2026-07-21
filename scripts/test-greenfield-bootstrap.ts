@@ -18,31 +18,31 @@ console.log('--- Testing Greenfield Bootstrap Guards ---');
 
 console.log('1. Missing confirmations -> Reject');
 runTest(
-  { DATABASE_URL: 'postgresql://postgres@127.0.0.1:5432/test', GREENFIELD_BOOTSTRAP_TARGET: '', GREENFIELD_BOOTSTRAP_CONFIRM: '' },
+  { DATABASE_URL: 'postgresql://postgres@127.0.0.1:55432/test', GREENFIELD_BOOTSTRAP_TARGET: '', GREENFIELD_BOOTSTRAP_CONFIRM: '' },
   'Unknown or missing GREENFIELD_BOOTSTRAP_TARGET'
 );
 
 console.log('2. Target unknown -> Reject');
 runTest(
-  { DATABASE_URL: 'postgresql://postgres@127.0.0.1:5432/test', GREENFIELD_BOOTSTRAP_TARGET: 'UNKNOWN', GREENFIELD_BOOTSTRAP_CONFIRM: '123' },
+  { DATABASE_URL: 'postgresql://postgres@127.0.0.1:55432/test', GREENFIELD_BOOTSTRAP_TARGET: 'UNKNOWN', GREENFIELD_BOOTSTRAP_CONFIRM: '123' },
   'Unknown or missing GREENFIELD_BOOTSTRAP_TARGET'
 );
 
 console.log('3. "true" as confirmation -> Reject');
 runTest(
-  { DATABASE_URL: 'postgresql://postgres@127.0.0.1:5432/test', GREENFIELD_BOOTSTRAP_TARGET: 'ISOLATED_DISPOSABLE_DB', GREENFIELD_BOOTSTRAP_CONFIRM: 'true' },
+  { DATABASE_URL: 'postgresql://postgres@127.0.0.1:55432/test', GREENFIELD_BOOTSTRAP_TARGET: 'ISOLATED_DISPOSABLE_DB', GREENFIELD_BOOTSTRAP_CONFIRM: 'true' },
   'incorrect'
 );
 
 console.log('4. Test confirmation with Production -> Reject');
 runTest(
-  { DATABASE_URL: 'postgresql://postgres@127.0.0.1:5432/test', GREENFIELD_BOOTSTRAP_TARGET: 'PRODUCTION', GREENFIELD_BOOTSTRAP_CONFIRM: 'INITIALIZE_EMPTY_DISPOSABLE_DATABASE' },
+  { DATABASE_URL: 'postgresql://postgres@127.0.0.1:55432/test', GREENFIELD_BOOTSTRAP_TARGET: 'PRODUCTION', GREENFIELD_BOOTSTRAP_CONFIRM: 'INITIALIZE_EMPTY_DISPOSABLE_DATABASE' },
   'incorrect'
 );
 
 console.log('5. Production confirmation with Test -> Reject');
 runTest(
-  { DATABASE_URL: 'postgresql://postgres@127.0.0.1:5432/test', GREENFIELD_BOOTSTRAP_TARGET: 'ISOLATED_DISPOSABLE_DB', GREENFIELD_BOOTSTRAP_CONFIRM: 'I_ACKNOWLEDGE_THIS_IS_PRODUCTION_AND_CONFIRM_EMPTY_BOOTSTRAP' },
+  { DATABASE_URL: 'postgresql://postgres@127.0.0.1:55432/test', GREENFIELD_BOOTSTRAP_TARGET: 'ISOLATED_DISPOSABLE_DB', GREENFIELD_BOOTSTRAP_CONFIRM: 'I_ACKNOWLEDGE_THIS_IS_PRODUCTION_AND_CONFIRM_EMPTY_BOOTSTRAP' },
   'incorrect'
 );
 
@@ -56,7 +56,8 @@ async function runConcurrencyTest() {
     GREENFIELD_BOOTSTRAP_CONFIRM: 'INITIALIZE_EMPTY_DISPOSABLE_DATABASE'
   };
 
-  const setupClient = new Client({ connectionString: "postgresql://postgres@127.0.0.1:55432/postgres" });
+  const pgUrl = env.DATABASE_URL.split('?')[0].replace(randomDb, 'postgres');
+  const setupClient = new Client({ connectionString: pgUrl });
   await setupClient.connect();
   try {
     await setupClient.query(`CREATE DATABASE ${randomDb}`);

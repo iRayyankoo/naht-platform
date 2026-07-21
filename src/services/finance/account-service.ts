@@ -1,4 +1,4 @@
-import { PrismaClient, FinanceAccount } from "@prisma/client";
+import { PrismaClient, FinanceAccount, Prisma } from "@prisma/client";
 import { CreateAccountSchema, UpdateAccountSchema } from "../../lib/validations/finance";
 import { FinanceDomainError } from "../../lib/finance-errors";
 import { requireFinanceServicePermission } from "../../lib/finance-auth";
@@ -129,7 +129,7 @@ export class AccountService {
       const parsed = UpdateAccountSchema.parse(data);
 
       return await prisma.$transaction(async (tx) => {
-        const existing = await tx.financeAccount.findUnique({ 
+        const existing = await tx.financeAccount.findUnique({
           where: { id },
           include: { children: true }
         });
@@ -220,7 +220,7 @@ export class AccountService {
       await requireFinanceServicePermission(actorId, "finance.account.manage");
 
       return await prisma.$transaction(async (tx) => {
-        const existing = await tx.financeAccount.findUnique({ 
+        const existing = await tx.financeAccount.findUnique({
           where: { id },
         });
 
@@ -364,17 +364,43 @@ export class AccountService {
     ledgerId: string,
     skip: number = 0,
     take: number = 100,
-    /* correlationId ignored */
-  ): Promise<FinanceAccount[]> {
+    options?: { search?: string; onlyActive?: boolean; onlyPosting?: boolean }
+  ): Promise<{ items: FinanceAccount[]; total: number }> {
     try {
       await requireFinanceServicePermission(actorId, "finance.account.view");
 
-      return await prisma.financeAccount.findMany({
-        where: { ledgerId },
-        skip,
-        take,
-        orderBy: { code: 'asc' },
-      });
+      const { isSuperAdmin, getCurrentUserScopedPermissions } = await import("../../lib/rbac-helpers");
+      const isSuper = await isSuperAdmin(actorId);
+      const scopedPerms = await getCurrentUserScopedPermissions(actorId);
+      const scopes = scopedPerms.get("finance.account.view");
+      const hasCompanyScope = isSuper || (scopes && scopes.has("COMPANY"));
+
+      if (!hasCompanyScope) {
+        throw new FinanceDomainError("F_PERMISSION_DENIED", "Insufficient scope to list accounts");
+      }
+
+      const where: Prisma.FinanceAccountWhereInput = { ledgerId };
+      if (options?.onlyActive) where.isActive = true;
+      if (options?.onlyPosting) where.isPostingAllowed = true;
+
+      if (options?.search) {
+        where.OR = [
+          { code: { contains: options.search, mode: "insensitive" } },
+          { nameAr: { contains: options.search, mode: "insensitive" } },
+          { nameEn: { contains: options.search, mode: "insensitive" } },
+        ];
+      }
+
+      const [items, total] = await Promise.all([
+        prisma.financeAccount.findMany({
+          where,
+          skip,
+          take,
+          orderBy: { code: 'asc' },
+        }),
+        prisma.financeAccount.count({ where })
+      ]);
+      return { items, total };
     } catch (error) {
       throw error;
     }

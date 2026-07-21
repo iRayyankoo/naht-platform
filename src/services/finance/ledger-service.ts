@@ -1,4 +1,4 @@
-import { PrismaClient, FinanceLedger } from "@prisma/client";
+import { PrismaClient, FinanceLedger, Prisma } from "@prisma/client";
 import { CreateLedgerSchema, UpdateLedgerSchema } from "../../lib/validations/finance";
 import { FinanceDomainError } from "../../lib/finance-errors";
 import { requireFinanceServicePermission } from "../../lib/finance-auth";
@@ -212,14 +212,40 @@ export class LedgerService {
    */
   static async listLedgers(
     actorId: string,
-    /* correlationId ignored */
-  ): Promise<FinanceLedger[]> {
+    options?: { onlyActive?: boolean; search?: string }
+  ): Promise<{ items: Prisma.FinanceLedgerGetPayload<{ include: { settings: true } }>[]; total: number }> {
     try {
       await requireFinanceServicePermission(actorId, "finance.ledger.view");
 
-      return await prisma.financeLedger.findMany({
-        orderBy: { code: 'asc' },
-      });
+      const { isSuperAdmin, getCurrentUserScopedPermissions } = await import("../../lib/rbac-helpers");
+      const isSuper = await isSuperAdmin(actorId);
+      const scopedPerms = await getCurrentUserScopedPermissions(actorId);
+      const scopes = scopedPerms.get("finance.ledger.view");
+      const hasCompanyScope = isSuper || (scopes && scopes.has("COMPANY"));
+
+      if (!hasCompanyScope) {
+        throw new FinanceDomainError("F_PERMISSION_DENIED", "Insufficient scope to list ledgers");
+      }
+
+      const where: Prisma.FinanceLedgerWhereInput = {};
+      if (options?.onlyActive) where.isActive = true;
+      if (options?.search) {
+        where.OR = [
+          { code: { contains: options.search, mode: "insensitive" } },
+          { nameEn: { contains: options.search, mode: "insensitive" } },
+          { nameAr: { contains: options.search, mode: "insensitive" } }
+        ];
+      }
+
+      const [items, total] = await Promise.all([
+        prisma.financeLedger.findMany({
+          where,
+          include: { settings: true },
+          orderBy: { code: 'asc' },
+        }),
+        prisma.financeLedger.count({ where })
+      ]);
+      return { items, total };
     } catch (error) {
       throw error;
     }

@@ -69,7 +69,8 @@ async function main() {
   // Strict regex for DML is prone to false positives in trigger functions.
   // We rely on the SHA256 hash to ensure the schema is untampered.
 
-  const client = new Client({ connectionString: dbUrl });
+  const pgUrl = dbUrl.split('?')[0];
+  const client = new Client({ connectionString: pgUrl });
   try {
     await client.connect();
   } catch (e) {

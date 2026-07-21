@@ -66,6 +66,57 @@ export interface FinanceJournalEntryDTO {
   totalBaseDebit?: string;
   totalBaseCredit?: string;
   lines?: FinanceJournalLineDTO[];
+  permissions?: FinanceJournalPermissionsDTO;
+}
+
+export interface FinanceLedgerReferenceDTO {
+  id: string;
+  code: string;
+  nameAr: string;
+  nameEn: string;
+  baseCurrencyId: string;
+}
+
+export interface FinanceCurrencyReferenceDTO {
+  id: string;
+  code: string;
+  nameAr: string;
+  nameEn: string;
+  decimals: number;
+}
+
+export interface FinanceAccountReferenceDTO {
+  id: string;
+  code: string;
+  nameAr: string;
+  nameEn: string;
+}
+
+export interface FinanceCostCenterReferenceDTO {
+  id: string;
+  code: string;
+  nameAr: string;
+  nameEn: string;
+  type: string;
+}
+
+export interface FinancePeriodReferenceDTO {
+  id: string;
+  periodName: string;
+  startDate: string;
+  endDate: string;
+  status: string;
+}
+
+export interface FinanceJournalPermissionsDTO {
+  canEdit: boolean;
+  canSubmit: boolean;
+  canReview: boolean;
+  canReturn: boolean;
+  canApprove: boolean;
+  canPost: boolean;
+  canVoid: boolean;
+  canReverse: boolean;
 }
 
 export interface FinanceDashboardSummaryDTO {
@@ -237,6 +288,59 @@ const IdSchema = z
   .min(1)
   .max(100)
   .refine((val) => !/[\x00-\x1F\x7F]/.test(val), "Control characters not allowed");
+
+export const CreateDraftWithLinesInputSchema = z.object({
+  idempotencyKey: z.string().min(1).max(100),
+  ledgerId: IdSchema,
+  fiscalPeriodId: IdSchema,
+  entryDate: z.string().datetime(), // ISO Date String
+  currencyId: IdSchema,
+  exchangeRate: z
+    .string()
+    .regex(/^[0-9]{1,13}(\.[0-9]{1,6})?$/, "Invalid decimal format, max 19,6")
+    .optional(),
+  description: z.string().min(1).max(500),
+  reference: z.string().max(100).optional(),
+  lines: z.array(z.object({
+    accountId: IdSchema,
+    costCenterId: IdSchema.nullable().optional(),
+    description: z.string().max(500).optional(),
+    debitAmount: DecimalStringSchema.optional(),
+    creditAmount: DecimalStringSchema.optional(),
+  }).strict().refine(validateLineAmounts, { message: "Exactly one of debitAmount or creditAmount must be provided and > 0" }))
+}).strict();
+
+export const ListLedgersInputSchema = z.object({
+  search: z.string().max(100).optional(),
+  skip: z.number().int().min(0).default(0),
+  take: z.number().int().min(1).max(100).default(50),
+}).strict();
+
+export const ListCurrenciesInputSchema = z.object({
+  search: z.string().max(100).optional(),
+  skip: z.number().int().min(0).default(0),
+  take: z.number().int().min(1).max(100).default(50),
+}).strict();
+
+export const ListAccountsInputSchema = z.object({
+  ledgerId: IdSchema,
+  search: z.string().max(100).optional(),
+  skip: z.number().int().min(0).default(0),
+  take: z.number().int().min(1).max(100).default(50),
+}).strict();
+
+export const ListCostCentersInputSchema = z.object({
+  ledgerId: IdSchema,
+  search: z.string().max(100).optional(),
+  skip: z.number().int().min(0).default(0),
+  take: z.number().int().min(1).max(100).default(50),
+}).strict();
+
+export const ListOpenPeriodsInputSchema = z.object({
+  ledgerId: IdSchema,
+  skip: z.number().int().min(0).default(0),
+  take: z.number().int().min(1).max(100).default(50),
+}).strict();
 
 export const CreateDraftInputSchema = z.object({
   ledgerId: IdSchema,

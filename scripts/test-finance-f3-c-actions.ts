@@ -227,7 +227,7 @@ async function runTests() {
     const adminDraftRes = await handleCreateDraft({
       ledgerId: ledger.id,
       fiscalPeriodId: period.id,
-      entryDate: new Date().toISOString(),
+      entryDate: new Date("2026-02-15").toISOString(),
       currencyId: currency.id,
       description: "Admin Draft",
     }, makeDeps(adminUser));

@@ -31,7 +31,7 @@ async function runGateway() {
         runStep('TypeScript Compilation', process.execPath, ['node_modules/typescript/bin/tsc', '--noEmit']);
 
         // 4. ESLint Strict
-        runStep('ESLint (Strict)', process.execPath, ['node_modules/eslint/bin/eslint.js', 'src/app/crm/finance', 'src/app/crm/layout.tsx', 'src/components/crm/CrmSidebar.tsx', 'src/actions/finance', 'src/lib/finance-audit.ts', 'src/services/finance', 'scripts/test-greenfield-bootstrap.ts', 'scripts/test-gateway.ts', 'scripts/test-finance-f3-d-ui-dtos.ts']);
+        runStep('ESLint (Strict)', process.execPath, ['node_modules/eslint/bin/eslint.js', '--max-warnings=0', 'src/app/crm/finance', 'src/app/crm/layout.tsx', 'src/components/crm/CrmSidebar.tsx', 'src/actions/finance', 'src/lib/finance-audit.ts', 'src/services/finance', 'scripts/test-greenfield-bootstrap.ts', 'scripts/test-gateway.ts', 'scripts/test-finance-f3-d-ui-dtos.ts', 'scripts/test-finance-f3-e-chunk2.ts']);
 
         // 5. Git Cleanliness
         console.log(`\n======================================================`);
@@ -58,7 +58,8 @@ async function runGateway() {
             'scripts/test-finance-f3-a-reversal.ts',
             'scripts/test-finance-f3-b-services.ts',
             'scripts/test-finance-f3-c-actions.ts',
-            'scripts/test-finance-f3-d-ui-dtos.ts'
+            'scripts/test-finance-f3-d-ui-dtos.ts',
+            'scripts/test-finance-f3-e-chunk2.ts'
         ];
 
         
@@ -99,7 +100,7 @@ async function runGateway() {
         console.log("Cleaning up Gateway Legacy DB...");
         const guardRegex = /^naht_finance_disposable_test_batch2_\d+$/;
         if (guardRegex.test(dbName)) {
-            const cleanupClient = new Client({ connectionString: "postgresql://postgres@127.0.0.1:55432/postgres" });
+            const cleanupClient = new Client({ connectionString: dbUrl.split('?')[0].replace(dbName, 'postgres') });
             await cleanupClient.connect();
             try {
                 const res = await cleanupClient.query('SELECT 1 FROM pg_database WHERE datname = $1', [dbName]);

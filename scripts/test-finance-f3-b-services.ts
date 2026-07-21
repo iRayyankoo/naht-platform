@@ -335,7 +335,7 @@ async function runAll() {
   // Independent Connection Concurrency Tests
   // ==========================================
   await runTest("Concurrency: Freeze vs Submit", async () => {
-    const concDraft = await JournalService.createDraft(ctxCreator, { ledgerId: ledger.id, fiscalPeriodId: period2.id, entryDate: new Date("2026-03-15"), currencyId: currency.id, description: "ConcSubmit" });
+    const concDraft = await JournalService.createDraft(ctxCreator, { ledgerId: ledger.id, fiscalPeriodId: period2.id, entryDate: new Date("2026-04-15"), currencyId: currency.id, description: "ConcSubmit" });
     await JournalService.addLine(ctxCreator, concDraft.id, { accountId: account1.id, debitAmount: "10", creditAmount: "0" });
     await JournalService.addLine(ctxCreator, concDraft.id, { accountId: account2.id, debitAmount: "0", creditAmount: "10" });
 
@@ -351,7 +351,7 @@ async function runAll() {
   });
 
   await runTest("Concurrency: Close vs Post", async () => {
-    const appDraft = await JournalService.createDraft(ctxCreator, { ledgerId: ledger.id, fiscalPeriodId: period2.id, entryDate: new Date("2026-03-15"), currencyId: currency.id, description: "ConcPost" });
+    const appDraft = await JournalService.createDraft(ctxCreator, { ledgerId: ledger.id, fiscalPeriodId: period2.id, entryDate: new Date("2026-04-15"), currencyId: currency.id, description: "ConcPost" });
     await JournalService.addLine(ctxCreator, appDraft.id, { accountId: account1.id, debitAmount: "10", creditAmount: "0" });
     await JournalService.addLine(ctxCreator, appDraft.id, { accountId: account2.id, debitAmount: "0", creditAmount: "10" });
     await JournalService.submitForReview(ctxCreator, appDraft.id);

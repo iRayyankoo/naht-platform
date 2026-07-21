@@ -105,7 +105,7 @@ async function main() {
 
   console.log("Testing listLedgers (Read access)...");
   const list = await LedgerService.listLedgers(USER_ID);
-  assert.ok(list.length > 0);
+  assert.ok(list.items.length > 0);
 
   console.log("Testing Duplicate Code...");
   try {

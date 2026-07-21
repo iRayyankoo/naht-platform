@@ -43,6 +43,134 @@ export class FinanceQueryService {
   }
 
   /**
+   * List open periods restricted by ledgerId
+   */
+  static async listOpenPeriods(
+    context: FinanceActionContext,
+    filter: { ledgerId: string },
+    pagination: { skip?: number; take?: number } = {}
+  ): Promise<{ items: FinanceFiscalPeriod[]; total: number }> {
+    verifyContext(context);
+    await requireFinanceServicePermission(context.actorId, "finance.period.view", context.actorId);
+
+    const isSuper = await isSuperAdmin(context.actorId);
+    const scopedPerms = await getCurrentUserScopedPermissions(context.actorId);
+    const scopes = scopedPerms.get("finance.period.view");
+    const hasCompanyScope = isSuper || (scopes && scopes.has("COMPANY"));
+
+    if (!hasCompanyScope) {
+      throw new FinanceDomainError("F_PERMISSION_DENIED", "Insufficient scope to list open periods");
+    }
+
+    const where: Prisma.FinanceFiscalPeriodWhereInput = {
+      status: "OPEN",
+      fiscalYear: {
+        ledgerId: filter.ledgerId,
+        ledger: { isActive: true }
+      }
+    };
+
+    const skip = pagination.skip ?? 0;
+    const take = pagination.take ?? 50;
+
+    const [items, total] = await Promise.all([
+      prisma.financeFiscalPeriod.findMany({
+        where,
+        orderBy: { startDate: "asc" },
+        skip,
+        take,
+      }),
+      prisma.financeFiscalPeriod.count({ where }),
+    ]);
+
+    return { items, total };
+  }
+
+  /**
+   * List active currencies
+   */
+  static async listCurrencies(
+    context: FinanceActionContext,
+    filter?: { search?: string },
+    pagination: { skip?: number; take?: number } = {}
+  ): Promise<{ items: Prisma.FinanceCurrencyGetPayload<Prisma.FinanceCurrencyDefaultArgs>[]; total: number }> {
+    verifyContext(context);
+    // Currency is a global reference, check if user has access to view ledgers/journals
+    await requireFinanceServicePermission(context.actorId, "finance.journal.view", context.actorId);
+
+    const isSuper = await isSuperAdmin(context.actorId);
+    const scopedPerms = await getCurrentUserScopedPermissions(context.actorId);
+    const scopes = scopedPerms.get("finance.journal.view");
+    const hasCompanyScope = isSuper || (scopes && scopes.has("COMPANY"));
+
+    if (!hasCompanyScope) {
+      throw new FinanceDomainError("F_PERMISSION_DENIED", "Insufficient scope to list currencies");
+    }
+
+    const where: Prisma.FinanceCurrencyWhereInput = { isActive: true };
+    if (filter?.search) {
+      where.OR = [
+        { code: { contains: filter.search, mode: "insensitive" } },
+        { nameEn: { contains: filter.search, mode: "insensitive" } },
+        { nameAr: { contains: filter.search, mode: "insensitive" } }
+      ];
+    }
+    const skip = pagination.skip ?? 0;
+    const take = pagination.take ?? 50;
+
+    const [items, total] = await Promise.all([
+      prisma.financeCurrency.findMany({ where, orderBy: { code: "asc" }, skip, take }),
+      prisma.financeCurrency.count({ where }),
+    ]);
+
+    return { items, total };
+  }
+
+  /**
+   * List active cost centers for a given ledger
+   */
+  static async listCostCenters(
+    context: FinanceActionContext,
+    filter: { ledgerId: string; search?: string },
+    pagination: { skip?: number; take?: number } = {}
+  ): Promise<{ items: Prisma.FinanceCostCenterGetPayload<Prisma.FinanceCostCenterDefaultArgs>[]; total: number }> {
+    verifyContext(context);
+    await requireFinanceServicePermission(context.actorId, "finance.journal.view", context.actorId);
+
+    const isSuper = await isSuperAdmin(context.actorId);
+    const scopedPerms = await getCurrentUserScopedPermissions(context.actorId);
+    const scopes = scopedPerms.get("finance.journal.view");
+    const hasCompanyScope = isSuper || (scopes && scopes.has("COMPANY"));
+
+    if (!hasCompanyScope) {
+      throw new FinanceDomainError("F_PERMISSION_DENIED", "Insufficient scope to list cost centers");
+    }
+
+    const where: Prisma.FinanceCostCenterWhereInput = {
+      ledgerId: filter.ledgerId,
+      isActive: true,
+    };
+
+    if (filter.search) {
+      where.OR = [
+        { code: { contains: filter.search, mode: "insensitive" } },
+        { nameAr: { contains: filter.search, mode: "insensitive" } },
+        { nameEn: { contains: filter.search, mode: "insensitive" } },
+      ];
+    }
+
+    const skip = pagination.skip ?? 0;
+    const take = pagination.take ?? 50;
+
+    const [items, total] = await Promise.all([
+      prisma.financeCostCenter.findMany({ where, orderBy: { code: "asc" }, skip, take }),
+      prisma.financeCostCenter.count({ where }),
+    ]);
+
+    return { items, total };
+  }
+
+  /**
    * Retrieves high-level summary metrics for the finance dashboard.
    */
   static async getFinanceDashboardSummary(

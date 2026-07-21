@@ -93,7 +93,7 @@ export async function withFinanceActionErrorHandler<T>(
     const errType = typeof error;
     const errName = error instanceof Error ? error.name : "UnknownError";
     const correlationId = context?.correlationId ?? "unknown";
-    console.error(`[FinanceAction Error] Type: ${errName} (${errType}) | CorrelationId: ${correlationId}`);
+    console.error(`[FinanceAction Error] Type: ${errName} (${errType}) | CorrelationId: ${correlationId} | Message: ${error instanceof Error ? error.message : String(error)}`);
 
     return {
       ok: false,
