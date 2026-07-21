@@ -1,6 +1,5 @@
 import { spawnSync } from 'child_process';
 import * as fs from 'fs';
-import * as path from 'path';
 import { Client } from 'pg';
 
 function runStep(name: string, command: string, args: string[], env: Record<string, string> = {}) {
@@ -31,8 +30,8 @@ async function runGateway() {
         // 3. TypeScript
         runStep('TypeScript Compilation', process.execPath, ['node_modules/typescript/bin/tsc', '--noEmit']);
 
-        // 4. ESLint Strict (Recursive src + scripts)
-        runStep('ESLint (Strict)', process.execPath, ['node_modules/eslint/bin/eslint.js', 'src/services/finance', 'scripts/test-finance-f2-b-final.ts', 'scripts/test-gateway.ts']);
+        // 4. ESLint Strict
+        runStep('ESLint (Strict)', process.execPath, ['node_modules/eslint/bin/eslint.js', 'src/app/crm/finance', 'src/app/crm/layout.tsx', 'src/components/crm/CrmSidebar.tsx', 'src/actions/finance', 'src/lib/finance-audit.ts', 'src/services/finance', 'scripts/test-greenfield-bootstrap.ts', 'scripts/test-gateway.ts', 'scripts/test-finance-f3-d-ui-dtos.ts']);
 
         // 5. Git Cleanliness
         console.log(`\n======================================================`);
@@ -44,7 +43,7 @@ async function runGateway() {
         console.log(`✅ STEP PASSED: Git Cleanliness`);
 
         // 6. Security Tools: Bootstrap Greenfield
-        runStep('Greenfield Bootstrap Security', process.execPath, ['node_modules/tsx/dist/cli.mjs', 'scripts/test-greenfield-bootstrap.ts']);
+        runStep('Greenfield Bootstrap Security', process.execPath, ['node_modules/tsx/dist/cli.mjs', 'scripts/test-greenfield-bootstrap.ts'], dbEnv);
 
         // 7. Old Test Harnesses (F1-A, F1-B)
         const testFiles = [
@@ -58,7 +57,8 @@ async function runGateway() {
             'scripts/test-finance-f2-a-audit-actions.ts',
             'scripts/test-finance-f3-a-reversal.ts',
             'scripts/test-finance-f3-b-services.ts',
-            'scripts/test-finance-f3-c-actions.ts'
+            'scripts/test-finance-f3-c-actions.ts',
+            'scripts/test-finance-f3-d-ui-dtos.ts'
         ];
 
         
