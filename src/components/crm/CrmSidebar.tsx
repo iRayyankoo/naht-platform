@@ -145,7 +145,9 @@ const allNavGroups: NavGroup[] = [
       { name: "لوحة التحكم", href: "/crm/finance" },
       { name: "القيود اليومية", href: "/crm/finance/journals" },
       { name: "الفترات المالية", href: "/crm/finance/periods" },
+      { name: "التقارير المالية", href: "/crm/finance/reports" },
     ],
+
   },
   {
     id: "settings",

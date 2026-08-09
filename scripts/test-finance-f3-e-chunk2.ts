@@ -40,7 +40,8 @@ if (process.env.CHILD_MODE) {
       
       if (process.env.CHILD_MODE === "CREATE") {
         const payload = JSON.parse(process.env.CREATE_PAYLOAD!);
-        await handleCreateDraftWithLines(payload, sDeps);
+        const res = await handleCreateDraftWithLines(payload, sDeps);
+        if (!res.ok) throw new Error(res.error?.message || "Action failed");
       } else if (process.env.CHILD_MODE === "FREEZE") {
         const { PeriodService: ImportedPeriodService } = await import("../src/services/finance/period-service");
         await ImportedPeriodService.freezePeriod({ actorId, correlationId: "123" }, process.env.PERIOD_ID!);
@@ -504,7 +505,7 @@ async function runTests() {
         env: { ...process.env, CHILD_MODE: "FREEZE", ACTOR_ID: superAdminId, PERIOD_ID: p1_2!.id }
       });
 
-      await new Promise(r => setTimeout(r, 1000)); // Wait for Freeze to hit the trigger
+      await new Promise(r => setTimeout(r, 3000)); // Wait for Freeze to hit the trigger
 
       // Spawn Create Child
       const payload = {
@@ -523,7 +524,7 @@ async function runTests() {
         env: { ...process.env, CHILD_MODE: "CREATE", ACTOR_ID: superAdminId, CREATE_PAYLOAD: JSON.stringify(payload) }
       });
 
-      await new Promise(r => setTimeout(r, 1000)); // Wait for Create to block on FOR SHARE
+      await new Promise(r => setTimeout(r, 3000)); // Wait for Create to block on FOR SHARE
 
       // Release lock
       await prisma.$executeRawUnsafe(`SELECT pg_advisory_unlock(2222)`);
