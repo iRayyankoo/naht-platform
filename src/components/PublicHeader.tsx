@@ -1,6 +1,8 @@
+/* eslint-disable @next/next/no-img-element */
 "use client";
 
 import { useState, useEffect } from "react";
+
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 
@@ -32,10 +34,13 @@ export default function PublicHeader({ siteName, logoUrl, logoDarkUrl, headerCta
 
   const navLinks = [
     { name: "الرئيسية", href: "/" },
-    { name: "من نحن", href: "/about" },
-    { name: "خدماتنا", href: "/services" },
+    { name: "الوحدات العقارية", href: "/units" },
     { name: "المشاريع", href: "/projects" },
+    { name: "خدماتنا", href: "/services" },
+    { name: "من نحن", href: "/about" },
+    { name: "تواصل معنا", href: "/contact" },
   ];
+
 
   const isActive = (path: string) => {
     if (path === "/" && pathname !== "/") return false;
@@ -64,10 +69,11 @@ export default function PublicHeader({ siteName, logoUrl, logoDarkUrl, headerCta
           {(logoUrl || logoDarkUrl) ? (
             <img 
               src={(isTransparent && logoDarkUrl) ? logoDarkUrl : (logoUrl || logoDarkUrl || "")} 
-              alt={siteName} 
+              alt={(siteName || "نحت العقارية").replace(/\s*-\s*معاينة/g, "")}
+
               className={`h-10 md:h-12 transition-all ${(isTransparent && !logoDarkUrl) ? 'brightness-0 invert' : ''}`} 
             />
-          ) : siteName}
+          ) : (siteName || "نحت العقارية").replace(/\s*-\s*معاينة/g, "")}
         </Link>
 
         {/* Desktop Nav */}
@@ -98,9 +104,12 @@ export default function PublicHeader({ siteName, logoUrl, logoDarkUrl, headerCta
 
         {/* Mobile Hamburger Button */}
         <button 
+          aria-label="فتح القائمة الرئيسية"
+          aria-expanded={isMobileMenuOpen}
           className={`md:hidden p-2 -mr-2 focus:outline-none z-50 ${isTransparent ? 'text-white' : 'text-gray-600 hover:text-brand-cafe'}`}
           onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
         >
+
           <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             {isMobileMenuOpen ? (
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M6 18L18 6M6 6l12 12" />

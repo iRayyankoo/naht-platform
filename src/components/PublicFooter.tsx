@@ -1,5 +1,7 @@
+/* eslint-disable @next/next/no-img-element */
 import Link from "next/link";
 import { prisma } from "@/lib/prisma";
+import { isValidPhone, isValidEmail } from "@/lib/contact-helpers";
 
 export default async function PublicFooter() {
   const settings = await prisma.siteSettings.findUnique({ where: { id: "global" } });
@@ -7,8 +9,10 @@ export default async function PublicFooter() {
   const footerLinks = await prisma.footerLink.findMany({ where: { isVisible: true }, orderBy: { order: "asc" } });
 
   const currentYear = new Date().getFullYear();
-  const companyName = settings?.footerCompanyName || settings?.siteName || "نحت الأصول العقارية";
+  const rawName = settings?.footerCompanyName || settings?.siteName || "نحت الأصول العقارية";
+  const companyName = rawName.replace(/\s*-\s*معاينة/g, "");
   const copyright = settings?.copyrightText ? `${settings.copyrightText} © ${currentYear} ${companyName}.` : `جميع الحقوق محفوظة © ${currentYear} ${companyName}.`;
+
 
   const showFooterLogo = settings?.showFooterLogo ?? true;
   const showImportantLinks = settings?.showImportantLinks ?? true;
@@ -89,22 +93,23 @@ export default async function PublicFooter() {
                   <span className="pt-2 leading-relaxed">{settings.address}</span>
                 </li>
               )}
-              {settings?.contactPhone && (
+              {isValidPhone(settings?.contactPhone) && (
                 <li className="flex items-center justify-center md:justify-start gap-4">
                   <div className="w-10 h-10 rounded-full bg-white/5 flex items-center justify-center shrink-0 border border-white/10">
                     <svg className="w-5 h-5 text-brand-cafe" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.5" d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z"/></svg>
                   </div>
-                  <span className="pt-1 font-bold tracking-wider" dir="ltr">{settings.contactPhone}</span>
+                  <span className="pt-1 font-bold tracking-wider" dir="ltr">{settings!.contactPhone}</span>
                 </li>
               )}
-              {settings?.contactEmail && (
+              {isValidEmail(settings?.contactEmail) && (
                 <li className="flex items-center justify-center md:justify-start gap-4">
                   <div className="w-10 h-10 rounded-full bg-white/5 flex items-center justify-center shrink-0 border border-white/10">
                     <svg className="w-5 h-5 text-brand-cafe" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.5" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/></svg>
                   </div>
-                  <a href={`mailto:${settings.contactEmail}`} className="pt-1 hover:text-white transition-colors">{settings.contactEmail}</a>
+                  <a href={`mailto:${settings!.contactEmail}`} className="pt-1 hover:text-white transition-colors">{settings!.contactEmail}</a>
                 </li>
               )}
+
             </ul>
           </div>
         )}

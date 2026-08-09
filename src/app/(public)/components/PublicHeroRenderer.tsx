@@ -1,7 +1,7 @@
 "use client";
 
 import { HomePageContent, Project, SiteSettings } from "@prisma/client";
-import HeroSection from "./HeroSection";
+import ModernHero from "./ModernHero";
 import TimedProductCardsHero from "./TimedProductCardsHero";
 
 interface PublicHeroRendererProps {
@@ -17,6 +17,6 @@ export default function PublicHeroRenderer({ content, projects, settings }: Publ
     return <TimedProductCardsHero content={content} projects={projects} settings={settings} />;
   }
 
-  // Fallback to classic hero
-  return <HeroSection content={content} />;
+  // New modern hero
+  return <ModernHero content={content} />;
 }

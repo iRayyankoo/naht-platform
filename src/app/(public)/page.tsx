@@ -1,15 +1,14 @@
 import { prisma } from "@/lib/prisma";
 import { getBaseMetadata } from "@/lib/seo";
 import PublicHeroRenderer from "./components/PublicHeroRenderer";
-import StatsSection from "./components/StatsSection";
-import FeaturedProjects from "./components/FeaturedProjects";
-import InteractiveMap from "./components/InteractiveMap";
-import HomeFaq from "./components/HomeFaq";
-import HomeContact from "./components/HomeContact";
-import NahtStandard from "./components/NahtStandard";
-import StickyMobileCta from "./components/StickyMobileCta";
+import NewFeaturedProjects from "./components/NewFeaturedProjects";
+import ModernAbout from "./components/ModernAbout";
+import ModernServices from "./components/ModernServices";
+import ModernContact from "./components/ModernContact";
+
 import TrustStrip from "./components/TrustStrip";
-import ClientJourney from "./components/ClientJourney";
+import StickyMobileCta from "./components/StickyMobileCta";
+import FeaturedUnits from "./components/FeaturedUnits";
 
 export async function generateMetadata() {
   const content = await prisma.homePageContent.findUnique({ where: { id: "global" } });
@@ -21,72 +20,63 @@ export async function generateMetadata() {
 }
 
 export default async function HomePage() {
-  const content = await prisma.homePageContent.findUnique({ where: { id: "global" } });
+  const content  = await prisma.homePageContent.findUnique({ where: { id: "global" } });
   const settings = await prisma.siteSettings.findUnique({ where: { id: "global" } });
 
+  // Featured projects (top 3)
   let featuredProjects = await prisma.project.findMany({
     where: { isVisible: true, isFeatured: true },
-    take: 5, // We take 5 for the new layout (1 signature + 4 curated)
-    orderBy: { createdAt: 'desc' }
+    take: 3,
+    orderBy: { createdAt: "desc" },
   });
-
   if (featuredProjects.length === 0) {
     featuredProjects = await prisma.project.findMany({
       where: { isVisible: true },
-      take: 5,
-      orderBy: { createdAt: 'desc' }
+      take: 3,
+      orderBy: { createdAt: "desc" },
     });
   }
 
-  const mapProjects = await prisma.project.findMany({
-    where: { isVisible: true, showOnHomeMap: true },
-    select: {
-      id: true,
-      slug: true,
-      name: true,
-      status: true,
-      price: true,
-      area: true,
-      mainImage: true,
-      mapX: true,
-      mapY: true,
-      mapLat: true,
-      mapLng: true,
-      type: true,
-      city: true
-    }
-  });
-
-  const faqs = await prisma.faq.findMany({
+  // Services
+  const services = await prisma.service.findMany({
     where: { isVisible: true },
     orderBy: { order: "asc" },
-    take: 5 // Just top 5 for home page
   });
 
   return (
-    <div className="bg-[#050505]"> {/* Main luxury background */}
+    <div className="bg-[#050505]">
+      {/* Hero */}
       <PublicHeroRenderer content={content} projects={featuredProjects} settings={settings} />
-      <FeaturedProjects projects={featuredProjects} />
+
+      {/* Featured Projects */}
+      <NewFeaturedProjects projects={featuredProjects} />
+
+      {/* Featured Units */}
+      <FeaturedUnits />
+
+      {/* About */}
+      <ModernAbout content={content} />
+
+      {/* Services */}
+      <ModernServices services={services} />
+
+      {/* Trust Strip */}
       <TrustStrip />
-      <NahtStandard content={content} />
-      <div className="bg-[#F9F9F7]"> {/* Light background for the rest */}
-        <InteractiveMap content={content} projects={mapProjects} />
-        <StatsSection content={content} />
-        <ClientJourney />
-        <section className="py-24">
-          <div className="max-w-7xl mx-auto px-6">
-            <div className="flex flex-col gap-16 lg:gap-24 w-full">
-              <div className="w-full">
-                <HomeFaq faqs={faqs} />
-              </div>
-              <div className="w-full">
-                <HomeContact settings={settings} />
-              </div>
-            </div>
-          </div>
-        </section>
-      </div>
-      <StickyMobileCta whatsappNumber={settings?.whatsappNumber} contactPhone={settings?.contactPhone} />
+
+      {/* Contact */}
+
+      <ModernContact
+        contactPhone={settings?.contactPhone}
+        contactEmail={settings?.contactEmail}
+        address={settings?.address}
+      />
+
+
+      {/* Sticky Mobile CTA */}
+      <StickyMobileCta
+        whatsappNumber={settings?.whatsappNumber}
+        contactPhone={settings?.contactPhone}
+      />
     </div>
   );
 }

@@ -8,10 +8,25 @@ export default async function TrackingScripts() {
 
   if (!settings) return null;
 
+  const isValidId = (id?: string | null) =>
+    Boolean(
+      id &&
+      id.trim().length > 8 &&
+      !id.toLowerCase().includes("your_") &&
+      !id.toLowerCase().includes("dummy") &&
+      !id.toLowerCase().includes("invalid") &&
+      !id.toLowerCase().includes("pixel") &&
+      !id.toLowerCase().includes("tiktok") &&
+      !id.toLowerCase().includes("meta") &&
+      !id.toLowerCase().includes("snap")
+    );
+
   return (
     <>
       {/* 1. Google Tag Manager */}
-      {settings.isGtmEnabled && settings.gtmId && (
+      {settings.isGtmEnabled && isValidId(settings.gtmId) && (
+
+
         <Script
           id="gtm-script"
           strategy="afterInteractive"
@@ -28,7 +43,7 @@ export default async function TrackingScripts() {
       )}
 
       {/* 2. Google Analytics 4 */}
-      {settings.isGa4Enabled && settings.ga4MeasurementId && (
+      {settings.isGa4Enabled && isValidId(settings.ga4MeasurementId) && (
         <>
           <Script src={`https://www.googletagmanager.com/gtag/js?id=${settings.ga4MeasurementId}`} strategy="afterInteractive" />
           <Script
@@ -47,7 +62,7 @@ export default async function TrackingScripts() {
       )}
 
       {/* 3. Google Ads */}
-      {settings.isGoogleAdsEnabled && settings.googleAdsId && (
+      {settings.isGoogleAdsEnabled && isValidId(settings.googleAdsId) && (
         <>
           <Script src={`https://www.googletagmanager.com/gtag/js?id=${settings.googleAdsId}`} strategy="afterInteractive" />
           <Script
@@ -66,7 +81,7 @@ export default async function TrackingScripts() {
       )}
 
       {/* 4. Meta Pixel */}
-      {settings.isMetaPixelEnabled && settings.metaPixelId && (
+      {settings.isMetaPixelEnabled && isValidId(settings.metaPixelId) && (
         <Script
           id="meta-pixel"
           strategy="afterInteractive"
@@ -88,7 +103,7 @@ export default async function TrackingScripts() {
       )}
 
       {/* 5. TikTok Pixel */}
-      {settings.isTiktokPixelEnabled && settings.tiktokPixelId && (
+      {settings.isTiktokPixelEnabled && isValidId(settings.tiktokPixelId) && (
         <Script
           id="tiktok-pixel"
           strategy="afterInteractive"
@@ -105,7 +120,8 @@ export default async function TrackingScripts() {
       )}
 
       {/* 6. Snapchat Pixel */}
-      {settings.isSnapchatPixelEnabled && settings.snapchatPixelId && (
+      {settings.isSnapchatPixelEnabled && isValidId(settings.snapchatPixelId) && (
+
         <Script
           id="snap-pixel"
           strategy="afterInteractive"
