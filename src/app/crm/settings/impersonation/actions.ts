@@ -36,12 +36,12 @@ async function validateCommonStartConditions() {
     throw new Error("لا تملك الصلاحيات الكافية (SUPER_ADMIN) لبدء التقمص.");
   }
 
-  return { actorUser, secret: process.env.IMPERSONATION_COOKIE_SECRET };
+  return { actorUser };
 }
 
 export async function startRoleImpersonationAction(roleKey: string) {
   try {
-    const { actorUser, secret } = await validateCommonStartConditions();
+    const { actorUser } = await validateCommonStartConditions();
 
     if (!roleKey) {
       throw new Error("يجب تحديد الدور المطلوب.");
@@ -81,19 +81,20 @@ export async function startRoleImpersonationAction(roleKey: string) {
     });
 
     return { success: true };
-  } catch (error: any) {
+  } catch (error: unknown) {
+    const reason = error instanceof Error ? error.message : "Unknown impersonation action failure";
     let actorUserId: string | undefined;
     try {
       const actorUser = await getCurrentUser();
       actorUserId = actorUser?.id;
-    } catch (e) {
+    } catch {
       // ignore
     }
 
     await logAuditEvent({
       action: "IMPERSONATION_START_BLOCKED",
       actorUserId,
-      metadata: { reason: error.message, roleKey }
+      metadata: { reason, roleKey }
     });
 
     throw error;
@@ -102,7 +103,7 @@ export async function startRoleImpersonationAction(roleKey: string) {
 
 export async function startUserImpersonationAction(userId: string) {
   try {
-    const { actorUser, secret } = await validateCommonStartConditions();
+    const { actorUser } = await validateCommonStartConditions();
 
     if (!userId) {
       throw new Error("يجب تحديد المستخدم المطلوب.");
@@ -151,26 +152,29 @@ export async function startUserImpersonationAction(userId: string) {
     });
 
     return { success: true };
-  } catch (error: any) {
+  } catch (error: unknown) {
+    const reason = error instanceof Error ? error.message : "Unknown impersonation action failure";
     let actorUserId: string | undefined;
     try {
       const actorUser = await getCurrentUser();
       actorUserId = actorUser?.id;
-    } catch (e) {
+    } catch {
       // ignore
     }
 
     await logAuditEvent({
       action: "IMPERSONATION_START_BLOCKED",
       actorUserId,
-      metadata: { reason: error.message, targetUserId: userId }
+      metadata: { reason, targetUserId: userId }
     });
 
     throw error;
   }
 }
 
-function clearImpersonationCookie(cookieStore: any) {
+type CookieStoreType = Awaited<ReturnType<typeof cookies>>;
+
+function clearImpersonationCookie(cookieStore: CookieStoreType) {
   const cookieOptions = getImpersonationCookieOptions();
   
   // بسبب طبيعة Next.js (cookies API)، يتم استخدام Map كمفتاح باسم الكوكي.
@@ -193,7 +197,7 @@ export async function stopImpersonationAction() {
     try {
       const actorUser = await getCurrentUser();
       actorUserId = actorUser?.id;
-    } catch (e) {
+    } catch {
       // ignore
     }
 
@@ -203,19 +207,20 @@ export async function stopImpersonationAction() {
     });
 
     return { success: true };
-  } catch (error: any) {
+  } catch (error: unknown) {
+    const reason = error instanceof Error ? error.message : "Unknown impersonation action failure";
     let actorUserId: string | undefined;
     try {
       const actorUser = await getCurrentUser();
       actorUserId = actorUser?.id;
-    } catch (e) {
+    } catch {
       // ignore
     }
 
     await logAuditEvent({
       action: "IMPERSONATION_STOP_FAILED",
       actorUserId,
-      metadata: { reason: error.message }
+      metadata: { reason }
     });
 
     throw error;
