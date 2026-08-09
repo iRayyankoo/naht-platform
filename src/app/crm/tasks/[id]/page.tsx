@@ -45,9 +45,14 @@ const getEventLabel = (type: string) => {
   return map[type] || type;
 };
 
-export default async function TaskDetailsPage({ params }: { params: { id: string } }) {
+export default async function TaskDetailsPage({ params }: { params: Promise<{ id: string }> }) {
   const session = await getServerSession(authOptions);
   if (!session?.user) return null;
+
+  const p = await params;
+  if (!p?.id || typeof p.id !== "string" || p.id.trim() === "") {
+    notFound();
+  }
 
   const canView = await checkPermission("tasks.view", "View Task Detail");
   if (!canView) return <div className="p-8 text-center text-red-600 font-bold">غير مصرح لك بعرض هذه المهمة</div>;
@@ -55,7 +60,7 @@ export default async function TaskDetailsPage({ params }: { params: { id: string
   const canApprove = await checkPermission("tasks.approve", "Approve Task");
 
   const task = await prisma.task.findUnique({
-    where: { id: params.id },
+    where: { id: p.id.trim() },
     include: {
       assignedTo: { select: { id: true, name: true } },
       createdBy: { select: { id: true, name: true } },

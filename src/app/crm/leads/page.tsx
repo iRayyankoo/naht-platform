@@ -39,18 +39,21 @@ const statusLabels: Record<string, string> = {
   "POSTPONED": "مؤجل",
 };
 
-export default async function LeadsPage({ searchParams }: { searchParams: { type?: string, status?: string, project?: string } }) {
+export default async function LeadsPage({ searchParams }: { searchParams: Promise<{ type?: string; status?: string; project?: string }> }) {
   const session = await getServerSession(authOptions);
-  const userRole = (session?.user as any)?.role;
+  const user = session?.user as { id?: string; role?: string } | undefined;
 
-  if (!session) {
+  if (!user?.id || !user.role) {
     redirect("/auth/login");
   }
-  const userId = (session.user as any).id;
 
-  const leadTypeFilter = searchParams.type || undefined;
-  const statusFilter = searchParams.status || undefined;
-  const projectFilter = searchParams.project || undefined;
+  const userId = user.id;
+  const userRole = user.role;
+
+  const sp = await searchParams;
+  const leadTypeFilter = sp.type || undefined;
+  const statusFilter = sp.status || undefined;
+  const projectFilter = sp.project || undefined;
 
   // STRICT PERMISSIONS LOGIC PRESERVED
   let roleWhereClause = {};

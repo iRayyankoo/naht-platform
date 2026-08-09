@@ -29,15 +29,16 @@ const statusLabels: Record<string, string> = {
 export default async function ContactRequestsPage({
   searchParams,
 }: {
-  searchParams: { [key: string]: string | string[] | undefined };
+  searchParams: Promise<{ q?: string; status?: string; source?: string; date?: string }>;
 }) {
   const session = await getServerSession(authOptions);
   if (!session) redirect("/auth/login");
 
-  const q = typeof searchParams.q === "string" ? searchParams.q : undefined;
-  const statusFilter = typeof searchParams.status === "string" ? searchParams.status : undefined;
-  const sourceFilter = typeof searchParams.source === "string" ? searchParams.source : undefined;
-  const dateFilter = typeof searchParams.date === "string" ? searchParams.date : undefined;
+  const sp = await searchParams;
+  const q = typeof sp.q === "string" ? sp.q : undefined;
+  const statusFilter = typeof sp.status === "string" ? sp.status : undefined;
+  const sourceFilter = typeof sp.source === "string" ? sp.source : undefined;
+  const dateFilter = typeof sp.date === "string" ? sp.date : undefined;
 
   let dateQuery = {};
   if (dateFilter === "today") {
@@ -54,7 +55,7 @@ export default async function ContactRequestsPage({
     dateQuery = { gte: month };
   }
 
-  const whereClause: any = {
+  const whereClause = {
     leadType: "CONTACT_US",
     ...(q && {
       OR: [
