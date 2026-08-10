@@ -7,9 +7,9 @@ import CampaignBuilderForm from "./CampaignBuilderForm";
 
 export default async function NewCampaignPage() {
   const session = await getServerSession(authOptions);
-  const userRole = (session?.user as any)?.role;
+  const userRole = (session?.user as { role?: string })?.role;
 
-  if (!session || !["ADMIN", "MARKETING"].includes(userRole)) {
+  if (!session || !["ADMIN", "MARKETING"].includes(userRole || "")) {
     redirect("/crm/campaigns");
   }
 

@@ -5,12 +5,25 @@ import ClientForm from "@/components/crm/ClientForm";
 import ImageUpload from "@/components/crm/ImageUpload";
 import { createProjectModel, updateProjectModel } from "@/actions/models";
 import { ProjectModel } from "@prisma/client";
-import toast from "react-hot-toast";
 
 interface ModelFormProps {
   projectId: string;
   initialData?: ProjectModel;
   onSuccess?: () => void;
+}
+
+function getErrorDigest(error: unknown): string | undefined {
+  if (
+    typeof error !== "object" ||
+    error === null ||
+    !("digest" in error)
+  ) {
+    return undefined;
+  }
+
+  return typeof error.digest === "string"
+    ? error.digest
+    : undefined;
 }
 
 export default function ModelForm({ projectId, initialData, onSuccess }: ModelFormProps) {
@@ -30,8 +43,10 @@ export default function ModelForm({ projectId, initialData, onSuccess }: ModelFo
         setIsOpen(false);
       }
       if (onSuccess) onSuccess();
-    } catch (err: any) {
-      if (err?.digest?.startsWith('NEXT_REDIRECT') || err?.message === 'NEXT_REDIRECT') {
+    } catch (err: unknown) {
+      const digest = getErrorDigest(err);
+      const message = err instanceof Error ? err.message : "";
+      if (digest?.startsWith('NEXT_REDIRECT') || message === 'NEXT_REDIRECT') {
         if (!isEditing) {
           // Success
         } else {

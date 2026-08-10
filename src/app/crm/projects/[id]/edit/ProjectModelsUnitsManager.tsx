@@ -40,7 +40,6 @@ export default async function ProjectModelsUnitsManager({ projectId }: ProjectMo
   const allModels = project.models;
   const unassignedUnits = allUnits.filter((u) => u.modelId === null);
   const availableUnits = allUnits.filter((u) => u.status === "AVAILABLE");
-  const soldUnits = allUnits.filter((u) => u.status === "SOLD");
 
   const modelsList = allModels.map((m) => ({ id: m.id, name: m.name, code: m.code }));
 
@@ -251,7 +250,7 @@ export default async function ProjectModelsUnitsManager({ projectId }: ProjectMo
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2"
               d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
           </svg>
-          <p className="text-sm text-gray-500">لا توجد نماذج مضافة بعد. استخدم نموذج "إضافة نموذج جديد" أعلاه.</p>
+          <p className="text-sm text-gray-500">لا توجد نماذج مضافة بعد. استخدم نموذج &quot;إضافة نموذج جديد&quot; أعلاه.</p>
         </div>
       )}
 
@@ -265,7 +264,7 @@ export default async function ProjectModelsUnitsManager({ projectId }: ProjectMo
             </h3>
           </div>
           <p className="text-xs text-amber-700 mb-4">
-            هذه الوحدات لم تُربط بنموذج محدد. استخدم "تصنيف" لربطها بالنموذج المناسب.
+            هذه الوحدات لم تُربط بنموذج محدد. استخدم &quot;تصنيف&quot; لربطها بالنموذج المناسب.
           </p>
           <div className="space-y-3">
             {unassignedUnits.map((unit) => (

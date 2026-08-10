@@ -28,8 +28,9 @@ export default function QuickAddUnitForm({ projectId, modelId, modelName }: Quic
       toast.success("تم إضافة الوحدة بنجاح");
       formRef.current.reset();
       setIsOpen(false);
-    } catch (err: any) {
-      toast.error(err.message || "حدث خطأ أثناء إضافة الوحدة");
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : "حدث خطأ أثناء إضافة الوحدة";
+      toast.error(message);
     } finally {
       setIsPending(false);
     }
@@ -55,7 +56,7 @@ export default function QuickAddUnitForm({ projectId, modelId, modelName }: Quic
           className="mt-3 p-4 bg-blue-50/50 border border-blue-100 rounded-xl space-y-3"
         >
           <p className="text-xs font-medium text-blue-700 mb-2">
-            إضافة وحدة جديدة — ستُربط تلقائياً بنموذج "{modelName}"
+            إضافة وحدة جديدة — ستُربط تلقائياً بنموذج &quot;{modelName}&quot;
           </p>
 
           <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">

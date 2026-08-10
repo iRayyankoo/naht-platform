@@ -19,8 +19,9 @@ export default function DeleteModelButton({ id, unitsCount, disabled }: { id: st
     try {
       await deleteProjectModel(id);
       toast.success("تم حذف النموذج بنجاح");
-    } catch (err: any) {
-      toast.error(err.message || "حدث خطأ أثناء الحذف");
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : "حدث خطأ أثناء الحذف";
+      toast.error(message);
     } finally {
       setIsDeleting(false);
     }

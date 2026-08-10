@@ -15,7 +15,6 @@ const PLATFORMS = [
 export default function CampaignBuilderForm({ projects }: { projects: { id: string, name: string, slug: string }[] }) {
   const router = useRouter();
   const [isSaving, setIsSaving] = useState(false);
-  const [generatedUrl, setGeneratedUrl] = useState<string>("");
 
   const [formData, setFormData] = useState({
     campaignName: "",
@@ -58,7 +57,7 @@ export default function CampaignBuilderForm({ projects }: { projects: { id: stri
 
   const handlePlatformChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
     const plat = e.target.value;
-    let source = plat.toLowerCase().replace(/\s|\//g, "_");
+    const source = plat.toLowerCase().replace(/\s|\//g, "_");
     let medium = "paid_social";
     
     if (plat.includes("Google") || plat === "YouTube") medium = "cpc";
@@ -88,8 +87,9 @@ export default function CampaignBuilderForm({ projects }: { projects: { id: stri
 
       toast.success("تم إنشاء الحملة بنجاح!");
       router.push("/crm/campaigns");
-    } catch (err: any) {
-      toast.error(err.message || "حدث خطأ غير متوقع");
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : "حدث خطأ غير متوقع";
+      toast.error(message);
       setIsSaving(false);
     }
   };

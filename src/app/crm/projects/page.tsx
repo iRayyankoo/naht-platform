@@ -15,10 +15,18 @@ const getProjectTypeLabel = (type: string) => {
   return map[type] || type;
 };
 
-export default async function ProjectsPage({ searchParams }: { searchParams: { status?: string, type?: string, city?: string } }) {
+export default async function ProjectsPage({
+  searchParams,
+}: {
+  searchParams: Promise<{
+    status?: string | string[];
+    type?: string | string[];
+    city?: string | string[];
+  }>;
+}) {
   const session = await getServerSession(authOptions);
   
-  const params = await Promise.resolve(searchParams);
+  const params = await searchParams;
   const statusFilter = typeof params.status === 'string' ? params.status : (Array.isArray(params.status) ? params.status[0] : undefined);
   const typeFilter = typeof params.type === 'string' ? params.type : (Array.isArray(params.type) ? params.type[0] : undefined);
   const cityFilter = typeof params.city === 'string' ? params.city : (Array.isArray(params.city) ? params.city[0] : undefined);
@@ -110,15 +118,15 @@ export default async function ProjectsPage({ searchParams }: { searchParams: { s
                    ) : (
                       /* ── Styled placeholder for projects without a cover image ── */
                       <div className={`absolute inset-0 flex flex-col items-center justify-center gap-2 ${
-                        !(project as any).isVisible
+                        !project.isVisible
                           ? "bg-gradient-to-br from-gray-100 to-gray-200"
                           : "bg-gradient-to-br from-amber-50 to-amber-100"
                       }`}>
                         {/* Icon */}
                         <div className={`w-14 h-14 rounded-full flex items-center justify-center ${
-                          !(project as any).isVisible ? "bg-gray-300/60" : "bg-amber-200/60"
+                          !project.isVisible ? "bg-gray-300/60" : "bg-amber-200/60"
                         }`}>
-                          {!(project as any).isVisible ? (
+                          {!project.isVisible ? (
                             /* Lock icon for hidden internal projects */
                             <svg className="w-7 h-7 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.5"
@@ -134,9 +142,9 @@ export default async function ProjectsPage({ searchParams }: { searchParams: { s
                         </div>
                         {/* Label */}
                         <span className={`text-xs font-semibold ${
-                          !(project as any).isVisible ? "text-gray-500" : "text-amber-700"
+                          !project.isVisible ? "text-gray-500" : "text-amber-700"
                         }`}>
-                          {!(project as any).isVisible ? "مشروع داخلي" : "لا توجد صورة"}
+                          {!project.isVisible ? "مشروع داخلي" : "لا توجد صورة"}
                         </span>
                       </div>
                    )}
@@ -198,7 +206,7 @@ export default async function ProjectsPage({ searchParams }: { searchParams: { s
                       </div>
                       
                       {/* ADMIN ONLY DELETE FORM */}
-                      {session?.user && (session.user as any).role === "ADMIN" && (
+                      {session?.user && (session.user as { role?: string }).role === "ADMIN" && (
                         <form action={async () => {
                           "use server";
                           const { deleteProject } = await import("@/actions/projects");

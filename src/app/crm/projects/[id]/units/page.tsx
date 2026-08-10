@@ -9,7 +9,7 @@ import { Fragment } from "react";
 export default async function ProjectUnitsPage({ params }: { params: Promise<{ id: string }> }) {
   const id = (await params).id;
   const session = await getServerSession(authOptions);
-  const userRole = (session?.user as any)?.role;
+  const userRole = (session?.user as { role?: string })?.role;
   const canEdit = userRole === "ADMIN" || userRole === "MARKETING";
 
   const project = await prisma.project.findUnique({

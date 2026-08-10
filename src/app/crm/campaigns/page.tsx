@@ -7,16 +7,16 @@ import { deleteCampaignLink } from "@/actions/campaigns";
 import CopyButton from "@/components/CopyButton";
 import FilterBar from "@/components/crm/FilterBar";
 
-export default async function CampaignsPage({ searchParams }: { searchParams: { platform?: string } }) {
+export default async function CampaignsPage({ searchParams }: { searchParams: Promise<{ platform?: string | string[] }> }) {
   const session = await getServerSession(authOptions);
-  const userRole = (session?.user as any)?.role;
+  const userRole = (session?.user as { role?: string })?.role;
 
-  if (!session || !["ADMIN", "MARKETING"].includes(userRole)) {
+  if (!session || !["ADMIN", "MARKETING"].includes(userRole || "")) {
     redirect("/crm");
   }
 
   // FIX: Next 15 searchParams promise + Array Safe Parsing
-  const params = await Promise.resolve(searchParams);
+  const params = await searchParams;
   const platformFilter = typeof params.platform === 'string' ? params.platform : (Array.isArray(params.platform) ? params.platform[0] : undefined);
 
   // STRICT DATA FETCHING LOGIC PRESERVED

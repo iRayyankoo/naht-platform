@@ -36,8 +36,9 @@ export default function UnitClassificationForm({
       await updateUnitModelDetails(formData);
       setIsOpen(false);
       alert("تم حفظ التصنيف بنجاح");
-    } catch (error: any) {
-      alert(error.message || "حدث خطأ أثناء الحفظ");
+    } catch (error: unknown) {
+      const message = error instanceof Error ? error.message : "حدث خطأ أثناء الحفظ";
+      alert(message);
     } finally {
       setIsPending(false);
     }
