@@ -3,8 +3,15 @@
 import { useState } from "react";
 import toast from "react-hot-toast";
 
-interface ClientFormProps extends React.FormHTMLAttributes<HTMLFormElement> {
-  action: (formData: FormData) => Promise<any>;
+function getErrorDigest(error: unknown): string | undefined {
+  if (typeof error === "object" && error !== null && "digest" in error && typeof error.digest === "string") {
+    return error.digest;
+  }
+  return undefined;
+}
+
+interface ClientFormProps extends Omit<React.FormHTMLAttributes<HTMLFormElement>, "action"> {
+  action: (formData: FormData) => Promise<unknown>;
   successMessage?: string;
   errorMessage?: string;
 }
@@ -27,14 +34,16 @@ export default function ClientForm({
     try {
       await action(formData);
       toast.success(successMessage);
-    } catch (err: any) {
+    } catch (err: unknown) {
       // Next.js redirect throws an error to halt execution. We must re-throw it to allow redirect.
       // The redirect error typically has a digest property starting with 'NEXT_REDIRECT'
-      if (err?.digest?.startsWith('NEXT_REDIRECT') || err?.message === 'NEXT_REDIRECT') {
+      const digest = getErrorDigest(err);
+      const msg = err instanceof Error ? err.message : "";
+      if (digest?.startsWith('NEXT_REDIRECT') || msg === 'NEXT_REDIRECT') {
         toast.success(successMessage);
         throw err;
       } else {
-        toast.error(err.message || errorMessage);
+        toast.error(msg || errorMessage);
       }
     } finally {
       setIsSaving(false);

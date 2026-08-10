@@ -53,7 +53,7 @@ export default function ImageUpload({ name, defaultValue = "", label = "الصو
       <div className="flex items-center gap-4">
         {imageUrl && (
           <div className="relative w-24 h-24 rounded-lg overflow-hidden border border-gray-200">
-            <img src={imageUrl} alt="Preview" className="object-cover w-full h-full" />
+            <Image src={imageUrl} alt="معاينة الصورة المرفوعة" fill sizes="96px" unoptimized className="object-cover" />
             <button
               type="button"
               onClick={() => {

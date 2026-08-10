@@ -41,7 +41,23 @@ const APPROVAL_LABELS: Record<ApprovalStatus, string> = {
 };
 
 export function TaskDetailsDrawer({ task, isOpen, onClose, permissions, sectionsAdapter }: TaskDetailsDrawerProps) {
-  const [sectionName, setSectionName] = useState<string | null>(null);
+  const sectionLookupKey =
+    isOpen &&
+    task.workProjectId &&
+    task.workProjectSectionId &&
+    sectionsAdapter
+      ? `${task.workProjectId}:${task.workProjectSectionId}`
+      : null;
+
+  const [resolvedSection, setResolvedSection] = useState<{
+    key: string;
+    name: string | null;
+  } | null>(null);
+
+  const sectionName =
+    resolvedSection?.key === sectionLookupKey
+      ? resolvedSection.name
+      : null;
 
   const [activeTab, setActiveTab] = useState<TabType>('DETAILS');
   const [newComment, setNewComment] = useState('');
@@ -71,17 +87,22 @@ export function TaskDetailsDrawer({ task, isOpen, onClose, permissions, sections
 
   // Fetch Section Name
   useEffect(() => {
-    if (isOpen && task.workProjectSectionId && task.workProjectId && sectionsAdapter) {
-      sectionsAdapter.getSections(task.workProjectId).then(data => {
-        if (data) {
-          const sec = data.find(s => s.id === task.workProjectSectionId);
-          if (sec) setSectionName(sec.name);
-        }
+    if (!sectionLookupKey || !task.workProjectId || !sectionsAdapter) return;
+    let isSubscribed = true;
+    sectionsAdapter.getSections(task.workProjectId)
+      .then(data => {
+        if (!isSubscribed) return;
+        const sec = data?.find(s => s.id === task.workProjectSectionId);
+        setResolvedSection({ key: sectionLookupKey, name: sec ? sec.name : null });
+      })
+      .catch(() => {
+        if (!isSubscribed) return;
+        setResolvedSection({ key: sectionLookupKey, name: null });
       });
-    } else {
-      setSectionName(null);
-    }
-  }, [isOpen, task.workProjectSectionId, task.workProjectId, sectionsAdapter]);
+    return () => {
+      isSubscribed = false;
+    };
+  }, [sectionLookupKey, task.workProjectId, task.workProjectSectionId, sectionsAdapter]);
 
   if (!isOpen) return null;
 
