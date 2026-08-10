@@ -1,19 +1,17 @@
 import { prisma } from "@/lib/prisma";
-import { getServerSession } from "next-auth";
-import { authOptions } from "@/lib/auth";
-import { redirect } from "next/navigation";
+import { requireRole } from "@/lib/auth-helpers";
 import FilterBar from "@/components/crm/FilterBar";
 
-export default async function TrackingDashboardPage({ searchParams }: { searchParams: { actionType?: string, platform?: string } }) {
-  const session = await getServerSession(authOptions);
-  const userRole = (session?.user as any)?.role;
+export default async function TrackingDashboardPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ actionType?: string | string[]; platform?: string | string[] }>;
+}) {
+  await requireRole(["ADMIN", "MARKETING"]);
 
-  if (!session || userRole === "VIEWER") {
-    redirect("/crm");
-  }
-
-  const actionTypeFilter = searchParams.actionType || undefined;
-  const platformFilter = searchParams.platform || undefined;
+  const params = await searchParams;
+  const actionTypeFilter = typeof params.actionType === "string" ? params.actionType : undefined;
+  const platformFilter = typeof params.platform === "string" ? params.platform : undefined;
 
   // Aggregate stats
   const totalWhatsApp = await prisma.clickEvent.count({ where: { actionType: "WHATSAPP" } });

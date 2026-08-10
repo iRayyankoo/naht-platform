@@ -20,11 +20,6 @@ export default async function EditUserPage({ params }: { params: Promise<{ id: s
     }
   });
 
-  const departments = await prisma.department.findMany({
-    where: { isActive: true },
-    orderBy: { sortOrder: "asc" }
-  });
-
   if (!user) {
     notFound();
   }

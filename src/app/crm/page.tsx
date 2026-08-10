@@ -1,5 +1,4 @@
-import { getServerSession } from "next-auth";
-import { authOptions } from "@/lib/auth";
+import { requireAuth } from "@/lib/auth-helpers";
 import { prisma } from "@/lib/prisma";
 import Link from "next/link";
 import MetricCard from "@/components/platform/layout/MetricCard";
@@ -14,14 +13,14 @@ const statusColors: Record<string, string> = {
   "NO_ANSWER": "bg-gray-100 text-gray-800",
   "INTERESTED": "bg-indigo-100 text-indigo-800",
   "DETAILS_SENT": "bg-purple-100 text-purple-800",
-  "VISIT_SCHEDULED": "bg-orange-100 text-orange-800",
-  "VISITED": "bg-teal-100 text-teal-800",
-  "NEGOTIATION": "bg-pink-100 text-pink-800",
+  "VISIT_SCHEDULED": "bg-teal-100 text-teal-800",
+  "VISIT_DONE": "bg-emerald-100 text-emerald-800",
+  "NEGOTIATION": "bg-amber-100 text-amber-800",
   "SOLD": "bg-green-100 text-green-800",
   "LOST": "bg-red-100 text-red-800",
-  "UNQUALIFIED": "bg-gray-200 text-gray-600",
-  "DUPLICATE": "bg-gray-200 text-gray-600",
-  "POSTPONED": "bg-yellow-50 text-yellow-600",
+  "UNQUALIFIED": "bg-rose-100 text-rose-800",
+  "DUPLICATE": "bg-slate-100 text-slate-800",
+  "POSTPONED": "bg-orange-100 text-orange-800",
 };
 
 const statusLabels: Record<string, string> = {
@@ -31,7 +30,7 @@ const statusLabels: Record<string, string> = {
   "INTERESTED": "مهتم",
   "DETAILS_SENT": "تم إرسال التفاصيل",
   "VISIT_SCHEDULED": "تم جدولة زيارة",
-  "VISITED": "تمت الزيارة",
+  "VISIT_DONE": "تمت الزيارة",
   "NEGOTIATION": "تفاوض",
   "SOLD": "تم البيع",
   "LOST": "خاسر",
@@ -41,67 +40,136 @@ const statusLabels: Record<string, string> = {
 };
 
 export default async function AdminDashboard() {
-  const session = await getServerSession(authOptions);
-  const userRole = (session?.user as any)?.role || "ADMIN";
+  const user = await requireAuth();
+  const userRole = user.role;
 
-  // Fetch Stats in parallel (Same as original)
-  const [
-    totalLeads,
-    newLeads,
-    totalProjects,
-    whatsappClicks,
-    callClicks,
-    totalCampaigns,
-    recentLeads,
-    leadStatusCounts,
-    recentMaintenance,
-    recentVendors,
-    recentCareers,
-    recentContact
-  ] = await Promise.all([
-    prisma.lead.count(),
-    prisma.lead.count({ where: { status: "NEW" } }),
-    prisma.project.count(),
-    prisma.clickEvent.count({ where: { actionType: "WHATSAPP" } }),
-    prisma.clickEvent.count({ where: { actionType: "CALL" } }),
-    prisma.campaignLink.count(),
-    prisma.lead.findMany({
-      take: 5,
-      orderBy: { createdAt: "desc" },
-      include: { project: true }
-    }),
-    prisma.lead.groupBy({
-      by: ["status"],
-      _count: true
-    }),
-    prisma.maintenanceRequest.findMany({ take: 3, orderBy: { createdAt: "desc" } }),
-    prisma.vendorApplication.findMany({ take: 3, orderBy: { createdAt: "desc" } }),
-    prisma.jobApplication.findMany({ take: 3, orderBy: { createdAt: "desc" } }),
-    prisma.lead.findMany({ take: 3, where: { leadType: "CONTACT_US" }, orderBy: { createdAt: "desc" } })
-  ]);
+  let totalLeads = 0;
+  let newLeads = 0;
+  let totalProjects = 0;
+  let whatsappClicks = 0;
+  let callClicks = 0;
+  let totalCampaigns = 0;
+  let realTotalRequests = 0;
+  let recentLeads: Array<{
+    id: string;
+    name: string;
+    phone: string;
+    createdAt: Date;
+    status: string;
+    project: { name: string } | null;
+  }> = [];
+  let leadStatusCounts: Array<{ status: string; _count: number }> = [];
+  let pendingTasksItems: Array<{ id: string; title: string; subtitle: string; badge: string; badgeColor: string }> = [];
 
-  const realTotalRequests = await prisma.$transaction([
-    prisma.maintenanceRequest.count(),
-    prisma.vendorApplication.count(),
-    prisma.jobApplication.count(),
-    prisma.lead.count({ where: { leadType: "CONTACT_US" } })
-  ]).then(res => res.reduce((a, b) => a + b, 0));
+  if (userRole === "ADMIN") {
+    const [
+      tl, nl, tp, wc, cc, tc, rl, lsc, rm, rv, rc, rcont
+    ] = await Promise.all([
+      prisma.lead.count(),
+      prisma.lead.count({ where: { status: "NEW" } }),
+      prisma.project.count(),
+      prisma.clickEvent.count({ where: { actionType: "WHATSAPP" } }),
+      prisma.clickEvent.count({ where: { actionType: "CALL" } }),
+      prisma.campaignLink.count(),
+      prisma.lead.findMany({
+        take: 5,
+        orderBy: { createdAt: "desc" },
+        select: { id: true, name: true, phone: true, createdAt: true, status: true, project: { select: { name: true } } }
+      }),
+      prisma.lead.groupBy({ by: ["status"], _count: true }),
+      prisma.maintenanceRequest.findMany({ take: 3, orderBy: { createdAt: "desc" } }),
+      prisma.vendorApplication.findMany({ take: 3, orderBy: { createdAt: "desc" } }),
+      prisma.jobApplication.findMany({ take: 3, orderBy: { createdAt: "desc" } }),
+      prisma.lead.findMany({ take: 3, where: { leadType: "CONTACT_US" }, orderBy: { createdAt: "desc" } })
+    ]);
 
-  // Combine and sort requests
-  const combinedRequests = [
-    ...recentMaintenance.map(r => ({ id: r.id, type: "صيانة", name: r.fullName, date: r.createdAt, link: `/crm/requests/maintenance/${r.id}` })),
-    ...recentVendors.map(r => ({ id: r.id, type: "مورد", name: r.companyName, date: r.createdAt, link: `/crm/requests/vendors/${r.id}` })),
-    ...recentCareers.map(r => ({ id: r.id, type: "توظيف", name: r.fullName, date: r.createdAt, link: `/crm/requests/careers/${r.id}` })),
-    ...recentContact.map(r => ({ id: r.id, type: "تواصل معنا", name: r.name, date: r.createdAt, link: `/crm/leads/${r.id}` })),
-  ].sort((a, b) => b.date.getTime() - a.date.getTime()).slice(0, 5);
+    totalLeads = tl;
+    newLeads = nl;
+    totalProjects = tp;
+    whatsappClicks = wc;
+    callClicks = cc;
+    totalCampaigns = tc;
+    recentLeads = rl;
+    leadStatusCounts = lsc;
 
-  const pendingTasksItems = combinedRequests.map(req => ({
-    id: `${req.type}-${req.id}`,
-    title: req.name,
-    subtitle: req.type,
-    badge: new Date(req.date).toLocaleDateString("ar-SA"),
-    badgeColor: "bg-gray-100 text-gray-800"
-  }));
+    realTotalRequests = await prisma.$transaction([
+      prisma.maintenanceRequest.count(),
+      prisma.vendorApplication.count(),
+      prisma.jobApplication.count(),
+      prisma.lead.count({ where: { leadType: "CONTACT_US" } })
+    ]).then(res => res.reduce((a, b) => a + b, 0));
+
+    const combinedRequests = [
+      ...rm.map(r => ({ id: r.id, type: "صيانة", name: r.fullName, date: r.createdAt })),
+      ...rv.map(r => ({ id: r.id, type: "مورد", name: r.companyName, date: r.createdAt })),
+      ...rc.map(r => ({ id: r.id, type: "توظيف", name: r.fullName, date: r.createdAt })),
+      ...rcont.map(r => ({ id: r.id, type: "تواصل معنا", name: r.name, date: r.createdAt })),
+    ].sort((a, b) => b.date.getTime() - a.date.getTime()).slice(0, 5);
+
+    pendingTasksItems = combinedRequests.map(req => ({
+      id: `${req.type}-${req.id}`,
+      title: req.name,
+      subtitle: req.type,
+      badge: new Date(req.date).toLocaleDateString("ar-SA"),
+      badgeColor: "bg-gray-100 text-gray-800"
+    }));
+
+  } else if (userRole === "SALES") {
+    const salesWhere = {
+      OR: [
+        { assignedToId: user.id },
+        { assignedToId: null }
+      ]
+    };
+
+    const [tl, nl, tp, rl, lsc] = await Promise.all([
+      prisma.lead.count({ where: salesWhere }),
+      prisma.lead.count({ where: { AND: [salesWhere, { status: "NEW" }] } }),
+      prisma.project.count(),
+      prisma.lead.findMany({
+        where: salesWhere,
+        take: 5,
+        orderBy: { createdAt: "desc" },
+        select: { id: true, name: true, phone: true, createdAt: true, status: true, project: { select: { name: true } } }
+      }),
+      prisma.lead.groupBy({
+        by: ["status"],
+        where: salesWhere,
+        _count: true
+      })
+    ]);
+
+    totalLeads = tl;
+    newLeads = nl;
+    totalProjects = tp;
+    recentLeads = rl;
+    leadStatusCounts = lsc;
+
+  } else if (userRole === "MARKETING") {
+    const [tl, nl, tp, wc, cc, tc, rl, lsc] = await Promise.all([
+      prisma.lead.count(),
+      prisma.lead.count({ where: { status: "NEW" } }),
+      prisma.project.count(),
+      prisma.clickEvent.count({ where: { actionType: "WHATSAPP" } }),
+      prisma.clickEvent.count({ where: { actionType: "CALL" } }),
+      prisma.campaignLink.count(),
+      prisma.lead.findMany({
+        take: 5,
+        orderBy: { createdAt: "desc" },
+        select: { id: true, name: true, phone: true, createdAt: true, status: true, project: { select: { name: true } } }
+      }),
+      prisma.lead.groupBy({ by: ["status"], _count: true })
+    ]);
+
+    totalLeads = tl;
+    newLeads = nl;
+    totalProjects = tp;
+    whatsappClicks = wc;
+    callClicks = cc;
+    totalCampaigns = tc;
+    recentLeads = rl;
+    leadStatusCounts = lsc;
+  }
 
   const leadsTableContent = (
     <div className="overflow-x-auto h-full">
@@ -116,7 +184,7 @@ export default async function AdminDashboard() {
         </thead>
         <tbody className="divide-y divide-gray-100">
           {recentLeads.length === 0 ? (
-            <tr><td colSpan={4} className="px-4 py-8 text-center text-gray-500">لا يوجد عملاء حتى الآن</td></tr>
+            <tr><td colSpan={4} className="px-4 py-8 text-center text-gray-500">لا يوجد عملاء في نطاقك حالياً</td></tr>
           ) : (
             recentLeads.map(lead => (
               <tr key={lead.id} className="hover:bg-gray-50 transition-colors">
@@ -160,10 +228,6 @@ export default async function AdminDashboard() {
       )}
     </div>
   );
-
-  // ==========================================
-  // Layouts
-  // ==========================================
 
   return (
     <div className="w-full space-y-4 xl:space-y-5 pb-6">
@@ -234,30 +298,23 @@ export default async function AdminDashboard() {
       {/* --- SALES DASHBOARD --- */}
       {userRole === 'SALES' && (
         <>
-          {/* Note: In a real scenario, this data should be filtered by Sales Rep ID. 
-              Currently showing generic data due to DB schema constraints. */}
-          <div className="grid grid-cols-2 xl:grid-cols-4 gap-3 lg:gap-4">
-            <MetricCard label="إجمالي العملاء" value={totalLeads} icon="👥" />
-            <MetricCard label="عملاء جدد" value={newLeads} icon="✨" />
-            <MetricCard label="إجمالي المشاريع" value={totalProjects} icon="🏢" />
-            <MetricCard label="نقرات واتساب" value={whatsappClicks} icon="💬" />
+          <div className="grid grid-cols-2 xl:grid-cols-3 gap-3 lg:gap-4">
+            <MetricCard label="عملائي والعملاء غير المسندين" value={totalLeads} icon="👥" />
+            <MetricCard label="العملاء الجدد في نطاقي" value={newLeads} icon="✨" />
+            <MetricCard label="المشاريع المتاحة" value={totalProjects} icon="🏢" />
           </div>
 
-          <div className="grid grid-cols-1 xl:grid-cols-3 gap-3 lg:gap-4 flex-1 min-h-[250px]">
-            <div className="xl:col-span-1 flex flex-col h-full">
-              <MiniListCard title="تنبيهات الطلبات" items={pendingTasksItems} emptyMessage="لا توجد تنبيهات حالياً" />
-            </div>
+          <div className="grid grid-cols-1 xl:grid-cols-3 gap-3 lg:gap-4 flex-1 min-h-[300px]">
             <div className="xl:col-span-2 flex flex-col h-full">
-              <ContentCard title="مراحل البيع (Pipeline - إجمالي النظام)" className="h-full">
+              <ContentCard title="عملائي والعملاء الجدد المستهدفين" action={<Link href="/crm/leads" className="text-sm text-primary font-medium hover:underline">عرض الكل</Link>} className="h-full">
+                {leadsTableContent}
+              </ContentCard>
+            </div>
+            <div className="flex flex-col h-full">
+              <ContentCard title="مراحل البيع (عملائي والعملاء غير المسندين)" className="h-full">
                 {statusSummaryContent}
               </ContentCard>
             </div>
-          </div>
-
-          <div className="grid grid-cols-1 gap-3 lg:gap-4 flex-1 min-h-[300px]">
-            <ContentCard title="آخر العملاء المضافين للنظام" action={<Link href="/crm/leads" className="text-sm text-primary font-medium hover:underline">عرض الكل</Link>} className="h-full">
-              {leadsTableContent}
-            </ContentCard>
           </div>
         </>
       )}

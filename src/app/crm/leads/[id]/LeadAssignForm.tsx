@@ -17,7 +17,7 @@ export default function LeadAssignForm({ leadId, currentAssignee, users }: { lea
     try {
       await assignLead(leadId, assignedToId === "none" ? null : assignedToId);
       toast.success("تم تعيين العميل للموظف بنجاح.");
-    } catch (error) {
+    } catch {
       toast.error("حدث خطأ أثناء التحديث.");
     } finally {
       setIsSaving(false);

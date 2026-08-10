@@ -15,9 +15,13 @@ export default function LeadStatusForm({ leadId, currentStatus, statusOptions }:
     const newStatus = formData.get("status") as string;
 
     try {
-      await updateLeadStatus(leadId, newStatus);
-      toast.success("تم تحديث حالة العميل بنجاح.");
-    } catch (error) {
+      const res = await updateLeadStatus(leadId, newStatus);
+      if (res && !res.success) {
+        toast.error(res.error || "حدث خطأ أثناء التحديث.");
+      } else {
+        toast.success("تم تحديث حالة العميل بنجاح.");
+      }
+    } catch {
       toast.error("حدث خطأ أثناء التحديث.");
     } finally {
       setIsSaving(false);

@@ -6,8 +6,9 @@ import { prisma } from "@/lib/prisma";
 
 export async function getCurrentUser() {
   const session = await getServerSession(authOptions);
-  if (!session?.user) return null;
-  const dbUser = await prisma.user.findUnique({ where: { id: (session.user as any).id } });
+  const sessionUser = session?.user as { id?: string; role?: string } | undefined;
+  if (!sessionUser?.id) return null;
+  const dbUser = await prisma.user.findUnique({ where: { id: sessionUser.id } });
   if (!dbUser) return null;
   return dbUser;
 }

@@ -1,7 +1,6 @@
 import { prisma } from "@/lib/prisma";
 import Link from "next/link";
-import { getServerSession } from "next-auth";
-import { authOptions } from "@/lib/auth";
+import { requireAuth } from "@/lib/auth-helpers";
 import { notFound, redirect } from "next/navigation";
 import { deleteLead, addLeadNote } from "@/actions/leads";
 import LeadStatusForm from "./LeadStatusForm";
@@ -9,14 +8,9 @@ import LeadAssignForm from "./LeadAssignForm";
 
 export default async function LeadDetailsPage({ params }: { params: Promise<{ id: string }> }) {
   const id = (await params).id;
-  const session = await getServerSession(authOptions);
-  const userRole = (session?.user as any)?.role;
-
-  if (!session) {
-    redirect("/auth/login");
-  }
-
-  const userId = (session.user as any).id;
+  const user = await requireAuth();
+  const userId = user.id;
+  const userRole = user.role;
 
   const lead = await prisma.lead.findUnique({
     where: { id },
@@ -38,15 +32,12 @@ export default async function LeadDetailsPage({ params }: { params: Promise<{ id
     redirect("/crm");
   }
 
-
-
-  let users: any[] = [];
-  if (userRole === "ADMIN") {
-    users = await prisma.user.findMany({
-      where: { role: { in: ["SALES", "MARKETING", "ADMIN"] } },
-      select: { id: true, name: true, role: true },
-    });
-  }
+  const users = userRole === "ADMIN"
+    ? (await prisma.user.findMany({
+        where: { role: { in: ["SALES", "MARKETING", "ADMIN"] } },
+        select: { id: true, name: true, role: true },
+      })).map(u => ({ id: u.id, name: u.name || "مجهول", role: u.role }))
+    : [];
 
   const getStatusLabel = (status: string) => {
     const map: Record<string, string> = {
@@ -223,7 +214,6 @@ export default async function LeadDetailsPage({ params }: { params: Promise<{ id
                   {pipelineStages.map((stage, idx) => {
                     const isCompleted = currentIndex > idx;
                     const isCurrent = currentIndex === idx && !isEndState;
-                    const isFuture = currentIndex < idx && !isEndState;
                     const stageDate = getStageDate(stage.id);
 
                     return (

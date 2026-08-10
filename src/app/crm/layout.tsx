@@ -1,5 +1,4 @@
-import { getServerSession } from "next-auth";
-import { authOptions } from "@/lib/auth";
+import { requireAuth } from "@/lib/auth-helpers";
 import Link from "next/link";
 import { ImpersonationBanner } from "@/components/crm/ImpersonationBanner";
 import { getImpersonationRuntimeContext } from "@/lib/impersonation-runtime-context";
@@ -11,30 +10,24 @@ export default async function AdminLayout({
 }: {
   children: React.ReactNode;
 }) {
-  const session = await getServerSession(authOptions);
-
-  // if (!session) {
-  //   redirect("/auth/login");
-  // }
+  const user = await requireAuth();
+  const userId = user.id;
 
   const impersonationContext = await getImpersonationRuntimeContext();
-  const permissions = session?.user ? await getCurrentUserPermissions(session?.user.id) : [];
+  const permissions = await getCurrentUserPermissions(userId);
 
   let orgScope = "NONE";
-  let isSuper = false;
-  if (session?.user) {
-    isSuper = await isSuperAdmin(session.user.id);
-    const scopedPerms = await getCurrentUserScopedPermissions(session.user.id);
-    const orgViewScopes = scopedPerms.get("org.departments.view") || new Set();
-    const membersViewScopes = scopedPerms.get("org.members.view") || new Set();
+  const isSuper = await isSuperAdmin(userId);
+  const scopedPerms = await getCurrentUserScopedPermissions(userId);
+  const orgViewScopes = scopedPerms.get("org.departments.view") || new Set();
+  const membersViewScopes = scopedPerms.get("org.members.view") || new Set();
 
-    if (isSuper || orgViewScopes.has("COMPANY") || membersViewScopes.has("COMPANY")) {
-      orgScope = "COMPANY";
-    } else if (orgViewScopes.has("DEPARTMENT") || membersViewScopes.has("DEPARTMENT")) {
-      orgScope = "DEPARTMENT";
-    } else if (membersViewScopes.has("SELF")) {
-      orgScope = "SELF";
-    }
+  if (isSuper || orgViewScopes.has("COMPANY") || membersViewScopes.has("COMPANY")) {
+    orgScope = "COMPANY";
+  } else if (orgViewScopes.has("DEPARTMENT") || membersViewScopes.has("DEPARTMENT")) {
+    orgScope = "DEPARTMENT";
+  } else if (membersViewScopes.has("SELF")) {
+    orgScope = "SELF";
   }
 
   const canViewOrganization = orgScope === "COMPANY" || orgScope === "DEPARTMENT" || orgScope === "SELF";
@@ -43,13 +36,13 @@ export default async function AdminLayout({
     <div className="flex min-h-screen bg-gray-50 text-gray-900">
       {/* Sidebar */}
       <CrmSidebar
-        userName={session?.user?.name || "مستخدم"}
-        userRole={session?.user && 'role' in session.user ? (session.user as { role: string }).role : "VIEWER"}
+        userName={user.name || "مستخدم"}
+        userRole={user.role || "VIEWER"}
         userPermissions={permissions}
         orgScope={orgScope}
         canViewOrganization={canViewOrganization}
         isSuperAdmin={isSuper}
-        userId={session?.user?.id}
+        userId={user.id}
       />
 
       {/* Main Content */}

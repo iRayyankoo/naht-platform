@@ -5,15 +5,8 @@ import { createUser } from "@/actions/users";
 import ContentCard from "@/components/platform/layout/ContentCard";
 import PasswordInput from "@/components/crm/PasswordInput";
 
-import { prisma } from "@/lib/prisma";
-
 export default async function NewUserPage() {
   await requireRole(["ADMIN"]);
-
-  const departments = await prisma.department.findMany({
-    where: { isActive: true },
-    orderBy: { sortOrder: "asc" }
-  });
 
   return (
     <div className="space-y-4 xl:space-y-6 max-w-4xl mx-auto w-full pb-6">
