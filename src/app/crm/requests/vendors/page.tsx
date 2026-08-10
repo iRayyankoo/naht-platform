@@ -6,15 +6,16 @@ import RequestStatusForm from "@/components/RequestStatusForm";
 import Link from "next/link";
 import FilterBar from "@/components/crm/FilterBar";
 
-export default async function CRMVendorRequests({ searchParams }: { searchParams: { status?: string } }) {
+export default async function CRMVendorRequests({ searchParams }: { searchParams: Promise<{ status?: string | string[] }> }) {
   const session = await getServerSession(authOptions);
-  const userRole = (session?.user as any)?.role;
+  const userRole = (session?.user as { role?: string })?.role;
 
   if (!session || userRole !== "ADMIN") {
     redirect("/crm");
   }
 
-  const statusFilter = searchParams.status || undefined;
+  const params = await searchParams;
+  const statusFilter = typeof params.status === 'string' ? params.status : (Array.isArray(params.status) ? params.status[0] : undefined);
 
   const requests = await prisma.vendorApplication.findMany({
     where: {

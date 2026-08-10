@@ -13,9 +13,9 @@ export default async function VendorDetailsPage({ params }: PageProps) {
   const { id } = await params;
   
   const session = await getServerSession(authOptions);
-  const userRole = (session?.user as any)?.role;
+  const userRole = (session?.user as { role?: string })?.role;
 
-  if (!session || userRole === "VIEWER") {
+  if (!session || userRole !== "ADMIN") {
     redirect("/crm");
   }
 

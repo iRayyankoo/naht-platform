@@ -5,15 +5,16 @@ import { prisma } from "@/lib/prisma";
 import Link from "next/link";
 import FilterBar from "@/components/crm/FilterBar";
 
-export default async function CRMOpportunityRequests({ searchParams }: { searchParams: { status?: string } }) {
+export default async function CRMOpportunityRequests({ searchParams }: { searchParams: Promise<{ status?: string | string[] }> }) {
   const session = await getServerSession(authOptions);
-  const userRole = (session?.user as any)?.role;
+  const userRole = (session?.user as { role?: string })?.role;
 
   if (!session || userRole === "VIEWER") {
     redirect("/crm");
   }
 
-  const statusFilter = searchParams.status || undefined;
+  const params = await searchParams;
+  const statusFilter = typeof params.status === 'string' ? params.status : (Array.isArray(params.status) ? params.status[0] : undefined);
 
   // Fetch only leads of type REAL_ESTATE_OPPORTUNITY
   const opportunities = await prisma.lead.findMany({
