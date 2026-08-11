@@ -15,7 +15,10 @@ export type FinancePermissionCode = "finance.ledger.view" | "finance.account.vie
   | "finance.journal.submit"
   | "finance.journal.review"
   | "finance.journal.void"
-  | "finance.journal.view";
+  | "finance.journal.view"
+  | "finance.report.view"
+  | "finance.report.export";
+
 
 export interface FinanceAuthDependencies {
   getCurrentUser: () => Promise<{ id: string; email?: string | null } | null>;

@@ -41,7 +41,7 @@ export class PeriodService {
       });
 
       return updated;
-    }, { isolationLevel: "Serializable" });
+    }, { isolationLevel: "Serializable", maxWait: 15000, timeout: 15000 });
   }
 
   static async unfreezePeriod(context: FinanceActionContext, periodId: string): Promise<FinanceFiscalPeriod> {
@@ -73,7 +73,7 @@ export class PeriodService {
       });
 
       return updated;
-    }, { isolationLevel: "Serializable" });
+    }, { isolationLevel: "Serializable", maxWait: 15000, timeout: 15000 });
   }
 
   static async closePeriod(context: FinanceActionContext, periodId: string): Promise<FinanceFiscalPeriod> {
@@ -122,6 +122,6 @@ export class PeriodService {
       });
 
       return updated;
-    }, { isolationLevel: "Serializable" });
+    }, { isolationLevel: "Serializable", maxWait: 15000, timeout: 15000 });
   }
 }

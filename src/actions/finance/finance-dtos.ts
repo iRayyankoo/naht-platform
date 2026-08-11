@@ -430,3 +430,30 @@ export const ListPeriodsInputSchema = z.object({
   skip: z.number().int().min(0).default(0),
   take: z.number().int().min(1).max(100).default(50),
 }).strict();
+
+export const TrialBalanceInputSchema = z.object({
+  ledgerId: IdSchema,
+  startDate: z.string().optional(),
+  endDate: z.string().optional(),
+  accountLevel: z.number().int().min(1).max(10).optional(),
+  includeZeroBalances: z.boolean().optional(),
+}).strict();
+
+export const GeneralLedgerInputSchema = z.object({
+  ledgerId: IdSchema,
+  accountId: IdSchema,
+  startDate: z.string().optional(),
+  endDate: z.string().optional(),
+  skip: z.number().int().min(0).default(0),
+  take: z.number().int().min(1).max(100).default(50),
+}).strict();
+
+export const JournalReportInputSchema = z.object({
+  ledgerId: IdSchema.optional(),
+  status: z.enum(["DRAFT", "PENDING_REVIEW", "APPROVED", "POSTED", "VOIDED"]).optional(),
+  startDate: z.string().optional(),
+  endDate: z.string().optional(),
+  search: z.string().optional(),
+  skip: z.number().int().min(0).default(0),
+  take: z.number().int().min(1).max(100).default(50),
+}).strict();

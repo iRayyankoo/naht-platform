@@ -2,6 +2,7 @@
 
 import {
   handleCreateDraft,
+  handleCreateDraftWithLines,
   handleUpdateDraft,
   handleAddLine,
   handleUpdateLine,
@@ -19,6 +20,10 @@ import {
 
 export async function createDraftAction(input: unknown) {
   return handleCreateDraft(input);
+}
+
+export async function createDraftWithLinesAction(input: unknown) {
+  return handleCreateDraftWithLines(input);
 }
 
 export async function updateDraftAction(input: unknown) {

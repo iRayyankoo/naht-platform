@@ -16,7 +16,10 @@ const financePermissions = [
   { code: 'finance.journal.post', description: 'Post journals atomically', module: 'FINANCE', action: 'POST' },
   { code: 'finance.journal.reverse', description: 'Reverse posted journals', module: 'FINANCE', action: 'REVERSE' },
   { code: 'finance.audit.view', description: 'View finance audit logs', module: 'FINANCE', action: 'VIEW' },
+  { code: 'finance.report.view', description: 'View financial reports', module: 'FINANCE', action: 'VIEW' },
+  { code: 'finance.report.export', description: 'Export financial reports', module: 'FINANCE', action: 'EXPORT' },
 ];
+
 
 const financeRoles = [
   { code: 'FINANCE_VIEWER', name: 'Finance Viewer', description: 'Read-only access to finance records' },
@@ -32,6 +35,7 @@ const rolePermissionMap: Record<string, { code: string; scope: PermissionScope }
     { code: 'finance.period.view', scope: 'COMPANY' },
     { code: 'finance.account.view', scope: 'COMPANY' },
     { code: 'finance.journal.view', scope: 'COMPANY' },
+    { code: 'finance.report.view', scope: 'COMPANY' },
   ],
   FINANCE_ACCOUNTANT: [
     { code: 'finance.ledger.view', scope: 'COMPANY' },
@@ -41,6 +45,8 @@ const rolePermissionMap: Record<string, { code: string; scope: PermissionScope }
     { code: 'finance.journal.create', scope: 'SELF' },
     { code: 'finance.journal.submit', scope: 'SELF' },
     { code: 'finance.journal.void', scope: 'SELF' },
+    { code: 'finance.report.view', scope: 'COMPANY' },
+    { code: 'finance.report.export', scope: 'COMPANY' },
   ],
   FINANCE_MANAGER: [
     { code: 'finance.ledger.view', scope: 'COMPANY' },
@@ -50,6 +56,8 @@ const rolePermissionMap: Record<string, { code: string; scope: PermissionScope }
     { code: 'finance.journal.review', scope: 'COMPANY' },
     { code: 'finance.journal.approve', scope: 'COMPANY' },
     { code: 'finance.journal.void', scope: 'COMPANY' },
+    { code: 'finance.report.view', scope: 'COMPANY' },
+    { code: 'finance.report.export', scope: 'COMPANY' },
   ],
   FINANCE_POSTER: [
     { code: 'finance.ledger.view', scope: 'COMPANY' },
@@ -58,6 +66,7 @@ const rolePermissionMap: Record<string, { code: string; scope: PermissionScope }
     { code: 'finance.journal.view', scope: 'COMPANY' },
     { code: 'finance.journal.post', scope: 'COMPANY' },
     { code: 'finance.journal.reverse', scope: 'COMPANY' },
+    { code: 'finance.report.view', scope: 'COMPANY' },
   ],
   FINANCE_ADMIN: [
     { code: 'finance.ledger.view', scope: 'COMPANY' },
@@ -68,7 +77,10 @@ const rolePermissionMap: Record<string, { code: string; scope: PermissionScope }
     { code: 'finance.period.manage', scope: 'COMPANY' },
     { code: 'finance.account.manage', scope: 'COMPANY' },
     { code: 'finance.audit.view', scope: 'COMPANY' },
+    { code: 'finance.report.view', scope: 'COMPANY' },
+    { code: 'finance.report.export', scope: 'COMPANY' },
   ],
+
 };
 
 /**
