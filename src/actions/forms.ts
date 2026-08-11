@@ -5,26 +5,142 @@ import { prisma } from "@/lib/prisma";
 // Basic email validation
 const isValidEmail = (email: string) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
 
-export async function submitContactUs(data: any) {
-  if (!data.name || !data.phone || !data.inquiryType || !data.message) {
-    throw new Error("جميع الحقول الإجبارية مطلوبة");
+function parseOptionalString(value: unknown): string | null {
+  if (value === null || value === undefined) return null;
+  if (typeof value === "string") {
+    const trimmed = value.trim();
+    return trimmed.length > 0 ? trimmed : null;
   }
+  throw new Error("القيمة المدخلة ليست نصاً صالحاً");
+}
+
+function parseRequiredString(value: unknown, fieldName: string): string {
+  if (typeof value === "string") {
+    const trimmed = value.trim();
+    if (trimmed.length > 0) return trimmed;
+  }
+  throw new Error(`حقل ${fieldName} مطلوب ويجب أن يكون نصاً صالحاً`);
+}
+
+function parseOptionalNumber(value: unknown, fieldName: string): number | null {
+  if (value === null || value === undefined || value === "") return null;
+  if (typeof value === "number") {
+    if (Number.isFinite(value)) return value;
+    throw new Error(`حقل ${fieldName} يجب أن يكون رقماً صالحاً`);
+  }
+  if (typeof value === "string") {
+    const trimmed = value.trim();
+    if (trimmed.length === 0) return null;
+    const num = Number(trimmed);
+    if (Number.isFinite(num)) return num;
+  }
+  throw new Error(`حقل ${fieldName} يجب أن يكون رقماً صالحاً`);
+}
+
+function parseOptionalNonNegativeInteger(value: unknown, fieldName: string): number | null {
+  const num = parseOptionalNumber(value, fieldName);
+  if (num === null) return null;
+  if (Number.isInteger(num) && num >= 0) return num;
+  throw new Error(`حقل ${fieldName} يجب أن يكون عدداً صحيحاً غير سالب`);
+}
+
+export interface ContactUsPayload {
+  name?: unknown;
+  phone?: unknown;
+  inquiryType?: unknown;
+  message?: unknown;
+  email?: unknown;
+  utmSource?: unknown;
+  utmMedium?: unknown;
+  utmCampaign?: unknown;
+  utmContent?: unknown;
+  utmTerm?: unknown;
+  landingPageUrl?: unknown;
+  [key: string]: unknown;
+}
+
+export interface OpportunityPayload {
+  name?: unknown;
+  phone?: unknown;
+  opportunityType?: unknown;
+  city?: unknown;
+  district?: unknown;
+  email?: unknown;
+  propertyLocation?: unknown;
+  landArea?: unknown;
+  propertyOwnership?: unknown;
+  notes?: unknown;
+  [key: string]: unknown;
+}
+
+export interface MaintenancePayload {
+  fullName?: unknown;
+  phone?: unknown;
+  issueType?: unknown;
+  description?: unknown;
+  email?: unknown;
+  projectOrUnit?: unknown;
+  attachmentUrl?: unknown;
+  contactTime?: unknown;
+  [key: string]: unknown;
+}
+
+export interface VendorPayload {
+  companyName?: unknown;
+  contactPerson?: unknown;
+  phone?: unknown;
+  email?: unknown;
+  vendorType?: unknown;
+  specialty?: unknown;
+  commercialRecord?: unknown;
+  city?: unknown;
+  companyProfile?: unknown;
+  notes?: unknown;
+  [key: string]: unknown;
+}
+
+export interface CareerPayload {
+  fullName?: unknown;
+  phone?: unknown;
+  email?: unknown;
+  position?: unknown;
+  resumeUrl?: unknown;
+  experienceYears?: unknown;
+  city?: unknown;
+  linkedInUrl?: unknown;
+  notes?: unknown;
+  [key: string]: unknown;
+}
+
+export async function submitContactUs(data: ContactUsPayload) {
+  const name = parseRequiredString(data.name, "الاسم");
+  const phone = parseRequiredString(data.phone, "رقم الجوال");
+  const inquiryType = parseRequiredString(data.inquiryType, "نوع الاستفسار");
+  const message = parseRequiredString(data.message, "الرسالة");
+
+  const email = parseOptionalString(data.email);
+  const utmSource = parseOptionalString(data.utmSource);
+  const utmMedium = parseOptionalString(data.utmMedium);
+  const utmCampaign = parseOptionalString(data.utmCampaign);
+  const utmContent = parseOptionalString(data.utmContent);
+  const utmTerm = parseOptionalString(data.utmTerm);
+  const landingPageUrl = parseOptionalString(data.landingPageUrl);
 
   await prisma.lead.create({
     data: {
-      name: data.name,
-      phone: data.phone,
-      email: data.email || null,
+      name,
+      phone,
+      email,
       formType: "GENERAL",
       leadType: "CONTACT_US",
-      opportunityType: data.inquiryType,
-      message: data.message,
-      utmSource: data.utmSource || null,
-      utmMedium: data.utmMedium || null,
-      utmCampaign: data.utmCampaign || null,
-      utmContent: data.utmContent || null,
-      utmTerm: data.utmTerm || null,
-      landingPageUrl: data.landingPageUrl || null,
+      opportunityType: inquiryType,
+      message,
+      utmSource,
+      utmMedium,
+      utmCampaign,
+      utmContent,
+      utmTerm,
+      landingPageUrl,
       status: "NEW",
     }
   });
@@ -32,25 +148,33 @@ export async function submitContactUs(data: any) {
   return { success: true };
 }
 
-export async function submitOpportunity(data: any) {
-  if (!data.name || !data.phone || !data.opportunityType || !data.city || !data.district) {
-    throw new Error("جميع الحقول الإجبارية مطلوبة");
-  }
+export async function submitOpportunity(data: OpportunityPayload) {
+  const name = parseRequiredString(data.name, "الاسم");
+  const phone = parseRequiredString(data.phone, "رقم الجوال");
+  const opportunityType = parseRequiredString(data.opportunityType, "نوع الفرصة");
+  const city = parseRequiredString(data.city, "المدينة");
+  const district = parseRequiredString(data.district, "الحي");
+
+  const email = parseOptionalString(data.email);
+  const propertyLocation = parseOptionalString(data.propertyLocation);
+  const landArea = parseOptionalNumber(data.landArea, "مساحة الأرض");
+  const propertyOwnership = parseOptionalString(data.propertyOwnership);
+  const message = parseOptionalString(data.notes);
 
   await prisma.lead.create({
     data: {
-      name: data.name,
-      phone: data.phone,
-      email: data.email || null,
+      name,
+      phone,
+      email,
       formType: "GENERAL",
       leadType: "REAL_ESTATE_OPPORTUNITY",
-      opportunityType: data.opportunityType,
-      city: data.city,
-      district: data.district,
-      propertyLocation: data.propertyLocation || null,
-      landArea: data.landArea ? parseFloat(data.landArea) : null,
-      propertyOwnership: data.propertyOwnership || null,
-      message: data.notes || null,
+      opportunityType,
+      city,
+      district,
+      propertyLocation,
+      landArea,
+      propertyOwnership,
+      message,
       status: "NEW",
     }
   });
@@ -58,21 +182,28 @@ export async function submitOpportunity(data: any) {
   return { success: true };
 }
 
-export async function submitMaintenance(data: any) {
-  if (!data.fullName || !data.phone || !data.issueType || !data.description) {
-    throw new Error("جميع الحقول الإجبارية مطلوبة");
-  }
+export async function submitMaintenance(data: MaintenancePayload) {
+  const fullName = parseRequiredString(data.fullName, "الاسم الكامل");
+  const phone = parseRequiredString(data.phone, "رقم الجوال");
+  const issueType = parseRequiredString(data.issueType, "نوع المشكلة");
+  const description = parseRequiredString(data.description, "وصف المشكلة");
+
+  const email = parseOptionalString(data.email);
+  const projectOrUnit = parseOptionalString(data.projectOrUnit);
+  const attachmentUrl = parseOptionalString(data.attachmentUrl);
+  const contactTime = parseOptionalString(data.contactTime);
+  const notes = contactTime ? `الوقت المناسب للتواصل: ${contactTime}` : null;
 
   await prisma.maintenanceRequest.create({
     data: {
-      fullName: data.fullName,
-      phone: data.phone,
-      email: data.email || null,
-      projectOrUnit: data.projectOrUnit || null,
-      issueType: data.issueType,
-      description: data.description,
-      attachmentUrl: data.attachmentUrl || null,
-      notes: data.contactTime ? `الوقت المناسب للتواصل: ${data.contactTime}` : null,
+      fullName,
+      phone,
+      email,
+      projectOrUnit,
+      issueType,
+      description,
+      attachmentUrl,
+      notes,
       status: "NEW",
     }
   });
@@ -80,27 +211,35 @@ export async function submitMaintenance(data: any) {
   return { success: true };
 }
 
-export async function submitVendor(data: any) {
-  if (!data.companyName || !data.contactPerson || !data.phone || !data.email || !data.vendorType || !data.specialty) {
-    throw new Error("جميع الحقول الإجبارية مطلوبة");
-  }
+export async function submitVendor(data: VendorPayload) {
+  const companyName = parseRequiredString(data.companyName, "اسم الشركة");
+  const contactPerson = parseRequiredString(data.contactPerson, "الشخص المسؤول");
+  const phone = parseRequiredString(data.phone, "رقم الجوال");
+  const email = parseRequiredString(data.email, "البريد الإلكتروني");
+  const vendorType = parseRequiredString(data.vendorType, "نوع المورد");
+  const specialty = parseRequiredString(data.specialty, "التخصص");
 
-  if (!isValidEmail(data.email)) {
+  if (!isValidEmail(email)) {
     throw new Error("البريد الإلكتروني غير صالح");
   }
+
+  const commercialRecord = parseOptionalString(data.commercialRecord);
+  const city = parseOptionalString(data.city);
+  const companyProfile = parseOptionalString(data.companyProfile);
+  const notes = parseOptionalString(data.notes);
 
   await prisma.vendorApplication.create({
     data: {
-      companyName: data.companyName,
-      contactPerson: data.contactPerson,
-      phone: data.phone,
-      email: data.email,
-      vendorType: data.vendorType,
-      specialty: data.specialty,
-      commercialRecord: data.commercialRecord || null,
-      city: data.city || null,
-      companyProfile: data.companyProfile || null,
-      notes: data.notes || null,
+      companyName,
+      contactPerson,
+      phone,
+      email,
+      vendorType,
+      specialty,
+      commercialRecord,
+      city,
+      companyProfile,
+      notes,
       status: "NEW",
     }
   });
@@ -108,26 +247,33 @@ export async function submitVendor(data: any) {
   return { success: true };
 }
 
-export async function submitCareer(data: any) {
-  if (!data.fullName || !data.phone || !data.email || !data.position || !data.resumeUrl) {
-    throw new Error("جميع الحقول الإجبارية مطلوبة، بما في ذلك السيرة الذاتية");
-  }
+export async function submitCareer(data: CareerPayload) {
+  const fullName = parseRequiredString(data.fullName, "الاسم الكامل");
+  const phone = parseRequiredString(data.phone, "رقم الجوال");
+  const email = parseRequiredString(data.email, "البريد الإلكتروني");
+  const position = parseRequiredString(data.position, "الوظيفة المتقدم لها");
+  const resumeUrl = parseRequiredString(data.resumeUrl, "رابط السيرة الذاتية");
 
-  if (!isValidEmail(data.email)) {
+  if (!isValidEmail(email)) {
     throw new Error("البريد الإلكتروني غير صالح");
   }
 
+  const experienceYears = parseOptionalNonNegativeInteger(data.experienceYears, "سنوات الخبرة");
+  const city = parseOptionalString(data.city);
+  const linkedInUrl = parseOptionalString(data.linkedInUrl);
+  const notes = parseOptionalString(data.notes);
+
   await prisma.jobApplication.create({
     data: {
-      fullName: data.fullName,
-      phone: data.phone,
-      email: data.email,
-      position: data.position,
-      experienceYears: data.experienceYears ? parseInt(data.experienceYears) : null,
-      city: data.city || null,
-      linkedInUrl: data.linkedInUrl || null,
-      resumeUrl: data.resumeUrl,
-      notes: data.notes || null,
+      fullName,
+      phone,
+      email,
+      position,
+      experienceYears,
+      city,
+      linkedInUrl,
+      resumeUrl,
+      notes,
       status: "NEW",
     }
   });

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { useRouter } from "next/navigation";
 import SelectInput from "./SelectInput";
 
@@ -10,27 +10,38 @@ interface LeadFormProps {
   formType?: string;
 }
 
+export interface UtmData {
+  utmSource?: string;
+  utmMedium?: string;
+  utmCampaign?: string;
+  utmContent?: string;
+  utmTerm?: string;
+  landingPageUrl?: string;
+  referrer?: string;
+  deviceType?: string;
+  platform?: string;
+}
+
+function getUtmData(): UtmData {
+  if (typeof window === "undefined") return {};
+  const urlParams = new URLSearchParams(window.location.search);
+  return {
+    utmSource: urlParams.get("utm_source") || "",
+    utmMedium: urlParams.get("utm_medium") || "",
+    utmCampaign: urlParams.get("utm_campaign") || "",
+    utmContent: urlParams.get("utm_content") || "",
+    utmTerm: urlParams.get("utm_term") || "",
+    landingPageUrl: window.location.href,
+    referrer: document.referrer || "",
+    deviceType: /Mobile|Android|iP(ad|hone)/.test(navigator.userAgent) ? "Mobile" : "Desktop",
+    platform: navigator.platform,
+  };
+}
+
 export default function LeadForm({ projectId, projectSlug, formType = "GENERAL" }: LeadFormProps) {
   const router = useRouter();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState("");
-  const [utmData, setUtmData] = useState<any>({});
-
-  useEffect(() => {
-    // Capture UTM and Tracking Data on mount
-    const urlParams = new URLSearchParams(window.location.search);
-    setUtmData({
-      utmSource: urlParams.get("utm_source") || "",
-      utmMedium: urlParams.get("utm_medium") || "",
-      utmCampaign: urlParams.get("utm_campaign") || "",
-      utmContent: urlParams.get("utm_content") || "",
-      utmTerm: urlParams.get("utm_term") || "",
-      landingPageUrl: window.location.href,
-      referrer: document.referrer || "",
-      deviceType: /Mobile|Android|iP(ad|hone)/.test(navigator.userAgent) ? "Mobile" : "Desktop",
-      platform: navigator.platform,
-    });
-  }, []);
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -47,6 +58,7 @@ export default function LeadForm({ projectId, projectSlug, formType = "GENERAL" 
     }
 
     const data = Object.fromEntries(formData.entries());
+    const utmData = getUtmData();
 
     const payload = {
       ...data,
@@ -78,7 +90,7 @@ export default function LeadForm({ projectId, projectSlug, formType = "GENERAL" 
         setError(result.message || "حدث خطأ غير متوقع. يرجى المحاولة مرة أخرى.");
         setIsSubmitting(false);
       }
-    } catch (err) {
+    } catch {
       setError("تعذر الاتصال بالخادم. يرجى المحاولة مرة أخرى.");
       setIsSubmitting(false);
     }

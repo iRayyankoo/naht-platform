@@ -1,10 +1,12 @@
 "use client";
 
 import { useState } from "react";
+import type { HomePageContent } from "@prisma/client";
 import { updateHomePageContent } from "@/actions/cms";
 import { updateProjectMapData } from "@/actions/projects";
 import toast from "react-hot-toast";
 import Link from "next/link";
+import Image from "next/image";
 import ImageUpload from "@/components/crm/ImageUpload";
 import dynamic from "next/dynamic";
 
@@ -13,13 +15,30 @@ const InteractiveMapPreview = dynamic(() => import('@/app/(public)/components/In
   loading: () => <div className="h-[400px] bg-gray-100 animate-pulse rounded-xl flex items-center justify-center">جاري تحميل المعاينة...</div>
 });
 
+export type MapContentSettings = HomePageContent;
+
+export interface MapProjectItem {
+  id: string;
+  name: string;
+  status: string;
+  city: string;
+  neighborhood: string;
+  isVisible?: boolean;
+  showOnHomeMap?: boolean;
+  mapLat?: number | string | null;
+  mapLng?: number | string | null;
+  mapX?: number | string | null;
+  mapY?: number | string | null;
+  [key: string]: unknown;
+}
+
 interface MapManagerClientProps {
-  content: any;
-  projects: any[];
+  content: HomePageContent;
+  projects: MapProjectItem[];
 }
 
 export default function MapManagerClient({ content, projects: initialProjects }: MapManagerClientProps) {
-  const [projects, setProjects] = useState(initialProjects);
+  const [projects, setProjects] = useState<MapProjectItem[]>(initialProjects);
   const [isSavingContent, setIsSavingContent] = useState(false);
   const [savingProjectId, setSavingProjectId] = useState<string | null>(null);
 
@@ -63,7 +82,6 @@ export default function MapManagerClient({ content, projects: initialProjects }:
         setMapTileBrightness(100); setMapTileContrast(110); setMapTileSaturation(0); setMapTileHue(0); setMapTileGrayscale(100);
         break;
       case "dark":
-        // simple dark mode inversion using CSS filters can be complex, but let's do a basic dimming for "dark"
         setMapTileBrightness(40); setMapTileContrast(120); setMapTileSaturation(80); setMapTileHue(0); setMapTileGrayscale(10);
         break;
       case "default":
@@ -99,7 +117,7 @@ export default function MapManagerClient({ content, projects: initialProjects }:
     toast.success("تم إعادة ضبط المعاينة للبيانات المحفوظة");
   };
 
-  const previewContent = {
+  const previewContent: HomePageContent = {
     ...content,
     showMapSection,
     mapSectionTitle,
@@ -131,30 +149,32 @@ export default function MapManagerClient({ content, projects: initialProjects }:
     try {
       await updateHomePageContent(previewContent);
       toast.success("تم حفظ إعدادات الخريطة بنجاح");
-    } catch (err: any) {
-      toast.error(err.message || "حدث خطأ أثناء حفظ الإعدادات");
+    } catch (err: unknown) {
+      const errMsg = err instanceof Error ? err.message : "حدث خطأ أثناء حفظ الإعدادات";
+      toast.error(errMsg);
     } finally {
       setIsSavingContent(false);
     }
   };
 
-  const handleProjectUpdate = (id: string, field: string, value: any) => {
+  const handleProjectUpdate = (id: string, field: keyof MapProjectItem, value: unknown) => {
     setProjects(projects.map(p => p.id === id ? { ...p, [field]: value } : p));
   };
 
-  const saveProjectMapData = async (project: any) => {
+  const saveProjectMapData = async (project: MapProjectItem) => {
     setSavingProjectId(project.id);
     try {
       await updateProjectMapData(project.id, {
-        showOnHomeMap: project.showOnHomeMap,
-        mapLat: project.mapLat ? parseFloat(project.mapLat) : null,
-        mapLng: project.mapLng ? parseFloat(project.mapLng) : null,
-        mapX: project.mapX ? parseFloat(project.mapX) : null,
-        mapY: project.mapY ? parseFloat(project.mapY) : null,
+        showOnHomeMap: Boolean(project.showOnHomeMap),
+        mapLat: project.mapLat ? parseFloat(String(project.mapLat)) : null,
+        mapLng: project.mapLng ? parseFloat(String(project.mapLng)) : null,
+        mapX: project.mapX ? parseFloat(String(project.mapX)) : null,
+        mapY: project.mapY ? parseFloat(String(project.mapY)) : null,
       });
       toast.success(`تم حفظ إحداثيات ${project.name} بنجاح`);
-    } catch (err: any) {
-      toast.error(err.message || "حدث خطأ أثناء الحفظ");
+    } catch (err: unknown) {
+      const errMsg = err instanceof Error ? err.message : "حدث خطأ أثناء الحفظ";
+      toast.error(errMsg);
     } finally {
       setSavingProjectId(null);
     }
@@ -360,9 +380,12 @@ export default function MapManagerClient({ content, projects: initialProjects }:
                       }}
                     >
                       {pinLogoUrl && (
-                        <img 
+                        <Image
                           src={pinLogoUrl} 
-                          alt="Pin Logo" 
+                          alt="شعار الخريطة"
+                          width={pinLogoSize}
+                          height={pinLogoSize}
+                          unoptimized
                           style={{ 
                             width: `${pinLogoSize}px`, 
                             height: `${pinLogoSize}px`, 
@@ -385,7 +408,7 @@ export default function MapManagerClient({ content, projects: initialProjects }:
             <button type="button" onClick={handleResetPreview} disabled={isSavingContent} className="bg-gray-100 hover:bg-gray-200 text-gray-700 px-8 py-2.5 rounded-md font-bold disabled:opacity-50">
               إعادة ضبط المعاينة
             </button>
-            <button type="submit" disabled={isSavingContent} className="bg-primary hover:bg-primary-dark text-white px-8 py-2.5 rounded-md font-bold disabled:opacity-50">
+            <button type="submit" disabled={isSavingContent} className="bg-primary hover:bg-primary-dark text-[#ffffff] px-8 py-2.5 rounded-md font-bold disabled:opacity-50">
               {isSavingContent ? "جاري الحفظ..." : "حفظ الإعدادات العامة"}
             </button>
           </div>
@@ -397,7 +420,7 @@ export default function MapManagerClient({ content, projects: initialProjects }:
         <div className="p-6 border-b border-gray-100 flex justify-between items-center bg-gray-50">
           <div>
             <h2 className="text-xl font-bold text-gray-900">معاينة مباشرة للخريطة (Live Preview)</h2>
-            <p className="text-sm text-gray-500 mt-1">تعكس التعديلات لحظياً. التعديلات لن تظهر في الموقع حتى تضغط على "حفظ".</p>
+            <p className="text-sm text-gray-500 mt-1">تعكس التعديلات لحظياً. التعديلات لن تظهر في الموقع حتى تضغط على &quot;حفظ&quot;.</p>
           </div>
           <span className="bg-blue-100 text-blue-800 text-xs px-3 py-1 rounded-full font-bold animate-pulse">Live</span>
         </div>
@@ -460,7 +483,7 @@ export default function MapManagerClient({ content, projects: initialProjects }:
                         <input 
                           type="checkbox" 
                           className="sr-only peer"
-                          checked={project.showOnHomeMap}
+                          checked={Boolean(project.showOnHomeMap)}
                           onChange={(e) => handleProjectUpdate(project.id, 'showOnHomeMap', e.target.checked)}
                         />
                         <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none rounded-full peer peer-checked:after:-translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:right-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-primary"></div>

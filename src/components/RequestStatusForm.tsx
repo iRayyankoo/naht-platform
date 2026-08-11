@@ -37,7 +37,7 @@ export default function RequestStatusForm({ id, currentStatus, type, options }: 
       }
       setMessage({ type: "success", text: "تم التحديث" });
       setTimeout(() => setMessage(null), 2000);
-    } catch (err: any) {
+    } catch {
       setMessage({ type: "error", text: "حدث خطأ" });
       setStatusValue(currentStatus); // revert
     } finally {

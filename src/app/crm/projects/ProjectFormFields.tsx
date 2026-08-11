@@ -3,28 +3,65 @@
 import { useState } from "react";
 import ImageUpload from "@/components/crm/ImageUpload";
 
-interface ProjectFeature {
+export interface ProjectFeature {
   id?: string;
   title: string;
-  desc: string;
-  icon: string;
+  desc?: string | null;
+  icon?: string | null;
+  order?: number;
 }
 
-interface ProjectWarranty {
+export interface ProjectWarranty {
   id?: string;
   title: string;
-  desc: string;
-  duration: string;
+  desc?: string | null;
+  duration?: string | null;
+  order?: number;
 }
 
-interface ProjectGalleryImage {
+export interface ProjectGalleryImage {
   id?: string;
   url: string;
-  alt: string;
+  alt?: string | null;
+  order?: number;
+}
+
+export interface ProjectInitialData {
+  id?: string;
+  name?: string;
+  slug?: string;
+  type?: string;
+  city?: string;
+  neighborhood?: string;
+  status?: string;
+  shortDesc?: string | null;
+  fullDesc?: string | null;
+  price?: number | string | null;
+  area?: number | string | null;
+  rooms?: number | string | null;
+  baths?: number | string | null;
+  progressPercent?: number | string | null;
+  progressLabel?: string | null;
+  mainImage?: string | null;
+  planImage?: string | null;
+  pdfUrl?: string | null;
+  locationText?: string | null;
+  googleMapsUrl?: string | null;
+  showOnHomeMap?: boolean | null;
+  mapLat?: number | string | null;
+  mapLng?: number | string | null;
+  mapX?: number | string | null;
+  mapY?: number | string | null;
+  isVisible?: boolean | null;
+  isFeatured?: boolean | null;
+  features?: ProjectFeature[];
+  warranties?: ProjectWarranty[];
+  galleryImages?: ProjectGalleryImage[];
+  [key: string]: unknown;
 }
 
 interface ProjectFormFieldsProps {
-  initialData?: any;
+  initialData?: ProjectInitialData;
 }
 
 export default function ProjectFormFields({ initialData }: ProjectFormFieldsProps) {
@@ -182,13 +219,13 @@ export default function ProjectFormFields({ initialData }: ProjectFormFieldsProp
             <div>
               <label className="block text-sm font-medium text-gray-700">الوصف المختصر</label>
               <p className="text-xs text-gray-500 mb-1">يظهر في نتائج البحث وبطاقة المشروع</p>
-              <textarea name="shortDesc" rows={2} defaultValue={initialData?.shortDesc}
+              <textarea name="shortDesc" rows={2} defaultValue={initialData?.shortDesc || ""}
                 className="block w-full border border-gray-300 rounded-md py-2 px-3 text-sm shadow-sm focus:ring-[#D4AF37] focus:border-[#D4AF37]" />
             </div>
             <div>
               <label className="block text-sm font-medium text-gray-700">الوصف الكامل</label>
               <p className="text-xs text-gray-500 mb-1">يظهر في صفحة المشروع الداخلية</p>
-              <textarea name="fullDesc" rows={5} defaultValue={initialData?.fullDesc}
+              <textarea name="fullDesc" rows={5} defaultValue={initialData?.fullDesc || ""}
                 className="block w-full border border-gray-300 rounded-md py-2 px-3 text-sm shadow-sm focus:ring-[#D4AF37] focus:border-[#D4AF37]" />
             </div>
           </div>
@@ -202,22 +239,22 @@ export default function ProjectFormFields({ initialData }: ProjectFormFieldsProp
             <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
               <div>
                 <label className="block text-xs font-medium text-gray-600 mb-1">السعر يبدأ من (ر.س)</label>
-                <input type="number" name="price" defaultValue={initialData?.price} placeholder="1500000"
+                <input type="number" name="price" defaultValue={initialData?.price ?? ""} placeholder="1500000"
                   className="block w-full border border-gray-300 rounded-md py-2 px-3 text-sm shadow-sm focus:ring-[#D4AF37] focus:border-[#D4AF37]" />
               </div>
               <div>
                 <label className="block text-xs font-medium text-gray-600 mb-1">المساحة (م²)</label>
-                <input type="number" name="area" defaultValue={initialData?.area} placeholder="350"
+                <input type="number" name="area" defaultValue={initialData?.area ?? ""} placeholder="350"
                   className="block w-full border border-gray-300 rounded-md py-2 px-3 text-sm shadow-sm focus:ring-[#D4AF37] focus:border-[#D4AF37]" />
               </div>
               <div>
                 <label className="block text-xs font-medium text-gray-600 mb-1">عدد الغرف</label>
-                <input type="number" name="rooms" defaultValue={initialData?.rooms} placeholder="5"
+                <input type="number" name="rooms" defaultValue={initialData?.rooms ?? ""} placeholder="5"
                   className="block w-full border border-gray-300 rounded-md py-2 px-3 text-sm shadow-sm focus:ring-[#D4AF37] focus:border-[#D4AF37]" />
               </div>
               <div>
                 <label className="block text-xs font-medium text-gray-600 mb-1">دورات المياه</label>
-                <input type="number" name="baths" defaultValue={initialData?.baths} placeholder="4"
+                <input type="number" name="baths" defaultValue={initialData?.baths ?? ""} placeholder="4"
                   className="block w-full border border-gray-300 rounded-md py-2 px-3 text-sm shadow-sm focus:ring-[#D4AF37] focus:border-[#D4AF37]" />
               </div>
             </div>
@@ -232,13 +269,13 @@ export default function ProjectFormFields({ initialData }: ProjectFormFieldsProp
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div>
                 <label className="block text-xs font-medium text-gray-600 mb-1">النسبة % (0–100)</label>
-                <input type="number" name="progressPercent" min="0" max="100" defaultValue={initialData?.progressPercent} placeholder="85"
+                <input type="number" name="progressPercent" min="0" max="100" defaultValue={initialData?.progressPercent ?? ""} placeholder="85"
                   className="block w-full border border-gray-300 rounded-md py-2 px-3 text-sm shadow-sm focus:ring-[#D4AF37] focus:border-[#D4AF37]" />
                 <p className="text-xs text-gray-500 mt-1">اتركه فارغاً لإخفاء شريط الإنجاز.</p>
               </div>
               <div>
                 <label className="block text-xs font-medium text-gray-600 mb-1">تسمية شريط الإنجاز</label>
-                <input type="text" name="progressLabel" defaultValue={initialData?.progressLabel} placeholder="نسبة الإنجاز العام للمشروع"
+                <input type="text" name="progressLabel" defaultValue={initialData?.progressLabel || ""} placeholder="نسبة الإنجاز العام للمشروع"
                   className="block w-full border border-gray-300 rounded-md py-2 px-3 text-sm shadow-sm focus:ring-[#D4AF37] focus:border-[#D4AF37]" />
               </div>
             </div>
@@ -258,7 +295,7 @@ export default function ProjectFormFields({ initialData }: ProjectFormFieldsProp
               الصورة الرئيسية (غلاف المشروع)
             </h3>
             <p className="text-xs text-gray-500 mb-3">تظهر في بطاقة المشروع وأعلى صفحته الداخلية.</p>
-            <ImageUpload name="mainImage" label="الصورة الرئيسية" defaultValue={initialData?.mainImage} />
+            <ImageUpload name="mainImage" label="الصورة الرئيسية" defaultValue={initialData?.mainImage || ""} />
           </div>
 
           {/* المخطط العام */}
@@ -267,7 +304,7 @@ export default function ProjectFormFields({ initialData }: ProjectFormFieldsProp
               <span className="w-1 h-4 bg-[#D4AF37] rounded-full"></span>
               المخطط العام للمشروع
             </h3>
-            <p className="text-xs text-gray-500 mb-3">يظهر في قسم "المخطط العام" بصفحة المشروع.</p>
+            <p className="text-xs text-gray-500 mb-3">يظهر في قسم &quot;المخطط العام&quot; بصفحة المشروع.</p>
             <ImageUpload name="planImage" label="المخطط العام" defaultValue={initialData?.planImage || ""} />
           </div>
 
@@ -309,7 +346,7 @@ export default function ProjectFormFields({ initialData }: ProjectFormFieldsProp
               ))}
               {galleryImages.length === 0 && (
                 <div className="text-center py-8 text-gray-400 text-sm border-2 border-dashed border-gray-200 rounded-lg">
-                  لا توجد صور في المعرض. اضغط "+ إضافة صورة" للبدء.
+                  لا توجد صور في المعرض. اضغط &quot;+ إضافة صورة&quot; للبدء.
                 </div>
               )}
             </div>
@@ -321,7 +358,7 @@ export default function ProjectFormFields({ initialData }: ProjectFormFieldsProp
               <span className="w-1 h-4 bg-[#D4AF37] rounded-full"></span>
               ملف PDF — بروفايل المشروع
             </h3>
-            <input type="url" name="pdfUrl" defaultValue={initialData?.pdfUrl} placeholder="https://..."
+            <input type="url" name="pdfUrl" defaultValue={initialData?.pdfUrl || ""} placeholder="https://..."
               className="block w-full border border-gray-300 rounded-md py-2 px-3 text-sm shadow-sm focus:ring-[#D4AF37] focus:border-[#D4AF37]" dir="ltr" />
             <p className="text-xs text-gray-500 mt-1">رابط ملف PDF خارجي (اختياري).</p>
           </div>
@@ -340,13 +377,13 @@ export default function ProjectFormFields({ initialData }: ProjectFormFieldsProp
             </h3>
             <div>
               <label className="block text-sm font-medium text-gray-700">وصف الموقع النصي</label>
-              <input type="text" name="locationText" defaultValue={initialData?.locationText}
+              <input type="text" name="locationText" defaultValue={initialData?.locationText || ""}
                 placeholder="مثال: يقع على تقاطع طريق الملك فهد مع الدائري الشمالي"
                 className="mt-1 block w-full border border-gray-300 rounded-md py-2 px-3 text-sm shadow-sm focus:ring-[#D4AF37] focus:border-[#D4AF37]" />
             </div>
             <div>
               <label className="block text-sm font-medium text-gray-700">رابط خرائط جوجل</label>
-              <input type="url" name="googleMapsUrl" defaultValue={initialData?.googleMapsUrl}
+              <input type="url" name="googleMapsUrl" defaultValue={initialData?.googleMapsUrl || ""}
                 placeholder="https://maps.google.com/..."
                 className="mt-1 block w-full border border-gray-300 rounded-md py-2 px-3 text-sm shadow-sm focus:ring-[#D4AF37] focus:border-[#D4AF37]" dir="ltr" />
             </div>
@@ -354,7 +391,7 @@ export default function ProjectFormFields({ initialData }: ProjectFormFieldsProp
 
           <div className="bg-blue-50/60 rounded-xl p-5 border border-blue-100 space-y-4">
             <div className="flex items-start gap-3">
-              <input name="showOnHomeMap" id="showOnHomeMap" type="checkbox" defaultChecked={initialData?.showOnHomeMap}
+              <input name="showOnHomeMap" id="showOnHomeMap" type="checkbox" defaultChecked={Boolean(initialData?.showOnHomeMap)}
                 className="mt-0.5 h-4 w-4 text-[#D4AF37] border-gray-300 rounded focus:ring-[#D4AF37]" />
               <div>
                 <label htmlFor="showOnHomeMap" className="text-sm font-medium text-gray-800 cursor-pointer">
@@ -369,13 +406,13 @@ export default function ProjectFormFields({ initialData }: ProjectFormFieldsProp
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-2">
               <div>
                 <label className="block text-xs font-medium text-gray-700 mb-1">Latitude (دائرة العرض)</label>
-                <input type="number" step="any" name="mapLat" defaultValue={initialData?.mapLat}
+                <input type="number" step="any" name="mapLat" defaultValue={initialData?.mapLat ?? ""}
                   placeholder="24.7136"
                   className="block w-full border border-gray-300 rounded-md py-2 px-3 text-sm shadow-sm focus:ring-[#D4AF37] focus:border-[#D4AF37]" dir="ltr" />
               </div>
               <div>
                 <label className="block text-xs font-medium text-gray-700 mb-1">Longitude (خط الطول)</label>
-                <input type="number" step="any" name="mapLng" defaultValue={initialData?.mapLng}
+                <input type="number" step="any" name="mapLng" defaultValue={initialData?.mapLng ?? ""}
                   placeholder="46.6753"
                   className="block w-full border border-gray-300 rounded-md py-2 px-3 text-sm shadow-sm focus:ring-[#D4AF37] focus:border-[#D4AF37]" dir="ltr" />
               </div>
@@ -401,7 +438,7 @@ export default function ProjectFormFields({ initialData }: ProjectFormFieldsProp
                   <span className="w-1 h-4 bg-[#D4AF37] rounded-full"></span>
                   مميزات ومرافق المشروع
                 </h3>
-                <p className="text-xs text-gray-500 mt-0.5">تظهر في قسم "أبرز المرافق" بصفحة المشروع.</p>
+                <p className="text-xs text-gray-500 mt-0.5">تظهر في قسم &quot;أبرز المرافق&quot; بصفحة المشروع.</p>
               </div>
               <button type="button" onClick={addFeature}
                 className="text-sm bg-[#D4AF37]/10 hover:bg-[#D4AF37]/20 text-[#b5952f] border border-[#D4AF37]/30 py-1.5 px-3 rounded-md font-medium transition">
@@ -441,7 +478,7 @@ export default function ProjectFormFields({ initialData }: ProjectFormFieldsProp
                   <span className="w-1 h-4 bg-[#D4AF37] rounded-full"></span>
                   ضمانات المشروع
                 </h3>
-                <p className="text-xs text-gray-500 mt-0.5">تظهر في قسم "الضمانات" بصفحة المشروع.</p>
+                <p className="text-xs text-gray-500 mt-0.5">تظهر في قسم &quot;الضمانات&quot; بصفحة المشروع.</p>
               </div>
               <button type="button" onClick={addWarranty}
                 className="text-sm bg-[#D4AF37]/10 hover:bg-[#D4AF37]/20 text-[#b5952f] border border-[#D4AF37]/30 py-1.5 px-3 rounded-md font-medium transition">
@@ -490,7 +527,7 @@ export default function ProjectFormFields({ initialData }: ProjectFormFieldsProp
             </h3>
 
             <label className="flex items-start gap-3 cursor-pointer group">
-              <input name="isVisible" type="checkbox" defaultChecked={initialData ? initialData.isVisible : true}
+              <input name="isVisible" type="checkbox" defaultChecked={initialData ? Boolean(initialData.isVisible) : true}
                 className="mt-0.5 h-4 w-4 text-[#D4AF37] border-gray-300 rounded focus:ring-[#D4AF37]" />
               <div>
                 <span className="text-sm font-medium text-gray-800 group-hover:text-gray-900">مرئي للزوار في الموقع</span>
@@ -499,7 +536,7 @@ export default function ProjectFormFields({ initialData }: ProjectFormFieldsProp
             </label>
 
             <label className="flex items-start gap-3 cursor-pointer group">
-              <input name="isFeatured" type="checkbox" defaultChecked={initialData?.isFeatured}
+              <input name="isFeatured" type="checkbox" defaultChecked={Boolean(initialData?.isFeatured)}
                 className="mt-0.5 h-4 w-4 text-[#D4AF37] border-gray-300 rounded focus:ring-[#D4AF37]" />
               <div>
                 <span className="text-sm font-medium text-gray-800 group-hover:text-gray-900">مميز (يظهر في الصفحة الرئيسية)</span>
