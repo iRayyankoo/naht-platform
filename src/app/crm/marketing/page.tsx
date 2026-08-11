@@ -12,24 +12,24 @@ export default async function MarketingDashboardPage() {
   return (
     <div className="p-6 md:p-8 max-w-7xl mx-auto space-y-8" dir="rtl">
       {/* Demo Header Banner */}
-      <div className="bg-gradient-to-r from-amber-900/90 via-amber-800 to-amber-950 p-6 rounded-3xl text-white shadow-xl relative overflow-hidden">
-        <div className="absolute top-3 left-3 bg-amber-500/30 text-amber-200 text-xs px-3 py-1 rounded-full font-bold backdrop-blur-md border border-amber-400/30">
-          بيانات تجريبية - Demo Sprint
-        </div>
-        <div className="max-w-2xl">
-          <h1 className="text-2xl md:text-3xl font-bold tracking-tight mb-2">
+      <div className="bg-gradient-to-r from-amber-900/90 via-amber-800 to-amber-950 p-6 rounded-3xl text-white shadow-xl flex flex-col md:flex-row md:items-start justify-between gap-4">
+        <div className="max-w-2xl space-y-2">
+          <h1 className="text-2xl md:text-3xl font-bold tracking-tight">
             مركز التسويق الموحد
           </h1>
           <p className="text-amber-100/90 text-sm md:text-base leading-relaxed">
             منصة تجريبية متكاملة لتخطيط وتنسيق حملات شركة نحت العقارية، متابعة أداء المحتوى، وإرشادات التحويل إلى العملاء.
           </p>
         </div>
+        <div className="self-start bg-amber-500/30 text-amber-200 text-xs px-3 py-1.5 rounded-full font-bold backdrop-blur-md border border-amber-400/30 whitespace-nowrap">
+          بيانات تجريبية - Demo Sprint
+        </div>
       </div>
 
       {/* Section 1: Demo Sprint Pages */}
       <div className="space-y-3">
         <div className="flex items-center gap-2">
-          <h2 className="text-base font-bold text-gray-900">أقسام العرض التجريبي (Demo Features)</h2>
+          <h2 className="text-base font-bold text-gray-900">أقسام العرض التجريبي</h2>
           <span className="text-xs text-amber-700 bg-amber-50 px-2.5 py-0.5 rounded-full font-bold">بيانات تجريبية</span>
         </div>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">

@@ -19,17 +19,17 @@ export default async function HrDashboardPage() {
   return (
     <div className="p-6 md:p-8 max-w-7xl mx-auto space-y-8" dir="rtl">
       {/* Demo Header Banner */}
-      <div className="bg-gradient-to-r from-gray-900 via-gray-800 to-gray-950 p-6 rounded-3xl text-white shadow-xl relative overflow-hidden">
-        <div className="absolute top-3 left-3 bg-amber-500/20 text-amber-300 text-xs px-3 py-1 rounded-full font-bold backdrop-blur-md border border-amber-500/30">
-          بيانات تجريبية - مؤمن للـ ADMIN فقط
-        </div>
-        <div className="max-w-2xl">
-          <h1 className="text-2xl md:text-3xl font-bold tracking-tight mb-2">
+      <div className="bg-gradient-to-r from-gray-900 via-gray-800 to-gray-950 p-6 rounded-3xl text-white shadow-xl flex flex-col md:flex-row md:items-start justify-between gap-4">
+        <div className="max-w-2xl space-y-2">
+          <h1 className="text-2xl md:text-3xl font-bold tracking-tight">
             نظام الموارد البشرية (HR Hub)
           </h1>
           <p className="text-gray-300 text-sm md:text-base leading-relaxed">
             إدارة البيانات الوظيفية العامة، دليل الموظفين، طلبات الإجازات، ومتابعة صلاحية العقود والوثائق الرسمية.
           </p>
+        </div>
+        <div className="self-start bg-amber-500/20 text-amber-300 text-xs px-3 py-1.5 rounded-full font-bold backdrop-blur-md border border-amber-500/30 whitespace-nowrap">
+          بيانات تجريبية - مؤمن للـ ADMIN فقط
         </div>
       </div>
 
