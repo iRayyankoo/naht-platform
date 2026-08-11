@@ -41,6 +41,31 @@ const allNavGroups: NavGroup[] = [
     ],
   },
   {
+    id: "marketing_hub",
+    title: "مركز التسويق",
+    icon: (
+      <svg className="w-5 h-5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M11 5.882V19.24a1.76 1.76 0 01-3.417.592l-2.147-6.15M18 13a3 3 0 100-6M5.436 13.683A4.001 4.001 0 017 6h1.832c4.1 0 7.625-1.234 9.168-3v14c-1.543-1.766-5.067-3-9.168-3H7a3.988 3.988 0 01-1.564-.317z"></path></svg>
+    ),
+    links: [
+      { name: "لوحة التسويق", href: "/crm/marketing", exact: true },
+      { name: "خطة وتقويم المحتوى", href: "/crm/marketing/content" },
+      { name: "تحليلات الأداء", href: "/crm/marketing/analytics" },
+    ],
+  },
+  {
+    id: "hr",
+    title: "الموارد البشرية",
+    icon: (
+      <svg className="w-5 h-5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"></path></svg>
+    ),
+    links: [
+      { name: "لوحة الموارد البشرية", href: "/crm/hr", exact: true },
+      { name: "دليل الموظفين", href: "/crm/hr/employees" },
+      { name: "طلبات الإجازات", href: "/crm/hr/leaves" },
+      { name: "العقود والوثائق", href: "/crm/hr/contracts" },
+    ],
+  },
+  {
     id: "sales",
     title: "المبيعات والعملاء",
     icon: (
@@ -200,6 +225,16 @@ export default function CrmSidebar({ userName, userRole, userPermissions = [], o
       }
       return group;
     }).filter(group => {
+      // HR section restricted to ADMIN
+      if (group.id === "hr") {
+        return userRole === "ADMIN" || isSuperAdmin;
+      }
+
+      // Marketing Hub accessible to ADMIN and MARKETING
+      if (group.id === "marketing_hub") {
+        return userRole === "ADMIN" || userRole === "MARKETING" || isSuperAdmin;
+      }
+
       if (group.id === "organization") {
         return canViewOrganization;
       }
@@ -222,16 +257,15 @@ export default function CrmSidebar({ userName, userRole, userPermissions = [], o
         return isSuperAdmin || financePerms.some(p => userPermissions.includes(p));
       }
 
-      // Remove old SALES/MARKETING role checks
       return true;
     });
-  }, [isSuperAdmin, orgScope, userId, canViewOrganization, userPermissions, hasPerm]);
+  }, [userRole, isSuperAdmin, orgScope, userId, canViewOrganization, userPermissions, hasPerm]);
 
   useEffect(() => {
     Promise.resolve().then(() => setMounted(true));
   }, []);
 
-  // 2. Identify the active group based on current URL
+  // Identify active group
   let activeGroupId = "";
   for (const group of navGroups) {
     for (const link of group.links) {
@@ -246,18 +280,21 @@ export default function CrmSidebar({ userName, userRole, userPermissions = [], o
   }
 
   const isGroupOpen = (id: string) => {
-    if (id === activeGroupId) return true;
+    if (id === activeGroupId) {
+      // If user explicitly toggled active group to false, respect it
+      if (openGroups[id] === false) return false;
+      return true;
+    }
     return !!openGroups[id];
   };
 
   const toggleGroup = (id: string) => {
-    const newState = { ...openGroups, [id]: !isGroupOpen(id) };
-    if (id === activeGroupId && !openGroups[id]) {
-      // If it was forced open by active route but not in state, explicitly set it to false
-      newState[id] = false;
+    const currentlyOpen = isGroupOpen(id);
+    const nextState = { ...openGroups, [id]: !currentlyOpen };
+    setOpenGroups(nextState);
+    if (typeof window !== "undefined") {
+      localStorage.setItem("crm_sidebar_state", JSON.stringify(nextState));
     }
-    setOpenGroups(newState);
-    localStorage.setItem("crm_sidebar_state", JSON.stringify(newState));
   };
 
   const isActiveLink = (href: string, exact?: boolean) => {
@@ -282,7 +319,8 @@ export default function CrmSidebar({ userName, userRole, userPermissions = [], o
       <button
         className="md:hidden fixed top-3 right-4 z-50 p-2 bg-white rounded-md shadow-sm border border-gray-200 text-gray-600 hover:text-primary hover:bg-gray-50 focus:outline-none"
         onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-        aria-label="Toggle Menu"
+        aria-label="القائمة الجانبية"
+        aria-expanded={mobileMenuOpen}
       >
         <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d={mobileMenuOpen ? "M6 18L18 6M6 6l12 12" : "M4 6h16M4 12h16M4 18h16"} />
@@ -303,79 +341,80 @@ export default function CrmSidebar({ userName, userRole, userPermissions = [], o
           <h1 className="text-xl font-bold text-primary">نحت العقارية</h1>
         </div>
 
-      <nav className="flex-1 overflow-y-auto py-4 px-3 space-y-2 custom-scrollbar">
-        {navGroups.map((group) => {
-          const isOpen = isGroupOpen(group.id);
-          const hasActiveChild = group.links.some(l => !l.disabled && isActiveLink(l.href, l.exact));
+        <nav className="flex-1 overflow-y-auto py-4 px-3 space-y-2 custom-scrollbar">
+          {navGroups.map((group) => {
+            const isOpen = isGroupOpen(group.id);
+            const hasActiveChild = group.links.some(l => !l.disabled && isActiveLink(l.href, l.exact));
 
-          return (
-            <div key={group.id} className="rounded-lg overflow-hidden">
-              <button
-                onClick={() => toggleGroup(group.id)}
-                className={`w-full flex items-center justify-between px-3 py-2.5 text-sm font-bold transition-colors ${
-                  hasActiveChild ? "text-primary bg-primary/5" : "text-gray-700 hover:bg-gray-50"
-                }`}
-              >
-                <div className="flex items-center gap-3">
-                  <span className={hasActiveChild ? "text-primary" : "text-gray-400"}>
-                    {group.icon}
-                  </span>
-                  <span>{group.title}</span>
-                </div>
-                <svg
-                  className={`w-5 h-5 transition-transform duration-200 ${isGroupOpen(group.id) ? "rotate-90" : "rotate-180"}`}
-                  fill="none" viewBox="0 0 24 24" stroke="currentColor"
+            return (
+              <div key={group.id} className="rounded-lg overflow-hidden">
+                <button
+                  onClick={() => toggleGroup(group.id)}
+                  aria-expanded={isOpen}
+                  className={`w-full flex items-center justify-between px-3 py-2.5 text-sm font-bold transition-colors ${
+                    hasActiveChild ? "text-primary bg-primary/5" : "text-gray-700 hover:bg-gray-50"
+                  }`}
                 >
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7" />
-                </svg>
-              </button>
+                  <div className="flex items-center gap-3">
+                    <span className={hasActiveChild ? "text-primary" : "text-gray-400"}>
+                      {group.icon}
+                    </span>
+                    <span>{group.title}</span>
+                  </div>
+                  <svg
+                    className={`w-5 h-5 transition-transform duration-200 ${isOpen ? "rotate-90" : "rotate-180"}`}
+                    fill="none" viewBox="0 0 24 24" stroke="currentColor"
+                  >
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7" />
+                  </svg>
+                </button>
 
-              {isOpen && (
-                <div className="mt-1 space-y-1 px-3 pb-2 border-l-2 border-gray-100 ml-4 rtl:ml-0 rtl:mr-4 rtl:border-l-0 rtl:border-r-2">
-                  {group.links.map((link, idx) => {
-                    if (link.disabled) {
+                {isOpen && (
+                  <div className="mt-1 space-y-1 px-3 pb-2 border-l-2 border-gray-100 ml-4 rtl:ml-0 rtl:mr-4 rtl:border-l-0 rtl:border-r-2">
+                    {group.links.map((link, idx) => {
+                      if (link.disabled) {
+                        return (
+                          <div key={idx} className="block px-3 py-2 text-sm text-gray-400 cursor-not-allowed" aria-disabled="true">
+                            {link.name}
+                          </div>
+                        );
+                      }
+                      const active = isActiveLink(link.href, link.exact);
                       return (
-                        <div key={idx} className="block px-3 py-2 text-sm text-gray-400 cursor-not-allowed">
+                        <Link
+                          key={idx}
+                          href={link.href}
+                          onClick={() => setMobileMenuOpen(false)}
+                          className={`flex items-center gap-2 px-3 py-2 text-sm rounded-md font-medium transition-colors ${
+                            active
+                              ? "bg-primary text-white shadow-sm"
+                              : "text-gray-600 hover:text-primary hover:bg-gray-50"
+                          }`}
+                        >
+                          {link.icon && <span className={active ? "text-white" : "text-gray-400"}>{link.icon}</span>}
                           {link.name}
-                        </div>
+                        </Link>
                       );
-                    }
-                    const active = isActiveLink(link.href, link.exact);
-                    return (
-                      <Link
-                        key={idx}
-                        href={link.href}
-                        onClick={() => setMobileMenuOpen(false)}
-                        className={`flex items-center gap-2 px-3 py-2 text-sm rounded-md font-medium transition-colors ${
-                          active
-                            ? "bg-primary text-white shadow-sm"
-                            : "text-gray-600 hover:text-primary hover:bg-gray-50"
-                        }`}
-                      >
-                        {link.icon && <span className={active ? "text-white" : "text-gray-400"}>{link.icon}</span>}
-                        {link.name}
-                      </Link>
-                    );
-                  })}
-                </div>
-              )}
-            </div>
-          );
-        })}
-      </nav>
+                    })}
+                  </div>
+                )}
+              </div>
+            );
+          })}
+        </nav>
 
-      <div className="p-4 border-t border-gray-200 shrink-0 bg-gray-50">
-        <div className="flex items-center">
-          <div className="w-8 h-8 rounded-full bg-primary/10 text-primary flex items-center justify-center font-bold text-sm">
-            {userName.charAt(0).toUpperCase()}
-          </div>
-          <div className="mr-3 rtl:mr-0 rtl:ml-3">
-            <p className="text-sm font-bold text-gray-900">{userName}</p>
-            <p className="text-xs font-medium text-gray-500 truncate">{userRole}</p>
+        <div className="p-4 border-t border-gray-200 shrink-0 bg-gray-50">
+          <div className="flex items-center">
+            <div className="w-8 h-8 rounded-full bg-primary/10 text-primary flex items-center justify-center font-bold text-sm">
+              {userName ? userName.charAt(0).toUpperCase() : "M"}
+            </div>
+            <div className="mr-3 rtl:mr-0 rtl:ml-3">
+              <p className="text-sm font-bold text-gray-900">{userName}</p>
+              <p className="text-xs font-medium text-gray-500 truncate">{userRole}</p>
+            </div>
           </div>
         </div>
-      </div>
-    </aside>
+      </aside>
     </>
   );
 }
