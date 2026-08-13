@@ -6,8 +6,9 @@ import TrackedButton from "@/components/TrackedButton";
 import ProjectViewTracker from "@/components/tracking/ProjectViewTracker";
 import { getBaseMetadata } from "@/lib/seo";
 import Image from "next/image";
+import { Unit } from "@prisma/client";
 
-function UnitCard({ unit }: { unit: any }) {
+function UnitCard({ unit }: { unit: Unit }) {
   return (
     <div className="bg-white border border-gray-100 rounded-3xl p-5 shadow-sm hover:shadow-md hover:-translate-y-1 hover:border-brand-cafe/20 transition-all duration-300 flex flex-col h-full">
       {/* Header */}
@@ -82,8 +83,19 @@ function UnitCard({ unit }: { unit: any }) {
 }
 
 export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }) {
-  const slug = (await params).slug;
-  const project = await prisma.project.findUnique({ where: { slug: slug } });
+  const rawSlug = (await params).slug;
+  const decoded = decodeURIComponent(rawSlug);
+  const normalized = decoded.replace(/[-\s]/g, "");
+
+  const project = await prisma.project.findFirst({
+    where: {
+      OR: [
+        { slug: rawSlug },
+        { slug: decoded },
+        { slug: normalized },
+      ],
+    },
+  });
   if (!project) return getBaseMetadata();
 
   return getBaseMetadata({
@@ -94,9 +106,18 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
 }
 
 export default async function PublicProjectDetailsPage({ params }: { params: Promise<{ slug: string }> }) {
-  const slug = (await params).slug;
-  const project = await prisma.project.findUnique({
-    where: { slug: slug },
+  const rawSlug = (await params).slug;
+  const decoded = decodeURIComponent(rawSlug);
+  const normalized = decoded.replace(/[-\s]/g, "");
+
+  const project = await prisma.project.findFirst({
+    where: {
+      OR: [
+        { slug: rawSlug },
+        { slug: decoded },
+        { slug: normalized },
+      ],
+    },
     include: { 
       models: {
         where: { isVisible: true },
@@ -113,6 +134,7 @@ export default async function PublicProjectDetailsPage({ params }: { params: Pro
       galleryImages: { orderBy: { order: 'asc' } },
     },
   });
+
   
   const settings = await prisma.siteSettings.findUnique({ where: { id: "global" } });
 
@@ -471,7 +493,7 @@ export default async function PublicProjectDetailsPage({ params }: { params: Pro
                         {model.units.length > 0 && (
                           <div className="p-6">
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                              {model.units.map((unit: any) => <UnitCard key={unit.id} unit={unit} />)}
+                              {model.units.map((unit: Unit) => <UnitCard key={unit.id} unit={unit} />)}
                             </div>
                           </div>
                         )}

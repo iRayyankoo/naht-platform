@@ -5,13 +5,24 @@ import bcrypt from "bcryptjs";
 
 declare module "next-auth" {
   interface User {
+    id: string;
     role?: string;
+    isActive?: boolean;
   }
   interface Session {
     user?: User & {
-      id?: string;
+      id: string;
       role?: string;
+      isActive?: boolean;
     };
+  }
+}
+
+declare module "next-auth/jwt" {
+  interface JWT {
+    id: string;
+    role?: string;
+    isActive?: boolean;
   }
 }
 
@@ -28,8 +39,9 @@ export const authOptions: NextAuthOptions = {
           throw new Error("يجب إدخال البريد الإلكتروني وكلمة المرور");
         }
 
+        const normalizedEmail = credentials.email.trim().toLowerCase();
         const realUser = await prisma.user.findUnique({
-          where: { email: credentials.email },
+          where: { email: normalizedEmail },
         });
 
         if (!realUser || !realUser.password) {
@@ -61,15 +73,15 @@ export const authOptions: NextAuthOptions = {
       if (user) {
         token.role = user.role;
         token.id = user.id;
-        token.isActive = (user as any).isActive;
+        token.isActive = user.isActive;
       }
       return token;
     },
     async session({ session, token }) {
       if (session.user) {
-        (session.user as any).role = token.role;
-        (session.user as any).id = token.id;
-        (session.user as any).isActive = token.isActive;
+        session.user.role = token.role;
+        session.user.id = token.id;
+        session.user.isActive = token.isActive;
       }
       return session;
     },

@@ -2,8 +2,10 @@
 
 import React, { useState } from 'react';
 import Link from 'next/link';
-import { Project, HomePageContent } from '@prisma/client';
+import Image from 'next/image';
+import { HomePageContent } from '@prisma/client';
 import dynamic from 'next/dynamic';
+import { ProjectMapItem } from './map/GeographicMap';
 
 const GeographicMap = dynamic(() => import('./map/GeographicMap'), { 
   ssr: false,
@@ -12,7 +14,7 @@ const GeographicMap = dynamic(() => import('./map/GeographicMap'), {
 
 interface InteractiveMapProps {
   content?: HomePageContent | null;
-  projects?: any[];
+  projects?: ProjectMapItem[];
 }
 
 export default function InteractiveMap({ content, projects = [] }: InteractiveMapProps) {
@@ -27,7 +29,7 @@ export default function InteractiveMap({ content, projects = [] }: InteractiveMa
     { id: 'UNDER_CONSTRUCTION', label: 'تحت الإنشاء', color: content?.pinColorUnderConstruction || '#A6937C' },
   ];
 
-  if (!content?.showMapSection) return null;
+  if (content?.showMapSection === false) return null;
 
   const filteredProjects = activeFilter === 'ALL' 
     ? projects 
@@ -36,7 +38,7 @@ export default function InteractiveMap({ content, projects = [] }: InteractiveMa
   const mapMode = content?.mapMode || 'geographic';
 
   return (
-    <section className="py-20 bg-white relative overflow-hidden" dir="rtl">
+    <section className="py-20 bg-white relative overflow-hidden" dir="rtl" id="map-section">
       {/* Background Decor */}
       <div className="absolute top-0 right-0 w-1/3 h-full bg-gradient-to-l from-gray-50 to-transparent pointer-events-none" />
 
@@ -109,14 +111,12 @@ export default function InteractiveMap({ content, projects = [] }: InteractiveMa
                       }}
                     >
                       {content?.pinLogoUrl ? (
-                        <img 
-                          src={content.pinLogoUrl} 
-                          alt="" 
-                          style={{ 
-                            width: `${content.pinLogoSize || 32}px`, 
-                            height: `${content.pinLogoSize || 32}px`, 
-                            objectFit: 'contain' 
-                          }} 
+                        <Image
+                          src={content.pinLogoUrl}
+                          alt="Pin Logo"
+                          width={content.pinLogoSize || 32}
+                          height={content.pinLogoSize || 32}
+                          className="object-contain"
                         />
                       ) : (
                         <div className="w-4 h-4 bg-white rounded-full shadow-inner" />

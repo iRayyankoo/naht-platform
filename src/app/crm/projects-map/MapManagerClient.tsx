@@ -1,177 +1,119 @@
 "use client";
 
-import { useState } from "react";
+import React, { useState, useMemo, useCallback } from "react";
 import type { HomePageContent } from "@prisma/client";
 import { updateHomePageContent } from "@/actions/cms";
 import { updateProjectMapData } from "@/actions/projects";
 import toast from "react-hot-toast";
-import Link from "next/link";
-import Image from "next/image";
-import ImageUpload from "@/components/crm/ImageUpload";
 import dynamic from "next/dynamic";
+import type L from "leaflet";
 
-const InteractiveMapPreview = dynamic(() => import('@/app/(public)/components/InteractiveMap'), {
+const LeafletMapInner = dynamic(() => import("./LeafletMapInner"), {
   ssr: false,
-  loading: () => <div className="h-[400px] bg-gray-100 animate-pulse rounded-xl flex items-center justify-center">جاري تحميل المعاينة...</div>
+  loading: () => <div className="w-full h-full bg-[#F7F3EB] rounded-2xl flex items-center justify-center animate-pulse text-xs font-bold text-gray-500">جاري تحميل الخريطة التفاعلية...</div>,
 });
-
-export type MapContentSettings = HomePageContent;
 
 export interface MapProjectItem {
   id: string;
   name: string;
+  slug: string;
   status: string;
-  city: string;
-  neighborhood: string;
+  city?: string | null;
+  neighborhood?: string | null;
   isVisible?: boolean;
   showOnHomeMap?: boolean;
   mapLat?: number | string | null;
   mapLng?: number | string | null;
-  mapX?: number | string | null;
-  mapY?: number | string | null;
+  mainImage?: string | null;
   [key: string]: unknown;
 }
 
 interface MapManagerClientProps {
-  content: HomePageContent;
-  projects: MapProjectItem[];
+  initialContent: HomePageContent;
+  initialProjects: MapProjectItem[];
 }
 
-export default function MapManagerClient({ content, projects: initialProjects }: MapManagerClientProps) {
+export default function MapManagerClient({ initialContent, initialProjects }: MapManagerClientProps) {
   const [projects, setProjects] = useState<MapProjectItem[]>(initialProjects);
+  const [selectedProjectId, setSelectedProjectId] = useState<string | null>(initialProjects[0]?.id || null);
   const [isSavingContent, setIsSavingContent] = useState(false);
   const [savingProjectId, setSavingProjectId] = useState<string | null>(null);
 
-  // General Settings State
-  const [showMapSection, setShowMapSection] = useState(content.showMapSection ?? true);
-  const [mapSectionTitle, setMapSectionTitle] = useState(content.mapSectionTitle || "منتجاتنا العقارية على الخريطة");
-  const [mapSectionDesc, setMapSectionDesc] = useState(content.mapSectionDesc || "تصفح مواقع منتجاتنا العقارية في مختلف مناطق المملكة.");
-  const [mapMode, setMapMode] = useState(content.mapMode || "geographic");
-  const [mapCenterLat, setMapCenterLat] = useState(content.mapCenterLat ?? 24.7136);
-  const [mapCenterLng, setMapCenterLng] = useState(content.mapCenterLng ?? 46.6753);
-  const [mapZoom, setMapZoom] = useState(content.mapZoom ?? 5);
-  const [mapBackgroundImage, setMapBackgroundImage] = useState(content.mapBackgroundImage || "");
+  // Filters State
+  const [searchTerm, setSearchTerm] = useState("");
+  const [visibilityFilter, setVisibilityFilter] = useState("ALL");
+  const [coordsFilter, setCoordsFilter] = useState("ALL");
+  const [statusFilter, setStatusFilter] = useState("ALL");
 
-  // Pin Settings State
-  const [pinLogoUrl, setPinLogoUrl] = useState(content.pinLogoUrl || "");
-  const [pinLogoSize, setPinLogoSize] = useState(content.pinLogoSize || 32);
-  const [pinColorAvailable, setPinColorAvailable] = useState(content.pinColorAvailable || "#B5B693");
-  const [pinColorSold, setPinColorSold] = useState(content.pinColorSold || "#4E4949");
-  const [pinColorComingSoon, setPinColorComingSoon] = useState(content.pinColorComingSoon || "#C5B59C");
-  const [pinColorUnderConstruction, setPinColorUnderConstruction] = useState(content.pinColorUnderConstruction || "#A6937C");
-  const [pinColorDefault, setPinColorDefault] = useState(content.pinColorDefault || "#A6937C");
+  // Content Settings State
+  const [showMapSection, setShowMapSection] = useState(initialContent.showMapSection ?? true);
+  const [mapSectionTitle, setMapSectionTitle] = useState(initialContent.mapSectionTitle || "مشاريعنا العقارية على الخريطة");
+  const [mapSectionDesc, setMapSectionDesc] = useState(initialContent.mapSectionDesc || "تصفح مواقع مشاريعنا في مختلف أحياء الرياض والمملكة.");
+  const [mapCenterLat, setMapCenterLat] = useState(initialContent.mapCenterLat ?? 24.7136);
+  const [mapCenterLng, setMapCenterLng] = useState(initialContent.mapCenterLng ?? 46.6753);
+  const [mapZoom, setMapZoom] = useState(initialContent.mapZoom ?? 11);
 
-  // Map Tile Style Settings
-  const [mapTileStyle, setMapTileStyle] = useState(content.mapTileStyle || "light");
-  const [mapTileBrightness, setMapTileBrightness] = useState(content.mapTileBrightness ?? 100);
-  const [mapTileContrast, setMapTileContrast] = useState(content.mapTileContrast ?? 100);
-  const [mapTileSaturation, setMapTileSaturation] = useState(content.mapTileSaturation ?? 100);
-  const [mapTileHue, setMapTileHue] = useState(content.mapTileHue ?? 0);
-  const [mapTileGrayscale, setMapTileGrayscale] = useState(content.mapTileGrayscale ?? 0);
+  const selectedProject = useMemo(() => {
+    return projects.find((p) => p.id === selectedProjectId) || projects[0] || null;
+  }, [projects, selectedProjectId]);
 
-  const handleStylePreset = (preset: string) => {
-    setMapTileStyle(preset);
-    switch (preset) {
-      case "warm":
-        setMapTileBrightness(95); setMapTileContrast(105); setMapTileSaturation(120); setMapTileHue(15); setMapTileGrayscale(0);
-        break;
-      case "muted":
-        setMapTileBrightness(90); setMapTileContrast(90); setMapTileSaturation(60); setMapTileHue(0); setMapTileGrayscale(20);
-        break;
-      case "grayscale":
-        setMapTileBrightness(100); setMapTileContrast(110); setMapTileSaturation(0); setMapTileHue(0); setMapTileGrayscale(100);
-        break;
-      case "dark":
-        setMapTileBrightness(40); setMapTileContrast(120); setMapTileSaturation(80); setMapTileHue(0); setMapTileGrayscale(10);
-        break;
-      case "default":
-      case "light":
-      default:
-        setMapTileBrightness(100); setMapTileContrast(100); setMapTileSaturation(100); setMapTileHue(0); setMapTileGrayscale(0);
-        break;
+  // Filtered projects list
+  const filteredProjects = useMemo(() => {
+    return projects.filter((p) => {
+      const matchSearch = (p.name || "").toLowerCase().includes(searchTerm.toLowerCase()) || (p.neighborhood || "").toLowerCase().includes(searchTerm.toLowerCase());
+      const matchVis = visibilityFilter === "ALL" || (visibilityFilter === "VISIBLE" ? p.isVisible : !p.isVisible);
+      const hasCoords = p.mapLat !== null && p.mapLng !== null && !isNaN(Number(p.mapLat)) && !isNaN(Number(p.mapLng));
+      const matchCoords = coordsFilter === "ALL" || (coordsFilter === "HAS_COORDS" ? hasCoords : !hasCoords);
+      const matchStatus = statusFilter === "ALL" || p.status === statusFilter;
+
+      return matchSearch && matchVis && matchCoords && matchStatus;
+    });
+  }, [projects, searchTerm, visibilityFilter, coordsFilter, statusFilter]);
+
+  const handleMapClick = useCallback(
+    (lat: number, lng: number) => {
+      if (!selectedProjectId) return;
+      const formattedLat = parseFloat(lat.toFixed(6));
+      const formattedLng = parseFloat(lng.toFixed(6));
+      setProjects((prev) =>
+        prev.map((p) => (p.id === selectedProjectId ? { ...p, mapLat: formattedLat, mapLng: formattedLng, showOnHomeMap: true } : p))
+      );
+      toast.success(`تم تحديد موقع جديد لـ ${selectedProject?.name || "المشروع"}`);
+    },
+    [selectedProjectId, selectedProject]
+  );
+
+  const handleMarkerDragEnd = useCallback((id: string, e: L.DragEndEvent) => {
+    const marker = e.target;
+    if (marker) {
+      const latLng = marker.getLatLng();
+      const formattedLat = parseFloat(latLng.lat.toFixed(6));
+      const formattedLng = parseFloat(latLng.lng.toFixed(6));
+      setProjects((prev) =>
+        prev.map((p) => (p.id === id ? { ...p, mapLat: formattedLat, mapLng: formattedLng, showOnHomeMap: true } : p))
+      );
+      toast.success("تم تحديث موقع العلامة بالسحب");
     }
-  };
-
-  const handleResetPreview = () => {
-    setShowMapSection(content.showMapSection ?? true);
-    setMapSectionTitle(content.mapSectionTitle || "منتجاتنا العقارية على الخريطة");
-    setMapSectionDesc(content.mapSectionDesc || "تصفح مواقع منتجاتنا العقارية في مختلف مناطق المملكة.");
-    setMapMode(content.mapMode || "geographic");
-    setMapCenterLat(content.mapCenterLat ?? 24.7136);
-    setMapCenterLng(content.mapCenterLng ?? 46.6753);
-    setMapZoom(content.mapZoom ?? 5);
-    setMapBackgroundImage(content.mapBackgroundImage || "");
-    setPinLogoUrl(content.pinLogoUrl || "");
-    setPinLogoSize(content.pinLogoSize || 32);
-    setPinColorAvailable(content.pinColorAvailable || "#B5B693");
-    setPinColorSold(content.pinColorSold || "#4E4949");
-    setPinColorComingSoon(content.pinColorComingSoon || "#C5B59C");
-    setPinColorUnderConstruction(content.pinColorUnderConstruction || "#A6937C");
-    setPinColorDefault(content.pinColorDefault || "#A6937C");
-    setMapTileStyle(content.mapTileStyle || "light");
-    setMapTileBrightness(content.mapTileBrightness ?? 100);
-    setMapTileContrast(content.mapTileContrast ?? 100);
-    setMapTileSaturation(content.mapTileSaturation ?? 100);
-    setMapTileHue(content.mapTileHue ?? 0);
-    setMapTileGrayscale(content.mapTileGrayscale ?? 0);
-    toast.success("تم إعادة ضبط المعاينة للبيانات المحفوظة");
-  };
-
-  const previewContent: HomePageContent = {
-    ...content,
-    showMapSection,
-    mapSectionTitle,
-    mapSectionDesc,
-    mapMode,
-    mapCenterLat,
-    mapCenterLng,
-    mapZoom,
-    mapBackgroundImage,
-    pinLogoUrl,
-    pinLogoSize,
-    pinColorAvailable,
-    pinColorSold,
-    pinColorComingSoon,
-    pinColorUnderConstruction,
-    pinColorDefault,
-    mapTileStyle,
-    mapTileBrightness,
-    mapTileContrast,
-    mapTileSaturation,
-    mapTileHue,
-    mapTileGrayscale,
-  };
-
-  const handleSaveContent = async (e: React.FormEvent<HTMLFormElement>) => {
-    e.preventDefault();
-    setIsSavingContent(true);
-
-    try {
-      await updateHomePageContent(previewContent);
-      toast.success("تم حفظ إعدادات الخريطة بنجاح");
-    } catch (err: unknown) {
-      const errMsg = err instanceof Error ? err.message : "حدث خطأ أثناء حفظ الإعدادات";
-      toast.error(errMsg);
-    } finally {
-      setIsSavingContent(false);
-    }
-  };
+  }, []);
 
   const handleProjectUpdate = (id: string, field: keyof MapProjectItem, value: unknown) => {
-    setProjects(projects.map(p => p.id === id ? { ...p, [field]: value } : p));
+    setProjects((prev) => prev.map((p) => (p.id === id ? { ...p, [field]: value } : p)));
   };
 
   const saveProjectMapData = async (project: MapProjectItem) => {
     setSavingProjectId(project.id);
     try {
+      const lat = project.mapLat !== null && project.mapLat !== undefined && project.mapLat !== "" ? parseFloat(String(project.mapLat)) : null;
+      const lng = project.mapLng !== null && project.mapLng !== undefined && project.mapLng !== "" ? parseFloat(String(project.mapLng)) : null;
+
       await updateProjectMapData(project.id, {
         showOnHomeMap: Boolean(project.showOnHomeMap),
-        mapLat: project.mapLat ? parseFloat(String(project.mapLat)) : null,
-        mapLng: project.mapLng ? parseFloat(String(project.mapLng)) : null,
+        mapLat: lat,
+        mapLng: lng,
         mapX: project.mapX ? parseFloat(String(project.mapX)) : null,
         mapY: project.mapY ? parseFloat(String(project.mapY)) : null,
       });
-      toast.success(`تم حفظ إحداثيات ${project.name} بنجاح`);
+      toast.success(`تم حفظ إعدادات خريطة ${project.name} بنجاح`);
     } catch (err: unknown) {
       const errMsg = err instanceof Error ? err.message : "حدث خطأ أثناء الحفظ";
       toast.error(errMsg);
@@ -180,374 +122,291 @@ export default function MapManagerClient({ content, projects: initialProjects }:
     }
   };
 
+  const handleSaveGeneralContent = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setIsSavingContent(true);
+    try {
+      await updateHomePageContent({
+        ...initialContent,
+        showMapSection,
+        mapSectionTitle,
+        mapSectionDesc,
+        mapCenterLat,
+        mapCenterLng,
+        mapZoom,
+      });
+      toast.success("تم حفظ الإعدادات العامة للخريطة بنجاح");
+    } catch (err: unknown) {
+      const errMsg = err instanceof Error ? err.message : "حدث خطأ أثناء الحفظ";
+      toast.error(errMsg);
+    } finally {
+      setIsSavingContent(false);
+    }
+  };
+
   return (
-    <div className="space-y-8">
-      {/* 1. General Map Settings */}
-      <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-100">
-        <h2 className="text-xl font-bold text-gray-900 mb-4 border-b pb-2">الإعدادات العامة للخريطة</h2>
-        
-        <form onSubmit={handleSaveContent} className="space-y-4">
-          <div className="mb-4">
-            <label className="flex items-center space-x-2 space-x-reverse cursor-pointer">
-              <input 
-                type="checkbox" 
-                name="showMapSection" 
-                checked={showMapSection} 
-                onChange={(e) => setShowMapSection(e.target.checked)}
-                className="w-5 h-5 text-primary border-gray-300 rounded" 
-              />
-              <span className="font-bold text-gray-800">إظهار قسم الخريطة التفاعلية في الصفحة الرئيسية</span>
+    <div className="space-y-6">
+      {/* 1. General Map Settings Panel */}
+      <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100">
+        <h2 className="text-xl font-bold text-gray-900 mb-4 border-b pb-3">الإعدادات العامة لخريطة الموقع العام</h2>
+        <form onSubmit={handleSaveGeneralContent} className="space-y-4">
+          <div className="flex items-center gap-3">
+            <input
+              type="checkbox"
+              id="showMapSection"
+              checked={showMapSection}
+              onChange={(e) => setShowMapSection(e.target.checked)}
+              className="w-5 h-5 text-[#a6937c] rounded border-gray-300 focus:ring-[#a6937c]"
+            />
+            <label htmlFor="showMapSection" className="font-bold text-gray-800 text-sm">
+              إظهار قسم الخريطة التفاعلية في الصفحة الرئيسية للموقع العام
             </label>
           </div>
-          
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
-              <label className="block text-sm font-bold text-gray-700 mb-1">عنوان القسم</label>
-              <input type="text" name="mapSectionTitle" value={mapSectionTitle} onChange={(e) => setMapSectionTitle(e.target.value)} className="w-full border-gray-300 rounded-md p-2 border" />
+              <label className="block text-sm font-bold text-gray-700 mb-1">عنوان القسم الخارجي</label>
+              <input
+                type="text"
+                value={mapSectionTitle}
+                onChange={(e) => setMapSectionTitle(e.target.value)}
+                className="w-full border border-gray-300 rounded-lg p-2.5 text-sm"
+              />
             </div>
             <div>
-              <label className="block text-sm font-bold text-gray-700 mb-1">وصف القسم</label>
-              <input type="text" name="mapSectionDesc" value={mapSectionDesc} onChange={(e) => setMapSectionDesc(e.target.value)} className="w-full border-gray-300 rounded-md p-2 border" />
-            </div>
-          </div>
-          
-          <div className="bg-gray-50 p-4 rounded-lg border border-gray-200 mt-4 space-y-4">
-            <div>
-              <label className="block text-sm font-bold text-gray-700 mb-1">نوع الخريطة</label>
-              <select name="mapMode" value={mapMode} onChange={(e) => setMapMode(e.target.value)} className="w-full border-gray-300 rounded-md p-2 border">
-                <option value="geographic">خريطة جغرافية حقيقية (Geographic Map)</option>
-                <option value="image">خريطة تصميمية (Image-based Map)</option>
-              </select>
-            </div>
-
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 border-t pt-4 border-gray-200">
-              <div>
-                <label className="block text-sm font-bold text-gray-700 mb-1">مركز الخريطة (Latitude)</label>
-                <input type="number" step="any" name="mapCenterLat" value={mapCenterLat} onChange={(e) => setMapCenterLat(Number(e.target.value))} className="w-full border-gray-300 rounded-md p-2 border text-left" dir="ltr" />
-              </div>
-              <div>
-                <label className="block text-sm font-bold text-gray-700 mb-1">مركز الخريطة (Longitude)</label>
-                <input type="number" step="any" name="mapCenterLng" value={mapCenterLng} onChange={(e) => setMapCenterLng(Number(e.target.value))} className="w-full border-gray-300 rounded-md p-2 border text-left" dir="ltr" />
-              </div>
-              <div>
-                <label className="block text-sm font-bold text-gray-700 mb-1">مستوى التكبير (Zoom)</label>
-                <input type="number" name="mapZoom" value={mapZoom} onChange={(e) => setMapZoom(Number(e.target.value))} className="w-full border-gray-300 rounded-md p-2 border text-left" dir="ltr" />
-              </div>
-            </div>
-
-            <div className="border-t pt-4 border-gray-200">
-              <label className="block text-sm font-bold text-gray-700 mb-1">رابط صورة الخريطة (للخريطة التصميمية فقط)</label>
-              <input type="url" name="mapBackgroundImage" value={mapBackgroundImage} onChange={(e) => setMapBackgroundImage(e.target.value)} placeholder="https://example.com/map-bg.png" className="w-full border-gray-300 rounded-md p-2 border text-left" dir="ltr" />
-            </div>
-
-            {/* Map Style Settings Section */}
-            <div className="border-t pt-6 mt-6 border-gray-200">
-              <h3 className="text-lg font-bold text-gray-900 mb-4">إعدادات ألوان الخريطة (Map Style)</h3>
-              <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-                
-                {/* Presets */}
-                <div>
-                  <label className="block text-sm font-bold text-gray-700 mb-3">القوالب الجاهزة (Presets)</label>
-                  <div className="flex flex-wrap gap-2 mb-4">
-                    {[
-                      { id: 'light', label: 'Light / فاتح' },
-                      { id: 'warm', label: 'Warm / دافئ' },
-                      { id: 'muted', label: 'Muted / هادئ' },
-                      { id: 'grayscale', label: 'Grayscale / رمادي' },
-                      { id: 'dark', label: 'Dark / داكن' },
-                    ].map(preset => (
-                      <button
-                        key={preset.id}
-                        type="button"
-                        onClick={() => handleStylePreset(preset.id)}
-                        className={`px-4 py-2 text-sm rounded-md border transition ${mapTileStyle === preset.id ? 'bg-primary text-white border-primary' : 'bg-white text-gray-700 border-gray-300 hover:bg-gray-50'}`}
-                      >
-                        {preset.label}
-                      </button>
-                    ))}
-                  </div>
-                  <input type="hidden" name="mapTileStyle" value={mapTileStyle} />
-                </div>
-
-                {/* Advanced CSS Filters */}
-                <div className="space-y-4 bg-gray-50 p-4 rounded border">
-                  <h4 className="text-sm font-bold text-gray-800 mb-2">تحكم متقدم (CSS Filters)</h4>
-                  
-                  <div>
-                    <label className="flex justify-between text-xs text-gray-600 mb-1">
-                      <span>السطوع (Brightness)</span>
-                      <span>{mapTileBrightness}%</span>
-                    </label>
-                    <input type="range" name="mapTileBrightness" min="0" max="200" value={mapTileBrightness} onChange={(e) => setMapTileBrightness(Number(e.target.value))} className="w-full" />
-                  </div>
-                  
-                  <div>
-                    <label className="flex justify-between text-xs text-gray-600 mb-1">
-                      <span>التباين (Contrast)</span>
-                      <span>{mapTileContrast}%</span>
-                    </label>
-                    <input type="range" name="mapTileContrast" min="0" max="200" value={mapTileContrast} onChange={(e) => setMapTileContrast(Number(e.target.value))} className="w-full" />
-                  </div>
-
-                  <div>
-                    <label className="flex justify-between text-xs text-gray-600 mb-1">
-                      <span>التشبع (Saturation)</span>
-                      <span>{mapTileSaturation}%</span>
-                    </label>
-                    <input type="range" name="mapTileSaturation" min="0" max="200" value={mapTileSaturation} onChange={(e) => setMapTileSaturation(Number(e.target.value))} className="w-full" />
-                  </div>
-
-                  <div>
-                    <label className="flex justify-between text-xs text-gray-600 mb-1">
-                      <span>تدرج اللون (Hue Rotate)</span>
-                      <span>{mapTileHue}deg</span>
-                    </label>
-                    <input type="range" name="mapTileHue" min="-180" max="180" value={mapTileHue} onChange={(e) => setMapTileHue(Number(e.target.value))} className="w-full" />
-                  </div>
-
-                  <div>
-                    <label className="flex justify-between text-xs text-gray-600 mb-1">
-                      <span>تدرج رمادي (Grayscale)</span>
-                      <span>{mapTileGrayscale}%</span>
-                    </label>
-                    <input type="range" name="mapTileGrayscale" min="0" max="100" value={mapTileGrayscale} onChange={(e) => setMapTileGrayscale(Number(e.target.value))} className="w-full" />
-                  </div>
-                </div>
-
-              </div>
-            </div>
-
-            {/* Pin Settings Section */}
-            <div className="border-t pt-6 mt-6 border-gray-200">
-              <h3 className="text-lg font-bold text-gray-900 mb-4">إعدادات علامات الخريطة (Pins)</h3>
-              
-              <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-                {/* Colors */}
-                <div className="space-y-4">
-                  <div className="flex items-center justify-between bg-white p-3 border rounded shadow-sm">
-                    <span className="text-sm font-bold">لون حالة (متاح)</span>
-                    <input type="color" value={pinColorAvailable} onChange={(e) => setPinColorAvailable(e.target.value)} className="w-10 h-10 rounded cursor-pointer" />
-                  </div>
-                  <div className="flex items-center justify-between bg-white p-3 border rounded shadow-sm">
-                    <span className="text-sm font-bold">لون حالة (مباع)</span>
-                    <input type="color" value={pinColorSold} onChange={(e) => setPinColorSold(e.target.value)} className="w-10 h-10 rounded cursor-pointer" />
-                  </div>
-                  <div className="flex items-center justify-between bg-white p-3 border rounded shadow-sm">
-                    <span className="text-sm font-bold">لون حالة (قريباً)</span>
-                    <input type="color" value={pinColorComingSoon} onChange={(e) => setPinColorComingSoon(e.target.value)} className="w-10 h-10 rounded cursor-pointer" />
-                  </div>
-                  <div className="flex items-center justify-between bg-white p-3 border rounded shadow-sm">
-                    <span className="text-sm font-bold">لون حالة (تحت الإنشاء)</span>
-                    <input type="color" value={pinColorUnderConstruction} onChange={(e) => setPinColorUnderConstruction(e.target.value)} className="w-10 h-10 rounded cursor-pointer" />
-                  </div>
-                  <div className="flex items-center justify-between bg-white p-3 border rounded shadow-sm">
-                    <span className="text-sm font-bold">اللون الافتراضي</span>
-                    <input type="color" value={pinColorDefault} onChange={(e) => setPinColorDefault(e.target.value)} className="w-10 h-10 rounded cursor-pointer" />
-                  </div>
-                </div>
-
-                {/* Logo & Preview */}
-                <div className="space-y-6">
-                  <div>
-                    <label className="block text-sm font-bold text-gray-700 mb-2">شعار داخل العلامة (اختياري)</label>
-                    <ImageUpload 
-                      name="pinLogoUrl"
-                      defaultValue={pinLogoUrl}
-                      onChange={(url) => setPinLogoUrl(url)} 
-                    />
-                  </div>
-                  
-                  <div>
-                    <label className="block text-sm font-bold text-gray-700 mb-2">حجم الشعار داخل العلامة: {pinLogoSize}px</label>
-                    <input 
-                      type="range" 
-                      min="16" 
-                      max="48" 
-                      value={pinLogoSize} 
-                      onChange={(e) => setPinLogoSize(Number(e.target.value))}
-                      className="w-full"
-                    />
-                  </div>
-
-                  <div className="bg-gray-100 p-4 rounded border flex flex-col items-center justify-center min-h-[120px]">
-                    <span className="text-xs text-gray-500 mb-4">معاينة العلامة (مثال: متاح)</span>
-                    <div 
-                      className="relative rounded-full border-2 border-white shadow-md flex items-center justify-center overflow-hidden"
-                      style={{ 
-                        backgroundColor: pinColorAvailable, 
-                        width: '40px', 
-                        height: '40px'
-                      }}
-                    >
-                      {pinLogoUrl && (
-                        <Image
-                          src={pinLogoUrl} 
-                          alt="شعار الخريطة"
-                          width={pinLogoSize}
-                          height={pinLogoSize}
-                          unoptimized
-                          style={{ 
-                            width: `${pinLogoSize}px`, 
-                            height: `${pinLogoSize}px`, 
-                            objectFit: 'contain' 
-                          }} 
-                        />
-                      )}
-                    </div>
-                  </div>
-                </div>
-              </div>
+              <label className="block text-sm font-bold text-gray-700 mb-1">وصف القسم الخارجي</label>
+              <input
+                type="text"
+                value={mapSectionDesc}
+                onChange={(e) => setMapSectionDesc(e.target.value)}
+                className="w-full border border-gray-300 rounded-lg p-2.5 text-sm"
+              />
             </div>
           </div>
 
-          <div className="flex justify-between items-center pt-4">
-            <Link href="/" target="_blank" className="text-primary hover:underline text-sm font-bold flex items-center gap-1">
-              <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" /></svg>
-              معاينة الخريطة في الرئيسية
-            </Link>
-            <button type="button" onClick={handleResetPreview} disabled={isSavingContent} className="bg-gray-100 hover:bg-gray-200 text-gray-700 px-8 py-2.5 rounded-md font-bold disabled:opacity-50">
-              إعادة ضبط المعاينة
-            </button>
-            <button type="submit" disabled={isSavingContent} className="bg-primary hover:bg-primary-dark text-[#ffffff] px-8 py-2.5 rounded-md font-bold disabled:opacity-50">
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 pt-2">
+            <div>
+              <label className="block text-xs font-bold text-gray-600 mb-1">مركز الخريطة (Latitude)</label>
+              <input
+                type="number"
+                step="any"
+                value={mapCenterLat}
+                onChange={(e) => setMapCenterLat(parseFloat(e.target.value))}
+                className="w-full border border-gray-300 rounded-lg p-2 text-sm text-left"
+                dir="ltr"
+              />
+            </div>
+            <div>
+              <label className="block text-xs font-bold text-gray-600 mb-1">مركز الخريطة (Longitude)</label>
+              <input
+                type="number"
+                step="any"
+                value={mapCenterLng}
+                onChange={(e) => setMapCenterLng(parseFloat(e.target.value))}
+                className="w-full border border-gray-300 rounded-lg p-2 text-sm text-left"
+                dir="ltr"
+              />
+            </div>
+            <div>
+              <label className="block text-xs font-bold text-gray-600 mb-1">مستوى التكبير الافتراضي (Zoom)</label>
+              <input
+                type="number"
+                value={mapZoom}
+                onChange={(e) => setMapZoom(parseInt(e.target.value))}
+                className="w-full border border-gray-300 rounded-lg p-2 text-sm text-left"
+                dir="ltr"
+              />
+            </div>
+          </div>
+
+          <div className="flex justify-end pt-2">
+            <button
+              type="submit"
+              disabled={isSavingContent}
+              className="px-5 py-2.5 bg-[#a6937c] text-white font-bold text-sm rounded-xl hover:bg-[#8e7d69] transition-colors disabled:opacity-50"
+            >
               {isSavingContent ? "جاري الحفظ..." : "حفظ الإعدادات العامة"}
             </button>
           </div>
         </form>
       </div>
 
-      {/* Live Map Preview */}
-      <div className="bg-white rounded-lg shadow-sm border border-gray-100 overflow-hidden">
-        <div className="p-6 border-b border-gray-100 flex justify-between items-center bg-gray-50">
-          <div>
-            <h2 className="text-xl font-bold text-gray-900">معاينة مباشرة للخريطة (Live Preview)</h2>
-            <p className="text-sm text-gray-500 mt-1">تعكس التعديلات لحظياً. التعديلات لن تظهر في الموقع حتى تضغط على &quot;حفظ&quot;.</p>
+      {/* 2. Interactive Map Picker & Filter Section */}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        {/* Left Column: Projects List & Filter controls */}
+        <div className="lg:col-span-1 bg-white p-5 rounded-2xl shadow-sm border border-gray-100 flex flex-col h-[700px]">
+          <h3 className="text-lg font-bold text-gray-900 mb-3">قائمة المشاريع (30 مشروعاً)</h3>
+
+          {/* Search & Filters */}
+          <div className="space-y-2 mb-3">
+            <input
+              type="text"
+              placeholder="ابحث باسم المشروع أو الحي..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              className="w-full border border-gray-200 rounded-lg p-2 text-xs"
+            />
+            <div className="grid grid-cols-3 gap-2">
+              <select
+                value={visibilityFilter}
+                onChange={(e) => setVisibilityFilter(e.target.value)}
+                className="border border-gray-200 rounded-lg p-1.5 text-xs font-semibold text-gray-700"
+              >
+                <option value="ALL">جميع العرض</option>
+                <option value="VISIBLE">مفعل</option>
+                <option value="HIDDEN">مخفي</option>
+              </select>
+
+              <select
+                value={coordsFilter}
+                onChange={(e) => setCoordsFilter(e.target.value)}
+                className="border border-gray-200 rounded-lg p-1.5 text-xs font-semibold text-gray-700"
+              >
+                <option value="ALL">الإحداثيات</option>
+                <option value="HAS_COORDS">محدد (14)</option>
+                <option value="MISSING_COORDS">ناقص (16)</option>
+              </select>
+
+              <select
+                value={statusFilter}
+                onChange={(e) => setStatusFilter(e.target.value)}
+                className="border border-gray-200 rounded-lg p-1.5 text-xs font-semibold text-gray-700"
+              >
+                <option value="ALL">الحالات</option>
+                <option value="AVAILABLE">متاح</option>
+                <option value="SOLD">مباع</option>
+                <option value="COMING_SOON">قريباً</option>
+              </select>
+            </div>
           </div>
-          <span className="bg-blue-100 text-blue-800 text-xs px-3 py-1 rounded-full font-bold animate-pulse">Live</span>
+
+          {/* Projects Scroll List */}
+          <div className="flex-1 overflow-y-auto space-y-2 pr-1">
+            {filteredProjects.map((p) => {
+              const isSelected = p.id === selectedProjectId;
+              const hasCoords = p.mapLat !== null && p.mapLng !== null && !isNaN(Number(p.mapLat)) && !isNaN(Number(p.mapLng));
+
+              return (
+                <div
+                  key={p.id}
+                  onClick={() => setSelectedProjectId(p.id)}
+                  className={`p-3 rounded-xl border transition-all cursor-pointer ${
+                    isSelected
+                      ? "border-[#a6937c] bg-[#a6937c]/5 shadow-sm"
+                      : "border-gray-100 hover:border-gray-200 bg-white"
+                  }`}
+                >
+                  <div className="flex items-center justify-between">
+                    <span className="font-bold text-xs text-gray-900">{p.name}</span>
+                    <span
+                      className={`px-2 py-0.5 rounded-full text-[10px] font-bold ${
+                        hasCoords ? "bg-emerald-50 text-emerald-700 border border-emerald-200" : "bg-amber-50 text-amber-700 border border-amber-200"
+                      }`}
+                    >
+                      {hasCoords ? "محدد الموقع" : "بدون إحداثيات"}
+                    </span>
+                  </div>
+
+                  <div className="flex items-center justify-between text-[11px] text-gray-500 mt-1">
+                    <span>حي: {p.neighborhood || "غير محدد"}</span>
+                    <span>الحالة: {p.status === "SOLD" ? "مباع" : p.status === "COMING_SOON" ? "قريباً" : "متاح"}</span>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
         </div>
-        <div className="p-4 bg-gray-100 relative z-0">
-          <div className="h-[500px] w-full rounded-xl overflow-hidden shadow-inner relative">
-            {showMapSection ? (
-              <InteractiveMapPreview content={previewContent} projects={projects} />
-            ) : (
-              <div className="flex items-center justify-center h-full text-gray-400 font-bold bg-white rounded-xl">
-                قسم الخريطة معطل حالياً (قم بتفعيل القسم لمعاينة الخريطة)
+
+        {/* Right Column: Interactive Leaflet Map & Selected Project Controls */}
+        <div className="lg:col-span-2 space-y-4">
+          {/* Leaflet Map Picker Container */}
+          <div className="relative w-full h-[450px] rounded-2xl overflow-hidden border border-gray-200 bg-[#F7F3EB]">
+            <LeafletMapInner
+              mapCenterLat={mapCenterLat}
+              mapCenterLng={mapCenterLng}
+              mapZoom={mapZoom}
+              projects={projects}
+              selectedProjectId={selectedProjectId}
+              onLocationSelect={handleMapClick}
+              onMarkerDragEnd={handleMarkerDragEnd}
+            />
+            <div className="absolute top-3 right-3 z-[1000] bg-white/90 backdrop-blur-md px-3 py-1.5 rounded-lg text-xs font-bold text-gray-800 shadow-sm border border-gray-200">
+              انقر في أي مكان بالخريطة لتحديد موقع المشروع المحدد ({selectedProject?.name || "لا يوجد"})
+            </div>
+          </div>
+
+          {/* Selected Project Coordinate & Status Editor */}
+          {selectedProject && (
+            <div className="bg-white p-5 rounded-2xl shadow-sm border border-gray-100 space-y-4">
+              <div className="flex items-center justify-between border-b pb-3">
+                <h4 className="text-base font-bold text-gray-900">
+                  تعديل موقع وحالة: <span className="text-[#a6937c]">{selectedProject.name}</span>
+                </h4>
+                <div className="flex items-center gap-2">
+                  <label className="flex items-center gap-1.5 cursor-pointer text-xs font-bold text-gray-700">
+                    <input
+                      type="checkbox"
+                      checked={Boolean(selectedProject.showOnHomeMap)}
+                      onChange={(e) => handleProjectUpdate(selectedProject.id, "showOnHomeMap", e.target.checked)}
+                      className="w-4 h-4 text-[#a6937c] rounded"
+                    />
+                    <span>إظهار في الخريطة</span>
+                  </label>
+                </div>
               </div>
-            )}
-          </div>
-        </div>
-      </div>
 
-      {/* 2. Projects Map Data */}
-      <div className="bg-white rounded-lg shadow-sm border border-gray-100 overflow-hidden">
-        <div className="p-6 border-b border-gray-100">
-          <h2 className="text-xl font-bold text-gray-900">إدارة المنتجات على الخريطة</h2>
-          <p className="text-sm text-gray-500 mt-1">تفعيل وتعديل إحداثيات المنتجات لظهورها على الخريطة</p>
-        </div>
-        
-        <div className="overflow-x-auto">
-          <table className="w-full text-right text-sm">
-            <thead className="bg-gray-50 text-gray-600 font-medium">
-              <tr>
-                <th className="p-4 border-b">المنتج</th>
-                <th className="p-4 border-b">الحالة والمكان</th>
-                <th className="p-4 border-b text-center">تفعيل الخريطة</th>
-                <th className="p-4 border-b">الإحداثيات (Lat / Lng)</th>
-                <th className="p-4 border-b">الإحداثيات (X / Y)</th>
-                <th className="p-4 border-b text-center">إجراءات</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-gray-100">
-              {projects.map((project) => {
-                const isGeoWarning = content.mapMode === 'geographic' && project.showOnHomeMap && (!project.mapLat || !project.mapLng);
-                const isImageWarning = content.mapMode === 'image' && project.showOnHomeMap && (!project.mapX || !project.mapY);
-                const hasWarning = isGeoWarning || isImageWarning;
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                <div>
+                  <label className="block text-xs font-bold text-gray-700 mb-1">دائرة العرض (Latitude)</label>
+                  <input
+                    type="number"
+                    step="any"
+                    value={selectedProject.mapLat ?? ""}
+                    onChange={(e) => handleProjectUpdate(selectedProject.id, "mapLat", e.target.value)}
+                    placeholder="مثال: 24.883778"
+                    className="w-full border border-gray-300 rounded-lg p-2 text-xs text-left"
+                    dir="ltr"
+                  />
+                </div>
+                <div>
+                  <label className="block text-xs font-bold text-gray-700 mb-1">خط الطول (Longitude)</label>
+                  <input
+                    type="number"
+                    step="any"
+                    value={selectedProject.mapLng ?? ""}
+                    onChange={(e) => handleProjectUpdate(selectedProject.id, "mapLng", e.target.value)}
+                    placeholder="مثال: 46.830028"
+                    className="w-full border border-gray-300 rounded-lg p-2 text-xs text-left"
+                    dir="ltr"
+                  />
+                </div>
+                <div>
+                  <label className="block text-xs font-bold text-gray-700 mb-1">حالة المشروع</label>
+                  <select
+                    value={selectedProject.status}
+                    onChange={(e) => handleProjectUpdate(selectedProject.id, "status", e.target.value)}
+                    className="w-full border border-gray-300 rounded-lg p-2 text-xs font-bold text-gray-800"
+                  >
+                    <option value="AVAILABLE">متاح (AVAILABLE)</option>
+                    <option value="SOLD">مباع (SOLD)</option>
+                    <option value="COMING_SOON">قريباً (COMING_SOON)</option>
+                    <option value="UNDER_CONSTRUCTION">تحت الإنشاء (UNDER_CONSTRUCTION)</option>
+                  </select>
+                </div>
+              </div>
 
-                return (
-                  <tr key={project.id} className="hover:bg-gray-50/50">
-                    <td className="p-4">
-                      <div className="font-bold text-gray-900">{project.name}</div>
-                      {!project.isVisible && <span className="text-xs text-red-500 font-medium">مخفي من الموقع</span>}
-                      {hasWarning && (
-                        <div className="text-xs text-orange-500 font-bold mt-1 flex items-center gap-1">
-                          <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" /></svg>
-                          ينقص إحداثيات
-                        </div>
-                      )}
-                    </td>
-                    <td className="p-4 text-gray-600">
-                      <div className="text-xs bg-gray-100 inline-block px-2 py-1 rounded mb-1">{project.status}</div>
-                      <div className="text-xs">{project.city} - {project.neighborhood}</div>
-                    </td>
-                    <td className="p-4 text-center">
-                      <label className="relative inline-flex items-center cursor-pointer">
-                        <input 
-                          type="checkbox" 
-                          className="sr-only peer"
-                          checked={Boolean(project.showOnHomeMap)}
-                          onChange={(e) => handleProjectUpdate(project.id, 'showOnHomeMap', e.target.checked)}
-                        />
-                        <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none rounded-full peer peer-checked:after:-translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:right-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-primary"></div>
-                      </label>
-                    </td>
-                    <td className="p-4">
-                      <div className="flex gap-2">
-                        <input 
-                          type="number" step="any" placeholder="Lat" dir="ltr"
-                          value={project.mapLat || ''}
-                          onChange={(e) => handleProjectUpdate(project.id, 'mapLat', e.target.value)}
-                          className="w-20 border-gray-300 rounded text-xs p-1 border text-center"
-                        />
-                        <input 
-                          type="number" step="any" placeholder="Lng" dir="ltr"
-                          value={project.mapLng || ''}
-                          onChange={(e) => handleProjectUpdate(project.id, 'mapLng', e.target.value)}
-                          className="w-20 border-gray-300 rounded text-xs p-1 border text-center"
-                        />
-                      </div>
-                    </td>
-                    <td className="p-4">
-                      <div className="flex gap-2">
-                        <input 
-                          type="number" step="any" placeholder="X %" dir="ltr"
-                          value={project.mapX || ''}
-                          onChange={(e) => handleProjectUpdate(project.id, 'mapX', e.target.value)}
-                          className="w-16 border-gray-300 rounded text-xs p-1 border text-center"
-                        />
-                        <input 
-                          type="number" step="any" placeholder="Y %" dir="ltr"
-                          value={project.mapY || ''}
-                          onChange={(e) => handleProjectUpdate(project.id, 'mapY', e.target.value)}
-                          className="w-16 border-gray-300 rounded text-xs p-1 border text-center"
-                        />
-                      </div>
-                    </td>
-                    <td className="p-4 text-center">
-                      <div className="flex items-center justify-center gap-2">
-                        <button 
-                          onClick={() => saveProjectMapData(project)}
-                          disabled={savingProjectId === project.id}
-                          className="bg-green-600 hover:bg-green-700 text-white px-3 py-1.5 rounded text-xs font-bold disabled:opacity-50"
-                        >
-                          {savingProjectId === project.id ? "..." : "حفظ"}
-                        </button>
-                        <Link 
-                          href={`/crm/projects/${project.id}/edit`}
-                          className="bg-gray-100 hover:bg-gray-200 text-gray-700 px-3 py-1.5 rounded text-xs font-bold"
-                        >
-                          تعديل
-                        </Link>
-                      </div>
-                    </td>
-                  </tr>
-                );
-              })}
-              {projects.length === 0 && (
-                <tr>
-                  <td colSpan={6} className="p-8 text-center text-gray-500">لا توجد مشاريع مضافة حالياً</td>
-                </tr>
-              )}
-            </tbody>
-          </table>
+              <div className="flex justify-end pt-2">
+                <button
+                  type="button"
+                  onClick={() => saveProjectMapData(selectedProject)}
+                  disabled={savingProjectId === selectedProject.id}
+                  className="px-6 py-2 bg-[#a6937c] text-white font-bold text-xs rounded-xl hover:bg-[#8e7d69] transition-colors disabled:opacity-50"
+                >
+                  {savingProjectId === selectedProject.id ? "جاري الحفظ..." : "حفظ موقع وحالة المشروع"}
+                </button>
+              </div>
+            </div>
+          )}
         </div>
       </div>
     </div>

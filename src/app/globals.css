@@ -1,23 +1,37 @@
+@font-face {
+  font-family: '29LT Kaff';
+  src: url('/fonts/29LTKaff-Regular.woff2') format('woff2');
+  font-weight: 400 500;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: '29LT Kaff';
+  src: url('/fonts/29LTKaff-Bold.woff2') format('woff2');
+  font-weight: 700 800 900;
+  font-style: normal;
+  font-display: swap;
+}
+
 @import "tailwindcss";
 
-:root {
-  --background: #ffffff;
-  --foreground: #171717;
-  
-  /* Brand Identity Tokens - Phase 6E-9B (For gradual implementation) */
-  --brand-cafe-beige: #A3947E;
-  --brand-off-white-beige: #EDEAE2;
-  --brand-pastel-green: #B4B596;
-  --brand-coal: #4D4948;
-  
-  /* Fallbacks for brand settings */
-  --brand-primary: #c09d73; /* لون نحت الذهبي */
-  --brand-secondary: #2c3e50;
-  --brand-accent: #d4af37;
-  --brand-dark-bg: #050505;
-  --brand-button: var(--brand-primary);
-  --brand-text: #111827;
-  --brand-border: #e5e7eb;
+.public-site-root {
+  /* Public Site Brand Identity Tokens */
+  --brand-primary: var(--color-primary-override, #A6937C);
+  --brand-secondary: var(--color-secondary-override, #B5B693);
+  --brand-accent: var(--color-accent-override, #C5B59C);
+  --brand-dark-bg: var(--color-dark-bg-override, #4F4949);
+  --brand-button: var(--color-button-override, #B5B693);
+  --brand-text: var(--color-text-override, #4F4949);
+  --brand-bg: #F7F3EB;
+  --brand-border: var(--color-border-override, rgba(166, 147, 124, 0.15));
+
+  --background: #F7F3EB;
+  --foreground: #4F4949;
+  font-family: '29LT Kaff', 'Tajawal', sans-serif;
+  background-color: #F7F3EB;
+  color: #4F4949;
 }
 
 @theme inline {
@@ -39,18 +53,11 @@
   --color-brand-text: var(--color-text-override, var(--brand-text));
   --color-brand-border: var(--color-border-override, var(--brand-border));
   
-  --font-sans: var(--font-tajawal), ui-sans-serif, system-ui, sans-serif;
-  --font-tajawal: var(--font-tajawal);
-}
-
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0f172a; /* Slate 900 */
-    --foreground: #f8fafc; /* Slate 50 */
-  }
+  --font-sans: '29LT Kaff', 'Tajawal', ui-sans-serif, system-ui, sans-serif;
 }
 
 body {
   background: var(--background);
   color: var(--foreground);
+  font-family: '29LT Kaff', 'Tajawal', sans-serif;
 }

@@ -8,10 +8,11 @@ export function isValidPhone(phone?: string | null): boolean {
   if (trimmed.length < 7) return false;
   if (
     trimmed.includes("00000000") ||
-    trimmed.includes("12345") ||
+    trimmed.includes("12345678") ||
     trimmed.includes("920000000") ||
     trimmed.includes("920012345") ||
-    trimmed.includes("9200")
+    trimmed.includes("placeholder") ||
+    trimmed.includes("test")
   ) {
     return false;
   }
@@ -23,12 +24,10 @@ export function isValidEmail(email?: string | null): boolean {
   const trimmed = email.trim().toLowerCase();
   if (trimmed.length < 5 || !trimmed.includes("@")) return false;
   if (
-    trimmed.includes("info@naht-re.sa") ||
-    trimmed.includes("info@naht.com.sa") ||
-    trimmed.includes("info@naht") ||
     trimmed.includes("example.com") ||
     trimmed.includes("test.com") ||
-    trimmed.includes("placeholder")
+    trimmed.includes("placeholder") ||
+    trimmed.includes("none@")
   ) {
     return false;
   }
@@ -36,7 +35,39 @@ export function isValidEmail(email?: string | null): boolean {
 }
 
 export function isValidWhatsapp(whatsapp?: string | null): boolean {
-  return isValidPhone(whatsapp);
+  if (!whatsapp) return false;
+  const trimmed = whatsapp.trim();
+  if (!trimmed) return false;
+
+  let rawNumber = trimmed;
+  if (trimmed.startsWith("https://wa.me/")) {
+    const after = trimmed.replace("https://wa.me/", "").split("?")[0].split("/")[0];
+    rawNumber = after;
+  } else if (trimmed.startsWith("https://api.whatsapp.com/")) {
+    const match = trimmed.match(/phone=([0-9+]+)/);
+    if (match && match[1]) {
+      rawNumber = match[1];
+    } else {
+      return false;
+    }
+  }
+
+  const digits = rawNumber.replace(/\D/g, "");
+  if (!digits || digits.length < 9 || digits.length > 15) return false;
+  if (digits.startsWith("9200") || digits.startsWith("920")) return false;
+  if (
+    digits.includes("000000") ||
+    digits.includes("123456") ||
+    digits.includes("999999") ||
+    digits === "123456789"
+  ) {
+    return false;
+  }
+
+  if (digits.startsWith("9665") || digits.startsWith("05") || digits.startsWith("5")) {
+    return true;
+  }
+  return digits.length >= 10;
 }
 
 export function formatProjectName(name?: string | null): string {

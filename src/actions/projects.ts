@@ -104,13 +104,28 @@ export async function validateProjectMapCoordinates(data: {
   mapX?: number | null;
   mapY?: number | null;
 }) {
-  if (data.mapLat !== null && data.mapLat !== undefined) {
+  const hasLat = data.mapLat !== null && data.mapLat !== undefined;
+  const hasLng = data.mapLng !== null && data.mapLng !== undefined;
+
+  // Strict rule: If showOnHomeMap is enabled, both coordinates MUST be present and valid
+  if (data.showOnHomeMap) {
+    if (!hasLat || !hasLng) {
+      throw new Error("يجب تزويد كلا إحداثيي دائرة العرض وخط الطول معاً لتفعيل إظهار المشروع على الخريطة");
+    }
+  }
+
+  // Strict rule: One coordinate cannot be supplied without the other
+  if ((hasLat && !hasLng) || (!hasLat && hasLng)) {
+    throw new Error("يجب تزويد دائرة العرض وخط الطول معاً كزوج إحداثيات مكتمل أو إزالتهم معاً");
+  }
+
+  if (hasLat && data.mapLat !== null && data.mapLat !== undefined) {
     if (!Number.isFinite(data.mapLat) || data.mapLat < -90 || data.mapLat > 90) {
       throw new Error("دائرة العرض (Latitude) غير صالحة، يجب أن تكون بين -90 و 90");
     }
   }
 
-  if (data.mapLng !== null && data.mapLng !== undefined) {
+  if (hasLng && data.mapLng !== null && data.mapLng !== undefined) {
     if (!Number.isFinite(data.mapLng) || data.mapLng < -180 || data.mapLng > 180) {
       throw new Error("خط الطول (Longitude) غير صالح، يجب أن يكون بين -180 و 180");
     }
@@ -274,5 +289,6 @@ export async function updateProjectMapData(
   });
 
   revalidatePath("/");
+  revalidatePath("/projects");
   revalidatePath("/crm/projects-map");
 }

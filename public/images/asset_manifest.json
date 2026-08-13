@@ -1,0 +1,47 @@
+{
+  "manifestVersion": "1.0",
+  "generatedAt": "2026-08-12T13:59:00+03:00",
+  "referenceWebsite": "https://naht-re.sa/",
+  "assets": [
+    {
+      "id": "logo-white",
+      "purpose": "Official White Logo for dark background and hero overlay",
+      "originalUrl": "https://naht-re.sa/wp-content/uploads/2025/11/Full-logo_3.png",
+      "localPath": "public/images/brand/logo-white.png",
+      "sha256": "499F77895B8358DEE5E10840654D4E2CD69B8D611034494F539A04AAD4D52E02",
+      "downloadedAt": "2026-08-12T10:48:18Z",
+      "hotlink": false,
+      "replacedAsset": "Generic textual logo"
+    },
+    {
+      "id": "logo-icon",
+      "purpose": "Official Brand Favicon & Icon",
+      "originalUrl": "https://naht-re.sa/wp-content/uploads/2025/12/s-e1765649988336.png",
+      "localPath": "public/images/brand/logo-icon.png",
+      "sha256": "FB4661870B520D85B2B6541667653E49CB5BDDDE1ABAF23E157EA8E1260EBB8E",
+      "downloadedAt": "2026-08-12T10:48:18Z",
+      "hotlink": false,
+      "replacedAsset": "Default browser icon"
+    },
+    {
+      "id": "hero-1",
+      "purpose": "Primary Hero Slider Villa Image (Bateel Villa / Official Naht Villa Asset)",
+      "originalUrl": "https://naht-re.sa/wp-content/uploads/2026/05/0010-2-2-1024x800.jpg",
+      "localPath": "public/images/hero/hero-1.jpg",
+      "sha256": "5E8B041FE5C8B2AB3159DF4D356D69ECBCD3599C4F9D0C54063BC3EFDF3710E6",
+      "downloadedAt": "2026-08-12T10:49:34Z",
+      "hotlink": false,
+      "replacedAsset": "Unsplash generic stock photo (https://images.unsplash.com/photo-1600596542815-ffad4c1539a9)"
+    },
+    {
+      "id": "hero-2",
+      "purpose": "Secondary Hero Slider Building Image (Naht 12 / Official Naht Residential Building)",
+      "originalUrl": "https://naht-re.sa/wp-content/uploads/2025/12/002-1024x576.jpg",
+      "localPath": "public/images/hero/hero-2.jpg",
+      "sha256": "8A73AC6178F84544EF2A7C1145E68EF73B973AF05A5D62E3C2680EB4565F8047",
+      "downloadedAt": "2026-08-12T10:49:34Z",
+      "hotlink": false,
+      "replacedAsset": "Unsplash generic stock photo (https://images.unsplash.com/photo-1512917774080-9991f1c4c750)"
+    }
+  ]
+}

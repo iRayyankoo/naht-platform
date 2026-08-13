@@ -1,3 +1,4 @@
+/* eslint-disable react-hooks/set-state-in-effect */
 "use client";
 
 import { useRouter, useSearchParams } from "next/navigation";
@@ -18,7 +19,6 @@ export default function ProjectsFilter({ types, statuses, cities }: ProjectsFilt
   const [status, setStatus] = useState(searchParams.get("status") || "");
   const [city, setCity] = useState(searchParams.get("city") || "");
 
-  // Optional: update local state if URL changes from outside
   useEffect(() => {
     setQ(searchParams.get("q") || "");
     setType(searchParams.get("type") || "");
@@ -42,116 +42,124 @@ export default function ProjectsFilter({ types, statuses, cities }: ProjectsFilt
 
   const hasFilters = searchParams.get("q") || searchParams.get("type") || searchParams.get("status") || searchParams.get("city");
 
+  const typeLabels: Record<string, string> = {
+    villas: "فلل",
+    villa: "فلل",
+    floors: "أدوار",
+    floor: "أدوار",
+    villasfloors: "فلل وأدوار",
+    apartments: "شقق",
+    apartment: "شقق",
+    townhouse: "تاون هاوس",
+    "فلل": "فلل",
+    "أدوار": "أدوار",
+    "شقق": "شقق",
+  };
+
   const statusLabels: Record<string, string> = {
     AVAILABLE: "متاح",
     SOLD: "مباع",
+    SOLD_OUT: "مباع",
+    SOON: "قريباً",
     COMING_SOON: "قريباً",
+    UNDER_CONSTRUCTION: "تحت الإنشاء",
+    "متاح": "متاح",
+    "مباع": "مباع",
+    "قريباً": "قريباً",
   };
 
   return (
-    <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100 mb-8 max-w-5xl mx-auto -mt-10 relative z-10">
-      {/* Filter Header */}
-      <div className="flex items-center justify-between mb-5">
+    <div className="bg-white p-6 rounded-2xl shadow-sm border border-[#A6937C]/20 mb-10 max-w-5xl mx-auto -mt-10 relative z-10">
+      <div className="flex items-center justify-between mb-4">
         <div>
-          <p className="text-[10px] text-primary font-bold tracking-[0.2em] uppercase mb-0.5">SEARCH</p>
-          <h2 className="text-sm font-bold text-gray-900">ابحث عن مشروعك المناسب</h2>
+          <p className="text-xs text-[#A6937C] font-bold tracking-wider uppercase mb-0.5">تصفية المشاريع</p>
+          <h2 className="text-sm font-bold text-[#4F4949]">ابحث عن عقارك المناسب</h2>
         </div>
         {hasFilters && (
           <button
             onClick={clearFilters}
-            className="text-xs text-red-500 hover:text-red-600 font-bold transition-colors border border-red-100 hover:border-red-200 px-3 py-1.5 rounded-lg"
+            className="text-xs text-red-600 hover:text-red-700 font-bold transition-colors border border-red-200 px-3 py-1.5 rounded-lg"
           >
             مسح الفلاتر
           </button>
         )}
       </div>
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-4 items-end">
-        
+
+      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4 items-end">
         {/* Text Search */}
-        <div className="flex flex-col gap-1.5 md:col-span-1">
-          <label className="text-sm font-bold text-gray-700">بحث</label>
+        <div className="flex flex-col gap-1.5">
+          <label className="text-xs font-semibold text-[#4F4949]">بحث بالاسم أو الحي</label>
           <input
             type="text"
             placeholder="اسم المشروع، الحي..."
             value={q}
-            onChange={(e) => {
-              setQ(e.target.value);
-            }}
+            onChange={(e) => setQ(e.target.value)}
             onKeyDown={(e) => {
               if (e.key === "Enter") handleFilter("q", q);
             }}
             onBlur={() => handleFilter("q", q)}
-            className="w-full px-4 py-2.5 border border-gray-200 rounded-lg focus:ring-2 focus:ring-primary focus:border-primary outline-none transition-all text-sm"
+            className="w-full px-3.5 py-2 border border-[#A6937C]/30 rounded-lg focus:ring-2 focus:ring-[#A6937C] focus:border-[#A6937C] outline-none text-xs bg-[#F9F9F9]"
           />
         </div>
 
         {/* Type Filter */}
         <div className="flex flex-col gap-1.5">
-          <label className="text-sm font-bold text-gray-700">النوع</label>
-          <div className="relative">
-            <select
-              value={type}
-              onChange={(e) => {
-                setType(e.target.value);
-                handleFilter("type", e.target.value);
-              }}
-              className="w-full pl-10 pr-4 py-2.5 border border-gray-200 rounded-lg focus:ring-2 focus:ring-primary focus:border-primary outline-none transition-all text-sm appearance-none bg-white text-gray-900 font-medium cursor-pointer"
-            >
-              <option value="">الكل</option>
-              {types.map((t) => (
-                <option key={t} value={t} className="text-gray-900">{t}</option>
-              ))}
-            </select>
-            <div className="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none text-gray-500">
-              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7"></path></svg>
-            </div>
-          </div>
+          <label className="text-xs font-semibold text-[#4F4949]">النوع</label>
+          <select
+            value={type}
+            onChange={(e) => {
+              setType(e.target.value);
+              handleFilter("type", e.target.value);
+            }}
+            className="w-full px-3.5 py-2 border border-[#A6937C]/30 rounded-lg focus:ring-2 focus:ring-[#A6937C] focus:border-[#A6937C] outline-none text-xs bg-[#F9F9F9] text-[#4F4949] cursor-pointer"
+          >
+            <option value="">جميع الأنواع</option>
+            {types.map((t) => (
+              <option key={t} value={t}>
+                {typeLabels[t.toLowerCase().trim()] || t}
+              </option>
+            ))}
+          </select>
         </div>
 
         {/* Status Filter */}
         <div className="flex flex-col gap-1.5">
-          <label className="text-sm font-bold text-gray-700">الحالة</label>
-          <div className="relative">
-            <select
-              value={status}
-              onChange={(e) => {
-                setStatus(e.target.value);
-                handleFilter("status", e.target.value);
-              }}
-              className="w-full pl-10 pr-4 py-2.5 border border-gray-200 rounded-lg focus:ring-2 focus:ring-primary focus:border-primary outline-none transition-all text-sm appearance-none bg-white text-gray-900 font-medium cursor-pointer"
-            >
-              <option value="">الكل</option>
-              {statuses.map((s) => (
-                <option key={s} value={s} className="text-gray-900">{statusLabels[s] || s}</option>
-              ))}
-            </select>
-            <div className="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none text-gray-500">
-              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7"></path></svg>
-            </div>
-          </div>
+          <label className="text-xs font-semibold text-[#4F4949]">الحالة</label>
+          <select
+            value={status}
+            onChange={(e) => {
+              setStatus(e.target.value);
+              handleFilter("status", e.target.value);
+            }}
+            className="w-full px-3.5 py-2 border border-[#A6937C]/30 rounded-lg focus:ring-2 focus:ring-[#A6937C] focus:border-[#A6937C] outline-none text-xs bg-[#F9F9F9] text-[#4F4949] cursor-pointer"
+          >
+            <option value="">جميع الحالات</option>
+            {statuses.map((s) => (
+              <option key={s} value={s}>
+                {statusLabels[s] || s}
+              </option>
+            ))}
+          </select>
         </div>
 
         {/* City Filter */}
         <div className="flex flex-col gap-1.5">
-          <label className="text-sm font-bold text-gray-700">المدينة</label>
-          <div className="relative">
-            <select
-              value={city}
-              onChange={(e) => {
-                setCity(e.target.value);
-                handleFilter("city", e.target.value);
-              }}
-              className="w-full pl-10 pr-4 py-2.5 border border-gray-200 rounded-lg focus:ring-2 focus:ring-primary focus:border-primary outline-none transition-all text-sm appearance-none bg-white text-gray-900 font-medium cursor-pointer"
-            >
-              <option value="">الكل</option>
-              {cities.map((c) => (
-                <option key={c} value={c} className="text-gray-900">{c}</option>
-              ))}
-            </select>
-            <div className="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none text-gray-500">
-              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7"></path></svg>
-            </div>
-          </div>
+          <label className="text-xs font-semibold text-[#4F4949]">المدينة</label>
+          <select
+            value={city}
+            onChange={(e) => {
+              setCity(e.target.value);
+              handleFilter("city", e.target.value);
+            }}
+            className="w-full px-3.5 py-2 border border-[#A6937C]/30 rounded-lg focus:ring-2 focus:ring-[#A6937C] focus:border-[#A6937C] outline-none text-xs bg-[#F9F9F9] text-[#4F4949] cursor-pointer"
+          >
+            <option value="">جميع المدن</option>
+            {cities.map((c) => (
+              <option key={c} value={c}>
+                {c}
+              </option>
+            ))}
+          </select>
         </div>
       </div>
     </div>

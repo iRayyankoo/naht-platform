@@ -6,34 +6,41 @@ export async function getBaseMetadata(customOverrides: Partial<Metadata> = {}): 
     where: { id: "global" }
   });
 
-  const title = settings?.defaultSeoTitle || settings?.siteName || "نحت العقارية";
-  const description = settings?.defaultSeoDescription || "نظام إدارة علاقات العملاء لشركة نحت العقارية";
+  const defaultTitle = settings?.defaultSeoTitle || settings?.siteName || "نحت العقارية";
+  const defaultDescription = settings?.defaultSeoDescription || "نظام إدارة علاقات العملاء لشركة نحت العقارية";
   const images = settings?.defaultOgImage ? [settings.defaultOgImage] : [];
   const robots = settings?.defaultRobotsIndex ? "index, follow" : "noindex, nofollow";
 
   const metadataBase = settings?.canonicalBaseUrl ? new URL(settings.canonicalBaseUrl) : undefined;
 
+  const finalTitle = (typeof customOverrides.title === "string" && customOverrides.title) ? customOverrides.title : defaultTitle;
+  const finalDescription = (typeof customOverrides.description === "string" && customOverrides.description) ? customOverrides.description : defaultDescription;
+
+  const cleanOverrides = Object.fromEntries(
+    Object.entries(customOverrides).filter(([k, v]) => Boolean(k) && v !== undefined)
+  );
+
   return {
     metadataBase,
-    title: customOverrides.title || title,
-    description: customOverrides.description || description,
     robots,
+    ...cleanOverrides,
+    title: finalTitle,
+    description: finalDescription,
     openGraph: {
-      title: customOverrides.title || title,
-      description: customOverrides.description || description,
+      title: finalTitle,
+      description: finalDescription,
       siteName: settings?.siteName || "نحت العقارية",
       images: customOverrides.openGraph?.images || images,
       locale: "ar_SA",
       type: "website",
-      ...customOverrides.openGraph,
+      ...(customOverrides.openGraph || {}),
     },
     twitter: {
       card: "summary_large_image",
-      title: customOverrides.title || title,
-      description: customOverrides.description || description,
+      title: finalTitle,
+      description: finalDescription,
       images: customOverrides.twitter?.images || images,
-      ...customOverrides.twitter,
+      ...(customOverrides.twitter || {}),
     },
-    ...customOverrides,
   };
 }

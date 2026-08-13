@@ -1,186 +1,240 @@
 'use client';
 
-import React, { useEffect, useState } from 'react';
-import { MapContainer, TileLayer, Marker, Popup, useMap, ZoomControl } from 'react-leaflet';
+import React, { useSyncExternalStore, useState, useMemo, useCallback, useEffect } from 'react';
+import { MapContainer, TileLayer, Marker, Popup, useMap } from 'react-leaflet';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
 import Link from 'next/link';
-import { HomePageContent, Project } from '@prisma/client';
+import Image from 'next/image';
+import { HomePageContent } from '@prisma/client';
+
+export interface ProjectMapItem {
+  id: string;
+  slug: string;
+  name: string;
+  status: string;
+  type?: string | null;
+  city?: string | null;
+  neighborhood?: string | null;
+  mapLat: number | null;
+  mapLng: number | null;
+  mainImage?: string | null;
+  isVisible?: boolean;
+  showOnHomeMap?: boolean;
+  mapX?: number | null;
+  mapY?: number | null;
+  locationText?: string | null;
+  area?: number | null;
+  price?: number | null;
+}
 
 interface GeographicMapProps {
   content?: HomePageContent | null;
-  projects: any[];
+  projects: ProjectMapItem[];
   activeFilter: string;
 }
 
-// Fix for default marker icon issues in Leaflet with Next.js
-delete (L.Icon.Default.prototype as any)._getIconUrl;
-L.Icon.Default.mergeOptions({
-  iconRetinaUrl: '/images/leaflet/marker-icon-2x.png',
-  iconUrl: '/images/leaflet/marker-icon.png',
-  shadowUrl: '/images/leaflet/marker-shadow.png',
-});
-
-// Custom Icons for different statuses
-const createIcon = (color: string, logoUrl?: string | null, logoSize?: number | null) => {
-  const size = logoSize || 32;
-  const containerSize = size + 8; // extra padding for the pin circle
-  
-  return L.divIcon({
-    className: 'custom-leaflet-icon',
-    html: `
-      <div style="
-        width: ${containerSize}px; 
-        height: ${containerSize}px; 
-        background: ${color}; 
-        border-radius: 50%; 
-        display: flex; 
-        align-items: center; 
-        justify-content: center; 
-        box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.3);
-        border: 2px solid white;
-        overflow: hidden;
-      ">
-        ${logoUrl ? `<img src="${logoUrl}" style="width: ${size}px; height: ${size}px; object-fit: contain;" />` : `<div style="width: 14px; height: 14px; background: white; border-radius: 50%;"></div>`}
-      </div>
-      <div class="absolute -z-10 w-full h-full rounded-full animate-ping opacity-30" style="background-color: ${color}"></div>
-    `,
-    iconSize: [containerSize, containerSize],
-    iconAnchor: [containerSize / 2, containerSize / 2],
-    popupAnchor: [0, -(containerSize / 2)],
-  });
+const MARKER_ICONS: Record<string, string> = {
+  AVAILABLE: '/images/markers/available.svg',
+  SOLD: '/images/markers/sold.svg',
+  COMING_SOON: '/images/markers/soon.svg',
+  UNDER_CONSTRUCTION: '/images/markers/under-sale.svg',
 };
 
-const getStatusColor = (status: string | null, content: any) => {
-  switch (status) {
-    case 'SOLD': return content?.pinColorSold || '#4E4949'; 
-    case 'AVAILABLE': return content?.pinColorAvailable || '#B5B693'; 
-    case 'COMING_SOON': return content?.pinColorComingSoon || '#C5B59C'; 
-    case 'UNDER_CONSTRUCTION': return content?.pinColorUnderConstruction || '#A6937C'; 
-    default: return content?.pinColorDefault || '#A6937C';
+function getMarkerIcon(status: string | null | undefined): L.Icon {
+  const s = (status || '').toUpperCase().trim();
+  let iconUrl = MARKER_ICONS.AVAILABLE;
+  if (s.includes('SOLD') || s.includes('مباع')) {
+    iconUrl = MARKER_ICONS.SOLD;
+  } else if (s.includes('SOON') || s.includes('قريباً')) {
+    iconUrl = MARKER_ICONS.COMING_SOON;
+  } else if (s.includes('UNDER') || s.includes('إنشاء') || s.includes('CONSTRUCTION')) {
+    iconUrl = MARKER_ICONS.UNDER_CONSTRUCTION;
   }
-};
 
-const GeographicMap: React.FC<GeographicMapProps> = ({ content, projects, activeFilter }) => {
-  const [mounted, setMounted] = useState(false);
+  return L.icon({
+    iconUrl,
+    iconSize: [36, 44],
+    iconAnchor: [18, 44],
+    popupAnchor: [0, -40],
+    className: 'leaflet-marker-bounce transition-transform hover:scale-110',
+  });
+}
+
+const emptySubscribe = () => () => {};
+
+function MapController({ validPositions, defaultCenter, defaultZoom }: { validPositions: [number, number][]; defaultCenter: [number, number]; defaultZoom: number }) {
+  const map = useMap();
+
+  const handleRecenter = useCallback(() => {
+    if (validPositions.length > 0) {
+      const bounds = L.latLngBounds(validPositions);
+      map.fitBounds(bounds, { padding: [40, 40], maxZoom: 15 });
+    } else {
+      map.setView(defaultCenter, defaultZoom);
+    }
+  }, [map, validPositions, defaultCenter, defaultZoom]);
 
   useEffect(() => {
-    setMounted(true);
-  }, []);
-
-  if (!mounted) return <div className="w-full h-full bg-[#EBE7DF] rounded-[2rem]" />; // Skeleton
-
-  const filteredProjects = activeFilter === 'ALL' 
-    ? projects 
-    : projects.filter(p => p.status === activeFilter);
-
-  const centerLat = content?.mapCenterLat || 24.7136;
-  const centerLng = content?.mapCenterLng || 46.6753;
-  const zoom = content?.mapZoom || 5;
-
-  const tileFilters = `brightness(${content?.mapTileBrightness ?? 100}%) contrast(${content?.mapTileContrast ?? 100}%) saturate(${content?.mapTileSaturation ?? 100}%) hue-rotate(${content?.mapTileHue ?? 0}deg) grayscale(${content?.mapTileGrayscale ?? 0}%)`;
+    if (validPositions.length > 0) {
+      const bounds = L.latLngBounds(validPositions);
+      map.fitBounds(bounds, { padding: [40, 40], maxZoom: 15 });
+    }
+  }, [map, validPositions]);
 
   return (
-    <>
-      <style>{`
-        .custom-tile-layer {
-          filter: ${tileFilters} !important;
-        }
-      `}</style>
-      <MapContainer 
-      center={[centerLat, centerLng]} 
-      zoom={zoom} 
-      style={{ width: '100%', height: '100%', background: '#EBE7DF' }}
-      zoomControl={false}
-      scrollWheelZoom={false}
-      attributionControl={false} // Disable default, add custom
-    >
-      <ZoomControl position="bottomright" />
-      {/* Light Luxury Theme - CartoDB Positron */}
-      <TileLayer
-        className="custom-tile-layer"
-        url="https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png"
-        attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OSM</a> contributors &copy; <a href="https://carto.com/attributions">CARTO</a>'
-      />
-      
-      {filteredProjects.map((project) => {
-        if (!project.mapLat || !project.mapLng) return null;
-        
-        const color = getStatusColor(project.status, content);
-        
-        return (
-          <Marker 
-            key={project.slug} 
-            position={[project.mapLat, project.mapLng]}
-            icon={createIcon(color, content?.pinLogoUrl, content?.pinLogoSize)}
+    <div className="absolute top-4 left-4 z-[1000]">
+      <button
+        onClick={handleRecenter}
+        type="button"
+        className="px-3.5 py-2 bg-white/95 backdrop-blur-md text-[#4f4949] font-bold text-xs rounded-xl shadow-md border border-gray-200 hover:bg-[#a6937c] hover:text-white transition-all flex items-center gap-1.5"
+      >
+        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
+        </svg>
+        <span>إعادة التمركز</span>
+      </button>
+    </div>
+  );
+}
+
+function SafeZoomControl() {
+  const map = useMap();
+
+  useEffect(() => {
+    if (!map) return;
+    const control = L.control.zoom({ position: 'bottomright' });
+    control.addTo(map);
+
+    return () => {
+      control.remove();
+    };
+  }, [map]);
+
+  return null;
+}
+
+export default function GeographicMap({ content, projects = [], activeFilter }: GeographicMapProps) {
+  const mounted = useSyncExternalStore(emptySubscribe, () => true, () => false);
+  const [tileError, setTileError] = useState(false);
+
+  const validProjects = useMemo(() => {
+    return (projects || []).filter((p) => {
+      const isVisible = p.isVisible === true;
+      const isShowOnHomeMap = p.showOnHomeMap === true;
+      const filterMatch = activeFilter === 'ALL' || p.status === activeFilter;
+      const lat = Number(p.mapLat);
+      const lng = Number(p.mapLng);
+      const hasValidCoords = Number.isFinite(lat) && Number.isFinite(lng) && lat >= -90 && lat <= 90 && lng >= -180 && lng <= 180 && lat !== 0 && lng !== 0;
+      return isVisible && isShowOnHomeMap && filterMatch && hasValidCoords;
+    });
+  }, [projects, activeFilter]);
+
+  const validPositions = useMemo(() => {
+    return validProjects.map((p) => [Number(p.mapLat), Number(p.mapLng)] as [number, number]);
+  }, [validProjects]);
+
+  const defaultCenter: [number, number] = [content?.mapCenterLat || 24.7136, content?.mapCenterLng || 46.6753];
+  const defaultZoom = content?.mapZoom || 11;
+
+  if (!mounted) {
+    return (
+      <div className="w-full h-full bg-[#F7F3EB] rounded-[2rem] flex items-center justify-center animate-pulse">
+        <div className="text-center text-[#a6937c] font-bold text-sm">جاري تحميل الخريطة التفاعلية...</div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="relative w-full h-full rounded-[2rem] overflow-hidden bg-[#F7F3EB]">
+      {/* Empty State Fallback */}
+      {validProjects.length === 0 && (
+        <div className="absolute inset-0 z-[1001] bg-[#F7F3EB]/90 backdrop-blur-sm flex flex-col items-center justify-center p-6 text-center">
+          <div className="w-12 h-12 rounded-full bg-[#a6937c]/10 text-[#a6937c] flex items-center justify-center mb-3">
+            <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
+            </svg>
+          </div>
+          <h4 className="text-base font-bold text-[#4f4949]">لا تتوفر مشاريع خريطة مطابقة للتصفية الحالية</h4>
+          <p className="text-xs text-gray-500 mt-1">تأكد من اختيار تصفية مختلفة أو استكمال الإحداثيات من لوحة CRM.</p>
+        </div>
+      )}
+
+      {/* Tile Loading Error Fallback */}
+      {tileError && (
+        <div className="absolute bottom-4 right-4 z-[1002] bg-amber-50 text-amber-800 border border-amber-200 px-3 py-1.5 rounded-lg text-xs font-bold shadow-sm">
+          تنبيه: يتعذر تحميل بعض بلاطات الخريطة من الخادم، يتم استخدام النمط البديل.
+        </div>
+      )}
+
+      <MapContainer
+        center={defaultCenter}
+        zoom={defaultZoom}
+        minZoom={4}
+        maxZoom={18}
+        style={{ width: '100%', height: '100%', background: '#F7F3EB' }}
+        zoomControl={false}
+        scrollWheelZoom={false}
+        attributionControl={false}
+      >
+        <SafeZoomControl />
+        <MapController validPositions={validPositions} defaultCenter={defaultCenter} defaultZoom={defaultZoom} />
+
+        <TileLayer
+          url="https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png"
+          subdomains="abcd"
+          maxZoom={19}
+          eventHandlers={{
+            tileerror: () => setTileError(true),
+          }}
+        />
+
+        {validProjects.map((project) => (
+          <Marker
+            key={project.id || project.slug}
+            position={[Number(project.mapLat), Number(project.mapLng)]}
+            icon={getMarkerIcon(project.status)}
           >
-            <Popup className="custom-leaflet-popup" closeButton={false}>
-              <div className="w-64 bg-white rounded-2xl overflow-hidden shadow-xl border border-gray-100 flex flex-col p-0">
-                {/* Image Section */}
-                <div className="relative h-32 w-full overflow-hidden">
-                  <div 
-                    className="absolute inset-0 bg-cover bg-center"
-                    style={{ backgroundImage: `url(${project.mainImage})` }}
-                  />
-                  <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent" />
-                  
-                  {/* Status Badge */}
-                  <div className="absolute top-3 right-3 flex gap-2">
-                    <span className="px-3 py-1 bg-white/90 backdrop-blur-sm text-gray-800 text-xs font-bold rounded-full shadow-sm">
-                      {project.status === 'SOLD' ? 'مباع' : project.status === 'COMING_SOON' ? 'قريباً' : project.status === 'UNDER_CONSTRUCTION' ? 'تحت الإنشاء' : 'متاح'}
-                    </span>
-                    <span className="px-3 py-1 bg-black/60 backdrop-blur-sm text-white text-xs font-bold rounded-full shadow-sm border border-white/20">
-                      {project.type || 'فيلا'}
-                    </span>
+            <Popup className="custom-map-popup">
+              <div className="p-1 min-w-[200px] text-right font-sans" dir="rtl">
+                {project.mainImage && (
+                  <div className="relative w-full h-28 rounded-lg overflow-hidden mb-2">
+                    <Image
+                      src={project.mainImage}
+                      alt={project.name}
+                      fill
+                      className="object-cover"
+                      unoptimized
+                    />
                   </div>
+                )}
+                <h4 className="font-bold text-sm text-[#4f4949] mb-1">{project.name}</h4>
+                <div className="flex items-center gap-1.5 text-xs text-gray-500 mb-2">
+                  <svg className="w-3.5 h-3.5 text-[#a6937c]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
+                  </svg>
+                  <span>{project.city || 'الرياض'} - {project.neighborhood || project.locationText || 'حي متألق'}</span>
                 </div>
-
-                {/* Content Section */}
-                <div className="p-4 flex flex-col gap-3">
-                  <div>
-                    <h3 className="text-lg font-bold text-gray-900 leading-tight mb-1">{project.name}</h3>
-                    <p className="text-sm text-gray-500 font-medium">{project.city || project.locationText}</p>
-                  </div>
-
-                  {/* Details Row */}
-                  <div className="flex items-center justify-between bg-gray-50 p-2 rounded-lg text-sm border border-gray-100">
-                    {project.area && (
-                      <div className="flex flex-col">
-                        <span className="text-xs text-gray-400">المساحة</span>
-                        <span className="font-bold text-gray-700">{project.area} م²</span>
-                      </div>
-                    )}
-                    {(project.area && project.price) && <div className="w-px h-6 bg-gray-200" />}
-                    {project.price && (
-                      <div className="flex flex-col">
-                        <span className="text-xs text-gray-400">يبدأ من</span>
-                        <span className="font-bold text-[#A6937C]">{project.price.toLocaleString()} ر.س</span>
-                      </div>
-                    )}
-                  </div>
-
-                  <Link 
-                    href={`/projects/${project.slug}`}
-                    className="w-full mt-1 py-2.5 bg-[#A6937C] text-white text-center rounded-xl font-bold text-sm hover:bg-[#8e7d69] transition-colors shadow-md"
-                  >
-                    عرض التفاصيل
-                  </Link>
+                <div className="flex items-center justify-between pt-2 border-t border-gray-100 text-xs">
+                  {project.area && (
+                    <span className="text-gray-600 font-medium">المساحة: {project.area} م²</span>
+                  )}
+                  {project.price && (
+                    <span className="font-bold text-[#a6937c]">{project.price.toLocaleString()} ر.س</span>
+                  )}
                 </div>
+                <Link
+                  href={`/projects/${project.slug}`}
+                  className="mt-2.5 block w-full py-1.5 text-center text-xs font-bold text-white bg-[#a6937c] rounded-lg hover:bg-[#8e7d69] transition-colors"
+                >
+                  التفاصيل الكاملة
+                </Link>
               </div>
             </Popup>
           </Marker>
-        );
-      })}
-      
-      {/* Attribution repositioned */}
-      <div className="absolute bottom-1 left-1 z-[1000] bg-white/70 backdrop-blur-sm px-2 py-0.5 rounded text-[10px] text-gray-500 shadow-sm pointer-events-auto">
-        <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noreferrer" className="hover:text-primary">OSM</a>
-        <span className="mx-1">•</span>
-        <a href="https://carto.com/attributions" target="_blank" rel="noreferrer" className="hover:text-primary">CARTO</a>
-      </div>
-    </MapContainer>
-    </>
+        ))}
+      </MapContainer>
+    </div>
   );
-};
-
-export default GeographicMap;
+}

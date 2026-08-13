@@ -1,6 +1,7 @@
 import { prisma } from "@/lib/prisma";
 import Link from "next/link";
 import { getBaseMetadata } from "@/lib/seo";
+import { Prisma } from "@prisma/client";
 import ProjectsFilter from "./ProjectsFilter";
 import ProjectCard from "./ProjectCard";
 
@@ -27,7 +28,15 @@ export default async function PublicProjectsPage({ searchParams }: { searchParam
   const status = params.status || "";
   const city = params.city || "";
 
-  const where: any = { isVisible: true };
+  const where: Prisma.ProjectWhereInput = {
+    isVisible: true,
+    NOT: [
+      { slug: "naht-demo" },
+      { slug: "naht-plots" },
+      { name: { contains: "ديمو" } },
+    ],
+  };
+
   if (q) {
     where.OR = [
       { name: { contains: q } },
@@ -45,7 +54,14 @@ export default async function PublicProjectsPage({ searchParams }: { searchParam
   });
 
   const allVisibleProjects = await prisma.project.findMany({
-    where: { isVisible: true },
+    where: {
+      isVisible: true,
+      NOT: [
+        { slug: "naht-demo" },
+        { slug: "naht-plots" },
+        { name: { contains: "ديمو" } },
+      ],
+    },
     select: { type: true, status: true, city: true },
   });
 
@@ -54,71 +70,51 @@ export default async function PublicProjectsPage({ searchParams }: { searchParam
   const uniqueCities = Array.from(new Set(allVisibleProjects.map(p => p.city).filter(Boolean)));
 
   return (
-    <div className="bg-[#fafafa] min-h-screen pb-20">
-
-      {/* ── Page Hero ── */}
-      <div className="bg-[#050505] pt-36 pb-28 relative overflow-hidden">
-        <div className="absolute inset-0 opacity-20 bg-[radial-gradient(circle_at_center,rgba(212,175,55,0.15)_0,transparent_100%)] pointer-events-none" />
-        <div className="absolute inset-0 bg-gradient-to-b from-black/50 to-transparent" />
+    <div className="bg-[#F7F3EB] min-h-screen pb-20">
+      {/* Page Hero */}
+      <div className="bg-[#4F4949] pt-32 pb-20 relative overflow-hidden text-white">
         <div className="max-w-7xl mx-auto px-6 relative z-10 text-center">
-          {/* Label */}
-          <div className="inline-flex items-center gap-3 mb-5">
-            <span className="h-[1px] w-8 bg-brand-cafe" />
-            <span className="text-brand-cafe text-xs font-bold tracking-[0.3em] uppercase">نحت العقارية</span>
-            <span className="h-[1px] w-8 bg-brand-cafe" />
-          </div>
-          {/* Title */}
-          <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold text-white mb-5 tracking-tight drop-shadow-md">
+          <h1 className="text-3xl md:text-5xl font-bold mb-4">
             {content?.title || "مشاريع نحت العقارية"}
           </h1>
-          {/* Description */}
-          <p className="text-base md:text-lg text-gray-300 max-w-xl mx-auto leading-relaxed mb-4">
-            {content?.description || "استعرض مشاريعنا السكنية المتاحة واختر ما يناسبك."}
-          </p>
-          {/* Trust line */}
-          <p className="text-sm text-brand-cafe font-medium tracking-wide">
-            مشاريع مختارة بعناية في مواقع واعدة
+          <p className="text-base md:text-lg text-[#F7F3EB]/80 max-w-xl mx-auto font-light">
+            {content?.description || "استعرض مشاريعنا السكنية المتاحة في مدينة الرياض."}
           </p>
         </div>
       </div>
 
-      <div className="max-w-7xl mx-auto px-6 lg:px-8">
-
-        {/* ── Filters ── */}
+      <div className="max-w-7xl mx-auto px-6">
+        {/* Filters */}
         <ProjectsFilter
           types={uniqueTypes}
           statuses={uniqueStatuses}
           cities={uniqueCities}
         />
 
-        {/* ── Results count ── */}
         {projects.length > 0 && (
-          <p className="text-sm text-gray-500 mb-6 font-medium">
-            يعرض <span className="text-gray-900 font-bold">{projects.length}</span> مشروع
+          <p className="text-xs text-[#4F4949]/70 mb-6 font-medium">
+            يعرض <span className="text-[#4F4949] font-bold">{projects.length}</span> مشروع
           </p>
         )}
 
-        {/* ── Projects Grid ── */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-7">
+        {/* Projects Grid */}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
           {projects.map((project) => (
-            <ProjectCard key={project.id} project={project as any} />
+            <ProjectCard key={project.id} project={project} />
           ))}
         </div>
 
-        {/* ── Empty State ── */}
+        {/* Empty State */}
         {projects.length === 0 && (
-          <div className="text-center py-24 bg-white rounded-3xl shadow-sm border border-gray-100 mt-8 max-w-3xl mx-auto">
-            <div className="w-16 h-16 bg-gray-50 rounded-full flex items-center justify-center mx-auto mb-6">
-              <svg className="w-8 h-8 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2"
-                  d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 002-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
-              </svg>
-            </div>
-            <h3 className="text-xl font-bold text-gray-900 mb-3">لا توجد مشاريع مطابقة</h3>
-            <p className="text-gray-500 mb-8 max-w-md mx-auto leading-relaxed text-sm">
+          <div className="text-center py-20 bg-white rounded-2xl border border-[#A6937C]/20 mt-8 max-w-2xl mx-auto">
+            <h3 className="text-lg font-bold text-[#4F4949] mb-2">لا توجد مشاريع مطابقة</h3>
+            <p className="text-sm text-[#4F4949]/70 mb-6">
               {content?.emptyStateText || "جرّب تعديل الفلاتر أو مسحها لعرض جميع المشاريع المتاحة."}
             </p>
-            <Link href="/projects" className="inline-block bg-brand-cafe hover:bg-brand-coal text-white font-bold py-2.5 px-8 transition-colors shadow-md text-sm [clip-path:polygon(0_0,calc(100%-16px)_0,100%_16px,100%_100%,0_100%)]">
+            <Link
+              href="/projects"
+              className="inline-block bg-[#4F4949] hover:bg-[#A6937C] text-white font-bold py-2.5 px-6 rounded-lg transition-colors text-sm"
+            >
               عرض كل المشاريع
             </Link>
           </div>
