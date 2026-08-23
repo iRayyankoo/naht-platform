@@ -61,6 +61,8 @@ export default async function HomePage() {
       mainImage: true,
       mapLat: true,
       mapLng: true,
+      price: true,
+      area: true,
       isVisible: true,
       showOnHomeMap: true,
     },

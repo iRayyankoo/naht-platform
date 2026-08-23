@@ -1,0 +1,487 @@
+/* =========================================================================
+   PUIUX Maps — High-Fidelity Scoped CSS Port for Naht Public Website
+   Scoped strictly under .puiux-map-port & custom leaflet overlay classes
+   ========================================================================= */
+
+/* --- Container & Shell --- */
+.puiux-map-port {
+  position: relative;
+  width: 100%;
+  border-radius: 24px;
+  overflow: hidden;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.12);
+  background-color: #f7f3eb;
+  font-family: inherit;
+  direction: rtl;
+}
+
+.puiux-map-port .puiux-maps-inner {
+  position: relative;
+  width: 100%;
+  height: 600px;
+  border-radius: 24px;
+  overflow: hidden;
+  background: transparent;
+  padding: 0;
+}
+
+.puiux-map-port .puiux-maps-map {
+  width: 100%;
+  height: 600px;
+  border-radius: 24px;
+  position: relative;
+  z-index: 10;
+}
+
+/* Tile Pane Grayscale + Warm Sepia Filter (Matching Live Source) */
+.puiux-map-port .leaflet-tile-pane {
+  filter: grayscale(100%) sepia(12%) hue-rotate(0deg) invert(0%);
+}
+
+/* Hide default attribution & zoom controls as in live site */
+.puiux-map-port .leaflet-control-attribution,
+.puiux-map-port .leaflet-control-container .leaflet-control-zoom {
+  display: none !important;
+}
+
+/* --- Floating Filter Panel (Top-Left in RTL) --- */
+.puiux-map-port .puiux-maps-filter-panel {
+  position: absolute;
+  top: 20px;
+  left: 20px;
+  right: auto;
+  z-index: 1000;
+  background-color: #f7f3eb !important;
+  background: #f7f3eb !important;
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid rgba(96, 165, 250, 0.3) !important;
+  border-radius: 16px !important;
+  padding: 20px !important;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5) !important;
+  width: 200px !important;
+  min-width: 200px !important;
+  box-sizing: border-box !important;
+  pointer-events: auto;
+  opacity: 1 !important;
+  animation: puiux-fade-in 0.35s ease-out;
+}
+
+.puiux-map-port .puiux-maps-filter-panel h3 {
+  color: #4e4949 !important;
+  font-size: 14px !important;
+  line-height: 18.2px !important;
+  font-weight: 600 !important;
+  margin: 0 0 16px 0 !important;
+  padding: 0 !important;
+  border: none !important;
+  border-bottom: none !important;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.puiux-map-port .puiux-maps-filter-icon {
+  color: #575252 !important;
+  font-size: 16px !important;
+  line-height: 20.8px !important;
+  font-weight: 600 !important;
+}
+
+.puiux-map-port .puiux-maps-radio-group {
+  display: flex;
+  flex-direction: column;
+  gap: 10px !important;
+}
+
+.puiux-map-port .puiux-maps-radio-item {
+  display: flex;
+  align-items: center;
+  gap: 10px !important;
+  cursor: pointer;
+  padding: 10px 12px !important;
+  margin: 0 !important;
+  height: 42.4px !important;
+  box-sizing: border-box !important;
+  border-radius: 8px;
+  transition: background-color 0.2s ease;
+  user-select: none;
+}
+
+.puiux-map-port .puiux-maps-radio-item:hover {
+  background: rgba(166, 147, 124, 0.12);
+}
+
+.puiux-map-port .puiux-maps-radio-item input[type="radio"] {
+  width: 18px !important;
+  height: 18px !important;
+  cursor: pointer;
+  accent-color: #575252 !important;
+  margin: 0;
+}
+
+.puiux-map-port .puiux-maps-radio-label {
+  font-size: 14px !important;
+  line-height: 22.4px !important;
+  color: #4e4949 !important;
+  font-weight: 500 !important;
+  flex: 1;
+}
+
+.puiux-map-port .puiux-maps-radio-item.active .puiux-maps-radio-label,
+.puiux-map-port .puiux-maps-radio-item:has(input:checked) .puiux-maps-radio-label {
+  font-weight: 600 !important;
+}
+
+.puiux-map-port .puiux-maps-status-dot {
+  width: 12px !important;
+  height: 12px !important;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+/* --- Floating Legend Panel (Bottom-Left in RTL) --- */
+.puiux-map-port .puiux-maps-legend {
+  position: absolute;
+  bottom: 24px;
+  left: 24px;
+  right: auto;
+  z-index: 1000;
+  background-color: #f6f3eb !important;
+  background: rgb(246, 243, 235) !important;
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  color: #4e4949 !important;
+  padding: 16px 20px !important;
+  border-radius: 16px !important;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5) !important;
+  border: 1px solid rgba(71, 85, 105, 0.5) !important;
+  width: 180px !important;
+  min-width: 180px !important;
+  box-sizing: border-box !important;
+  pointer-events: auto;
+  opacity: 1 !important;
+  animation: puiux-fade-in 0.35s ease-out;
+}
+
+.puiux-map-port .puiux-maps-legend h3 {
+  font-weight: 600 !important;
+  font-size: 14px !important;
+  line-height: 18.2px !important;
+  margin: 0 0 12px 0 !important;
+  padding: 0 !important;
+  border: none !important;
+  border-bottom: none !important;
+  color: #4e4949 !important;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.puiux-map-port .puiux-maps-legend-items {
+  display: flex;
+  flex-direction: column;
+  gap: 8px !important;
+}
+
+.puiux-map-port .puiux-maps-legend-item {
+  display: flex;
+  align-items: center;
+  gap: 10px !important;
+  color: #4e4949 !important;
+  font-size: 13px !important;
+  font-weight: 500;
+  height: 28px !important;
+  padding: 0 !important;
+  margin: 0 !important;
+  box-sizing: border-box !important;
+}
+
+.puiux-map-port .puiux-maps-legend-item svg {
+  flex-shrink: 0;
+}
+
+/* --- Custom Marker & Central Pin Logo --- */
+.puiux-custom-marker {
+  background: transparent !important;
+  border: none !important;
+  box-shadow: none !important;
+  cursor: pointer;
+  transition: transform 0.2s ease;
+}
+
+.puiux-custom-marker:hover {
+  transform: scale(1.12);
+  z-index: 1001 !important;
+}
+
+.puiux-marker-container {
+  position: relative;
+  width: 40px;
+  height: 52px;
+  display: block;
+}
+
+.puiux-marker-svg {
+  display: block;
+  width: 40px;
+  height: 52px;
+  filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.3)) !important;
+}
+
+.puiux-marker-logo {
+  position: absolute;
+  left: 5px;
+  top: 5px;
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  object-fit: cover;
+  background: #ffffff;
+  z-index: 10;
+  pointer-events: none;
+}
+
+/* --- Popup Styles --- */
+.leaflet-popup.puiux-maps-popup-container .leaflet-popup-content-wrapper {
+  background: #ffffff !important;
+  border-radius: 12px !important;
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3) !important;
+  border: none !important;
+  overflow: hidden !important;
+  padding: 0 !important;
+}
+
+.leaflet-popup.puiux-maps-popup-container .leaflet-popup-content {
+  margin: 0 !important;
+  padding: 0 !important;
+  width: 280px !important;
+  direction: rtl;
+  text-align: right;
+}
+
+.leaflet-popup.puiux-maps-popup-container .leaflet-popup-tip {
+  background: #ffffff !important;
+}
+
+.puiux-maps-popup {
+  border-radius: 12px;
+  overflow: hidden;
+  font-family: inherit;
+}
+
+.puiux-maps-popup-image {
+  width: 100% !important;
+  height: auto !important;
+  object-fit: cover;
+  display: block;
+  background-color: #ede9e1;
+}
+
+.puiux-maps-popup-content {
+  padding: 14px 16px;
+}
+
+.puiux-maps-popup-title {
+  font-weight: 600;
+  color: #1f2937;
+  margin: 0 0 10px 0;
+  font-size: 15px;
+  line-height: 1.4;
+}
+
+.puiux-maps-popup-meta {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 12px;
+}
+
+.puiux-maps-popup-status {
+  font-size: 12px;
+  font-weight: 600;
+  padding: 4px 12px;
+  border-radius: 9999px;
+}
+
+.puiux-maps-popup-status.sold {
+  background-color: rgba(239, 68, 68, 0.15);
+  color: #4F4949;
+}
+
+.puiux-maps-popup-status.available {
+  background-color: rgba(245, 158, 11, 0.15);
+  color: #65664a;
+}
+
+.puiux-maps-popup-status.soon {
+  background-color: rgba(59, 130, 246, 0.15);
+  color: #8c785f;
+}
+
+.puiux-maps-popup-status.under_sale,
+.puiux-maps-popup-status.under_construction {
+  background-color: rgba(245, 158, 11, 0.18);
+  color: #b45309;
+}
+
+.puiux-maps-popup-id {
+  font-size: 12px;
+  color: #9ca3af;
+  font-weight: 600;
+}
+
+.puiux-maps-popup-details {
+  display: flex;
+  gap: 16px;
+  font-size: 13px;
+  color: #6b7280;
+  margin-bottom: 12px;
+  padding: 0;
+}
+
+.puiux-maps-popup-detail {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.puiux-maps-popup-link {
+  display: block;
+  text-align: center;
+  padding: 10px;
+  background: #565151;
+  color: #ffffff !important;
+  text-decoration: none !important;
+  font-size: 13px;
+  font-weight: 600;
+  border-radius: 8px;
+  transition: all 0.3s ease;
+}
+
+.puiux-maps-popup-link:hover {
+  background: #b5b693;
+  color: #ffffff !important;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(26, 26, 46, 0.3);
+}
+
+/* --- Empty / No Results Message (Dark Overlay Matching Source) --- */
+.puiux-maps-no-results {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  z-index: 1000;
+  background: rgba(15, 23, 42, 0.95) !important;
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  padding: 32px 48px !important;
+  border-radius: 16px !important;
+  color: #ffffff !important;
+  text-align: center;
+  font-size: 14px;
+  border: none !important;
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3) !important;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px !important;
+  box-sizing: border-box !important;
+}
+
+.puiux-maps-no-results-icon {
+  font-size: 48px !important;
+  margin: 0 !important;
+  line-height: 76.8px !important;
+}
+
+.puiux-maps-no-results-text {
+  font-size: 16px !important;
+  font-weight: 500 !important;
+  color: #ffffff !important;
+  margin: 0 !important;
+  line-height: 25.6px !important;
+}
+
+/* --- Responsive Breakpoints (Matching map.css & live Elementor overrides) --- */
+@media (max-width: 768px) {
+  .puiux-map-port .puiux-maps-inner,
+  .puiux-map-port .puiux-maps-map {
+    height: 600px !important;
+  }
+
+  .puiux-map-port .puiux-maps-filter-panel {
+    top: 12px;
+    left: 12px;
+    min-width: 150px;
+    padding: 14px;
+  }
+
+  .puiux-map-port .puiux-maps-filter-panel h3 {
+    font-size: 13px;
+  }
+
+  .puiux-map-port .puiux-maps-radio-label {
+    font-size: 13px;
+  }
+
+  .puiux-map-port .puiux-maps-legend {
+    bottom: 12px;
+    left: 12px;
+    min-width: auto;
+    padding: 12px 16px;
+  }
+
+  .puiux-map-port .puiux-maps-legend h3 {
+    font-size: 12px;
+  }
+
+  .puiux-map-port .puiux-maps-legend-item {
+    font-size: 12px;
+  }
+
+  .leaflet-popup.puiux-maps-popup-container .leaflet-popup-content {
+    width: 240px !important;
+  }
+}
+
+@media (max-width: 480px) {
+  .puiux-map-port .puiux-maps-inner,
+  .puiux-map-port .puiux-maps-map {
+    height: 600px !important;
+  }
+
+  .puiux-map-port .puiux-maps-filter-panel {
+    position: relative !important;
+    top: 0px !important;
+    left: 20px !important;
+    right: -20px !important;
+    bottom: 0px !important;
+    margin: 10px 0 !important;
+    width: calc(100% - 40px) !important;
+    min-width: unset !important;
+  }
+
+  .puiux-map-port .puiux-maps-legend {
+    position: relative !important;
+    top: 0px !important;
+    left: 24px !important;
+    right: -24px !important;
+    bottom: 0px !important;
+    margin: 10px 0 !important;
+    width: calc(100% - 48px) !important;
+    min-width: unset !important;
+  }
+}
+
+@keyframes puiux-fade-in {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}

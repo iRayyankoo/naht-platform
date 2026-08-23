@@ -4,8 +4,8 @@ import React, { useSyncExternalStore, useState, useMemo, useCallback, useEffect 
 import { MapContainer, TileLayer, Marker, Popup, useMap } from 'react-leaflet';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
+import './puiux-maps.css';
 import Link from 'next/link';
-import Image from 'next/image';
 import { HomePageContent } from '@prisma/client';
 
 export interface ProjectMapItem {
@@ -31,103 +31,128 @@ export interface ProjectMapItem {
 interface GeographicMapProps {
   content?: HomePageContent | null;
   projects: ProjectMapItem[];
-  activeFilter: string;
+  activeFilter?: string;
+  onFilterChange?: (filterId: string) => void;
 }
 
-const MARKER_ICONS: Record<string, string> = {
-  AVAILABLE: '/images/markers/available.svg',
-  SOLD: '/images/markers/sold.svg',
-  COMING_SOON: '/images/markers/soon.svg',
-  UNDER_CONSTRUCTION: '/images/markers/under-sale.svg',
-};
+export const MAP_STATUS_OPTIONS = [
+  { id: 'all', label: 'الكل', color: '#575252', slug: 'all' },
+  { id: '%d8%aa%d8%ad%d8%aa-%d8%a7%d9%84%d8%aa%d9%86%d9%81%d9%8a%d8%b0', label: 'تحت التنفيذ', color: '#b9ba99', slug: 'under_construction_parent' },
+  { id: '%d8%aa%d8%ad%d8%aa-%d8%a7%d9%84%d8%aa%d9%86%d9%81%d9%8a%d8%b0-%d8%aa%d8%ad%d8%aa-%d8%a7%d9%84%d8%aa%d9%86%d9%81%d9%8a%d8%b0', label: 'تحت التنفيذ', color: '#b9ba99', slug: 'under_construction_child' },
+  { id: 'soon', label: 'قريباً', color: '#ab9983', slug: 'soon' },
+  { id: 'sold', label: 'مباع', color: '#585252', slug: 'sold' },
+  { id: 'available', label: 'متاح', color: '#b9ba99', slug: 'available' },
+];
 
-function getMarkerIcon(status: string | null | undefined): L.Icon {
+export const MAP_LEGEND_ITEMS = [
+  { id: 'leg-1', label: 'تحت التنفيذ', color: '#b9ba99' },
+  { id: 'leg-2', label: 'تحت التنفيذ', color: '#b9ba99' },
+  { id: 'leg-3', label: 'قريباً', color: '#ab9983' },
+  { id: 'leg-4', label: 'مباع', color: '#585252' },
+  { id: 'leg-5', label: 'متاح', color: '#b9ba99' },
+];
+
+// Helper to construct DivIcon matching PUIUXMap.createIcon from map.js
+function createPuiuxDivIcon(status: string | null | undefined, pinLogoUrl: string, slug?: string): L.DivIcon {
   const s = (status || '').toUpperCase().trim();
-  let iconUrl = MARKER_ICONS.AVAILABLE;
+  let color = '#b9ba99'; // available default
   if (s.includes('SOLD') || s.includes('مباع')) {
-    iconUrl = MARKER_ICONS.SOLD;
+    color = '#585252';
   } else if (s.includes('SOON') || s.includes('قريباً')) {
-    iconUrl = MARKER_ICONS.COMING_SOON;
+    color = '#ab9983';
   } else if (s.includes('UNDER') || s.includes('إنشاء') || s.includes('CONSTRUCTION')) {
-    iconUrl = MARKER_ICONS.UNDER_CONSTRUCTION;
+    color = '#b9ba99';
   }
 
-  return L.icon({
-    iconUrl,
-    iconSize: [36, 44],
-    iconAnchor: [18, 44],
-    popupAnchor: [0, -40],
-    className: 'leaflet-marker-bounce transition-transform hover:scale-110',
+  const logoSrc = pinLogoUrl || '/images/brand/naht-pin-logo.jpg';
+
+  const html = `
+    <div class="puiux-marker-container" data-slug="${slug || ''}">
+      <svg class="puiux-marker-svg" width="40" height="52" viewBox="0 0 24 32" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <path d="M12 0C5.37 0 0 5.37 0 12c0 9 12 20 12 20s12-11 12-20c0-6.63-5.37-12-12-12z" fill="${color}"/>
+        <circle cx="12" cy="12" r="8" fill="white"/>
+      </svg>
+      <img src="${logoSrc}" alt="Logo" class="puiux-marker-logo" />
+    </div>
+  `;
+
+  return L.divIcon({
+    html,
+    className: 'puiux-custom-marker',
+    iconSize: [40, 52],
+    iconAnchor: [20, 52],
+    popupAnchor: [0, -52],
   });
 }
-
-const emptySubscribe = () => () => {};
 
 function MapController({ validPositions, defaultCenter, defaultZoom }: { validPositions: [number, number][]; defaultCenter: [number, number]; defaultZoom: number }) {
   const map = useMap();
 
-  const handleRecenter = useCallback(() => {
-    if (validPositions.length > 0) {
+  useEffect(() => {
+    if (validPositions.length > 1) {
       const bounds = L.latLngBounds(validPositions);
-      map.fitBounds(bounds, { padding: [40, 40], maxZoom: 15 });
-    } else {
-      map.setView(defaultCenter, defaultZoom);
+      map.fitBounds(bounds.pad(0.1));
+    } else if (validPositions.length === 1) {
+      map.setView(validPositions[0], defaultZoom);
     }
+    // When validPositions.length === 0, do not reset or fitBounds. Keep current center & zoom.
   }, [map, validPositions, defaultCenter, defaultZoom]);
-
-  useEffect(() => {
-    if (validPositions.length > 0) {
-      const bounds = L.latLngBounds(validPositions);
-      map.fitBounds(bounds, { padding: [40, 40], maxZoom: 15 });
-    }
-  }, [map, validPositions]);
-
-  return (
-    <div className="absolute top-4 left-4 z-[1000]">
-      <button
-        onClick={handleRecenter}
-        type="button"
-        className="px-3.5 py-2 bg-white/95 backdrop-blur-md text-[#4f4949] font-bold text-xs rounded-xl shadow-md border border-gray-200 hover:bg-[#a6937c] hover:text-white transition-all flex items-center gap-1.5"
-      >
-        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
-        </svg>
-        <span>إعادة التمركز</span>
-      </button>
-    </div>
-  );
-}
-
-function SafeZoomControl() {
-  const map = useMap();
-
-  useEffect(() => {
-    if (!map) return;
-    const control = L.control.zoom({ position: 'bottomright' });
-    control.addTo(map);
-
-    return () => {
-      control.remove();
-    };
-  }, [map]);
 
   return null;
 }
 
-export default function GeographicMap({ content, projects = [], activeFilter }: GeographicMapProps) {
-  const mounted = useSyncExternalStore(emptySubscribe, () => true, () => false);
-  const [tileError, setTileError] = useState(false);
+const emptySubscribe = () => () => {};
 
+export default function GeographicMap({ content, projects = [], activeFilter: controlledFilter, onFilterChange }: GeographicMapProps) {
+  const mounted = useSyncExternalStore(emptySubscribe, () => true, () => false);
+  const [internalFilter, setInternalFilter] = useState('all');
+
+  const activeFilter = controlledFilter !== undefined ? controlledFilter : internalFilter;
+
+  const handleFilterSelect = useCallback((filterId: string) => {
+    setInternalFilter(filterId);
+    if (onFilterChange) {
+      onFilterChange(filterId);
+    }
+  }, [onFilterChange]);
+
+  const defaultCenter: [number, number] = [content?.mapCenterLat || 24.7136, content?.mapCenterLng || 46.6753];
+  const defaultZoom = content?.mapZoom || 12;
+  const pinLogoUrl = content?.pinLogoUrl || '/images/brand/naht-pin-logo.jpg';
+
+  // Filter projects according to official WordPress filter matching
   const validProjects = useMemo(() => {
     return (projects || []).filter((p) => {
       const isVisible = p.isVisible === true;
       const isShowOnHomeMap = p.showOnHomeMap === true;
-      const filterMatch = activeFilter === 'ALL' || p.status === activeFilter;
       const lat = Number(p.mapLat);
       const lng = Number(p.mapLng);
-      const hasValidCoords = Number.isFinite(lat) && Number.isFinite(lng) && lat >= -90 && lat <= 90 && lng >= -180 && lng <= 180 && lat !== 0 && lng !== 0;
-      return isVisible && isShowOnHomeMap && filterMatch && hasValidCoords;
+      const hasValidCoords = Number.isFinite(lat) && Number.isFinite(lng) && lat !== 0 && lng !== 0;
+
+      if (!isVisible || !isShowOnHomeMap || !hasValidCoords) return false;
+
+      if (activeFilter === 'all') return true;
+
+      // The dual 'تحت التنفيذ' filters: no records currently assigned in source (returns 0)
+      if (activeFilter === '%d8%aa%d8%ad%d8%aa-%d8%a7%d9%84%d8%aa%d9%86%d9%81%d9%8a%d8%b0' ||
+          activeFilter === '%d8%aa%d8%ad%d8%aa-%d8%a7%d9%84%d8%aa%d9%86%d9%81%d9%8a%d8%b0-%d8%aa%d8%ad%d8%aa-%d8%a7%d9%84%d8%aa%d9%86%d9%81%d9%8a%d8%b0' ||
+          activeFilter === 'under_construction') {
+        return false;
+      }
+
+      if (activeFilter === 'available' || activeFilter === 'AVAILABLE') {
+        return p.status === 'AVAILABLE';
+      }
+
+      if (activeFilter === 'sold' || activeFilter === 'SOLD') {
+        return p.status === 'SOLD';
+      }
+
+      if (activeFilter === 'soon' || activeFilter === 'SOON' || activeFilter === 'COMING_SOON') {
+        return p.status === 'COMING_SOON' || p.status === 'SOON';
+      }
+
+      return false;
     });
   }, [projects, activeFilter]);
 
@@ -135,106 +160,150 @@ export default function GeographicMap({ content, projects = [], activeFilter }: 
     return validProjects.map((p) => [Number(p.mapLat), Number(p.mapLng)] as [number, number]);
   }, [validProjects]);
 
-  const defaultCenter: [number, number] = [content?.mapCenterLat || 24.7136, content?.mapCenterLng || 46.6753];
-  const defaultZoom = content?.mapZoom || 11;
-
   if (!mounted) {
     return (
-      <div className="w-full h-full bg-[#F7F3EB] rounded-[2rem] flex items-center justify-center animate-pulse">
-        <div className="text-center text-[#a6937c] font-bold text-sm">جاري تحميل الخريطة التفاعلية...</div>
+      <div className="puiux-map-port w-full h-[600px] flex items-center justify-center animate-pulse">
+        <div className="text-center text-[#a6937c] font-bold text-sm">جاري تحميل خريطة تواجدنا في المملكة...</div>
       </div>
     );
   }
 
   return (
-    <div className="relative w-full h-full rounded-[2rem] overflow-hidden bg-[#F7F3EB]">
-      {/* Empty State Fallback */}
-      {validProjects.length === 0 && (
-        <div className="absolute inset-0 z-[1001] bg-[#F7F3EB]/90 backdrop-blur-sm flex flex-col items-center justify-center p-6 text-center">
-          <div className="w-12 h-12 rounded-full bg-[#a6937c]/10 text-[#a6937c] flex items-center justify-center mb-3">
-            <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
-            </svg>
-          </div>
-          <h4 className="text-base font-bold text-[#4f4949]">لا تتوفر مشاريع خريطة مطابقة للتصفية الحالية</h4>
-          <p className="text-xs text-gray-500 mt-1">تأكد من اختيار تصفية مختلفة أو استكمال الإحداثيات من لوحة CRM.</p>
-        </div>
-      )}
-
-      {/* Tile Loading Error Fallback */}
-      {tileError && (
-        <div className="absolute bottom-4 right-4 z-[1002] bg-amber-50 text-amber-800 border border-amber-200 px-3 py-1.5 rounded-lg text-xs font-bold shadow-sm">
-          تنبيه: يتعذر تحميل بعض بلاطات الخريطة من الخادم، يتم استخدام النمط البديل.
-        </div>
-      )}
-
-      <MapContainer
-        center={defaultCenter}
-        zoom={defaultZoom}
-        minZoom={4}
-        maxZoom={18}
-        style={{ width: '100%', height: '100%', background: '#F7F3EB' }}
-        zoomControl={false}
-        scrollWheelZoom={false}
-        attributionControl={false}
-      >
-        <SafeZoomControl />
-        <MapController validPositions={validPositions} defaultCenter={defaultCenter} defaultZoom={defaultZoom} />
-
-        <TileLayer
-          url="https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png"
-          subdomains="abcd"
+    <div className="puiux-map-port" id="puiux-maps-root">
+      <div className="puiux-maps-inner">
+        {/* Leaflet Map */}
+        <MapContainer
+          center={defaultCenter}
+          zoom={defaultZoom}
+          minZoom={4}
           maxZoom={19}
-          eventHandlers={{
-            tileerror: () => setTileError(true),
-          }}
-        />
+          className="puiux-maps-map"
+          zoomControl={false}
+          scrollWheelZoom={true}
+          touchZoom={true}
+          attributionControl={false}
+        >
+          <MapController validPositions={validPositions} defaultCenter={defaultCenter} defaultZoom={defaultZoom} />
 
-        {validProjects.map((project) => (
-          <Marker
-            key={project.id || project.slug}
-            position={[Number(project.mapLat), Number(project.mapLng)]}
-            icon={getMarkerIcon(project.status)}
-          >
-            <Popup className="custom-map-popup">
-              <div className="p-1 min-w-[200px] text-right font-sans" dir="rtl">
-                {project.mainImage && (
-                  <div className="relative w-full h-28 rounded-lg overflow-hidden mb-2">
-                    <Image
-                      src={project.mainImage}
-                      alt={project.name}
-                      fill
-                      className="object-cover"
-                      unoptimized
-                    />
+          <TileLayer
+            url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+            maxZoom={19}
+          />
+
+          {validProjects.map((project) => {
+            const statusSlug = project.status.toLowerCase();
+            const statusLabel =
+              statusSlug.includes('sold') ? 'مباع' :
+              statusSlug.includes('soon') ? 'قريباً' :
+              statusSlug.includes('under') ? 'تحت التنفيذ' : 'متاح';
+            const statusClass =
+              statusSlug.includes('sold') ? 'sold' :
+              statusSlug.includes('soon') ? 'soon' :
+              statusSlug.includes('under') ? 'under_sale' : 'available';
+
+            const displayId = project.id;
+            const hasImage = Boolean(project.mainImage);
+            const areaDisplay = project.area ? `${project.area.toLocaleString('ar-SA')} م²` : null;
+
+            return (
+              <Marker
+                key={project.id || project.slug}
+                position={[Number(project.mapLat), Number(project.mapLng)]}
+                icon={createPuiuxDivIcon(project.status, pinLogoUrl, project.slug)}
+              >
+                <Popup className="puiux-maps-popup-container" maxWidth={300}>
+                  <div className="puiux-maps-popup">
+                    {/* Thumbnail if available */}
+                    {hasImage && (
+                      /* eslint-disable-next-line @next/next/no-img-element */
+                      <img
+                        src={project.mainImage!}
+                        alt={project.name}
+                        className="puiux-maps-popup-image"
+                        loading="lazy"
+                      />
+                    )}
+                    <div className="puiux-maps-popup-content">
+                      <h3 className="puiux-maps-popup-title">{project.name}</h3>
+                      <div className="puiux-maps-popup-meta">
+                        <span className={`puiux-maps-popup-status ${statusClass}`}>{statusLabel}</span>
+                        <span className="puiux-maps-popup-id">#{displayId}</span>
+                      </div>
+
+                      {(project.price || areaDisplay) ? (
+                        <div className="puiux-maps-popup-details">
+                          {project.price ? (
+                            <span className="puiux-maps-popup-detail">💰 {project.price.toLocaleString('ar-SA')} ر.س</span>
+                          ) : null}
+                          {areaDisplay ? (
+                            <span className="puiux-maps-popup-detail">📐 {areaDisplay}</span>
+                          ) : null}
+                        </div>
+                      ) : null}
+
+                      <Link href={`/projects/${project.slug}`} className="puiux-maps-popup-link">
+                        عرض التفاصيل
+                      </Link>
+                    </div>
                   </div>
+                </Popup>
+              </Marker>
+            );
+          })}
+        </MapContainer>
+
+        {/* Floating Filter Panel (Top-Left in RTL, matching official site) */}
+        <div className="puiux-maps-filter-panel" data-testid="map-filter-panel">
+          <h3>
+            <span className="puiux-maps-filter-icon">◉</span>
+            تصفية حسب الحالة
+          </h3>
+          <div className="puiux-maps-radio-group">
+            {MAP_STATUS_OPTIONS.map((opt) => (
+              <label key={opt.id} className={`puiux-maps-radio-item ${activeFilter === opt.id ? 'active' : ''}`}>
+                <input
+                  type="radio"
+                  name="puiux-status-map-1"
+                  value={opt.id}
+                  checked={activeFilter === opt.id}
+                  onChange={() => handleFilterSelect(opt.id)}
+                />
+                {opt.id !== 'all' && (
+                  <span className="puiux-maps-status-dot" style={{ backgroundColor: opt.color }} />
                 )}
-                <h4 className="font-bold text-sm text-[#4f4949] mb-1">{project.name}</h4>
-                <div className="flex items-center gap-1.5 text-xs text-gray-500 mb-2">
-                  <svg className="w-3.5 h-3.5 text-[#a6937c]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
-                  </svg>
-                  <span>{project.city || 'الرياض'} - {project.neighborhood || project.locationText || 'حي متألق'}</span>
-                </div>
-                <div className="flex items-center justify-between pt-2 border-t border-gray-100 text-xs">
-                  {project.area && (
-                    <span className="text-gray-600 font-medium">المساحة: {project.area} م²</span>
-                  )}
-                  {project.price && (
-                    <span className="font-bold text-[#a6937c]">{project.price.toLocaleString()} ر.س</span>
-                  )}
-                </div>
-                <Link
-                  href={`/projects/${project.slug}`}
-                  className="mt-2.5 block w-full py-1.5 text-center text-xs font-bold text-white bg-[#a6937c] rounded-lg hover:bg-[#8e7d69] transition-colors"
-                >
-                  التفاصيل الكاملة
-                </Link>
+                <span className="puiux-maps-radio-label">{opt.label}</span>
+              </label>
+            ))}
+          </div>
+        </div>
+
+        {/* Floating Legend (Bottom-Left in RTL, matching official site) */}
+        <div className="puiux-maps-legend" data-testid="map-legend">
+          <h3>
+            <span className="puiux-maps-legend-icon" style={{ color: '#ab9983' }}>●</span>
+            شرح الألوان
+          </h3>
+          <div className="puiux-maps-legend-items">
+            {MAP_LEGEND_ITEMS.map((item) => (
+              <div key={item.id} className="puiux-maps-legend-item">
+                <svg width="20" height="28" viewBox="0 0 24 32" fill="none">
+                  <path d="M12 0C5.37 0 0 5.37 0 12c0 9 12 20 12 20s12-11 12-20c0-6.63-5.37-12-12-12z" fill={item.color} />
+                  <circle cx="12" cy="12" r="5" fill="white" />
+                </svg>
+                <span>{item.label}</span>
               </div>
-            </Popup>
-          </Marker>
-        ))}
-      </MapContainer>
+            ))}
+          </div>
+        </div>
+
+        {/* No Results Fallback if filter has 0 items */}
+        {validProjects.length === 0 && (
+          <div className="puiux-maps-no-results">
+            <div className="puiux-maps-no-results-icon">📍</div>
+            <div className="puiux-maps-no-results-text">لا توجد وحدات مطابقة</div>
+          </div>
+        )}
+      </div>
     </div>
   );
 }
